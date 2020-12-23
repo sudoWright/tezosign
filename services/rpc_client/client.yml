@@ -1,0 +1,45 @@
+swagger: '2.0'
+info:
+  title: Tezos RPC
+  version: 0.0.1
+paths:
+  /chains/main/blocks/head/context/contracts/{contract}/script:
+    get:
+      operationId: getContractScript
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: contract
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Endpoint for contract script
+          schema:
+            type: object
+        '500':
+          description: Internal error
+      tags:
+        - Contracts
+  /chains/main/blocks/head/context/contracts/{contract}/manager_key:
+    get:
+      operationId: getContractManagerKey
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: contract
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Endpoint for contract manager key
+          schema:
+            type: string
+        '500':
+          description: Internal error
+        '404':
+          description: Not found
+      tags:
+        - Contracts

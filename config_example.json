@@ -1,0 +1,29 @@
+{
+  "LogLevel":"debug",
+  "API":{
+    "ListenOnPort":8080,
+    "CORSAllowedOrigins":[
+      "*"
+    ]
+  },
+  "Networks":[
+    {
+      "Name": "main",
+      "SqlConnectionString":"",
+      "Params": {
+        "Host": "127.0.0.1",
+        "Port": 5432,
+        "User": "user",
+        "Password": "password",
+        "Database": "msig_db",
+        "Schema": "msig",
+        "DebugMode": false
+      },
+      "NodeRpc": {
+        "Host": "mainnet-tezos.giganode.io:443",
+        "Schemes": ["https"],
+        "BasePath": ""
+      }
+    }
+  ]
+}
