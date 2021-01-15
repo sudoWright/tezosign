@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"msig/models"
 	"msig/services/rpc_client/client"
+	"msig/services/rpc_client/client/chains"
 	"msig/services/rpc_client/client/contracts"
 )
 
@@ -52,6 +53,16 @@ func (t *Tezos) ManagerKey(ctx context.Context, address string) (pubKey string, 
 	resp, err := t.client.Contracts.GetContractManagerKey(params)
 	if err != nil {
 		return pubKey, err
+	}
+
+	return resp.Payload, nil
+}
+
+func (t *Tezos) ChainID(ctx context.Context) (chainID string, err error) {
+	params := chains.NewGetChaIDParamsWithContext(ctx)
+	resp, err := t.client.Chains.GetChaID(params)
+	if err != nil {
+		return chainID, err
 	}
 
 	return resp.Payload, nil

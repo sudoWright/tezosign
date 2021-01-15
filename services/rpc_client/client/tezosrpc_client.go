@@ -11,6 +11,7 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
+	"msig/services/rpc_client/client/chains"
 	"msig/services/rpc_client/client/contracts"
 )
 
@@ -56,6 +57,8 @@ func New(transport runtime.ClientTransport, formats strfmt.Registry) *Tezosrpc {
 
 	cli := new(Tezosrpc)
 	cli.Transport = transport
+
+	cli.Chains = chains.New(transport, formats)
 
 	cli.Contracts = contracts.New(transport, formats)
 
@@ -103,6 +106,8 @@ func (cfg *TransportConfig) WithSchemes(schemes []string) *TransportConfig {
 
 // Tezosrpc is a client for tezosrpc
 type Tezosrpc struct {
+	Chains *chains.Client
+
 	Contracts *contracts.Client
 
 	Transport runtime.ClientTransport
@@ -111,6 +116,8 @@ type Tezosrpc struct {
 // SetTransport changes the transport on the client and all its subresources
 func (c *Tezosrpc) SetTransport(transport runtime.ClientTransport) {
 	c.Transport = transport
+
+	c.Chains.SetTransport(transport)
 
 	c.Contracts.SetTransport(transport)
 

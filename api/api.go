@@ -80,10 +80,6 @@ func (api *API) initialize(handlerArr ...negroni.Handler) {
 		wrapper.Use(handler)
 	}
 
-	api.router.
-		PathPrefix("/static").
-		Handler(http.StripPrefix("/static", http.FileServer(http.Dir("./resources"))))
-
 	wrapper.Use(cors.New(cors.Options{
 		AllowedOrigins:   api.cfg.API.CORSAllowedOrigins,
 		AllowCredentials: true,
@@ -91,12 +87,19 @@ func (api *API) initialize(handlerArr ...negroni.Handler) {
 		AllowedHeaders:   []string{"Accept", "Content-Type", "Content-Length", "Accept-Encoding", "X-CSRF-Token", "Authorization", "User-Env"},
 	}))
 
+	//Static file
+	w := wrapper.With(negroni.Wrap(http.StripPrefix("/static", http.FileServer(http.Dir("./resources")))))
+	api.router.PathPrefix("/static").Handler(w).Methods(http.MethodGet, http.MethodOptions)
+
 	//public routes
 	HandleActions(api.router, wrapper, actionsAPIPrefix, []*Route{
 		{Path: "/", Method: http.MethodGet, Func: api.Index},
 		{Path: "/health", Method: http.MethodGet, Func: api.Health},
 
-		{Path: "/{network}/contract/storage/init", Method: http.MethodPost, Func: api.Contract},
+		{Path: "/{network}/contract/storage/init", Method: http.MethodPost, Func: api.ContractStorageInit},
+		{Path: "/{network}/contract/storage/update", Method: http.MethodPost, Func: api.ContractStorageUpdate},
+		{Path: "/{network}/contract/operation", Method: http.MethodPost, Func: api.ContractOperation},
+		{Path: "/{network}/contract/operation/signature", Method: http.MethodPost, Func: api.ContractOperationSignature},
 	})
 
 	api.server = &http.Server{Addr: fmt.Sprintf(":%d", api.cfg.API.ListenOnPort), Handler: api.router}

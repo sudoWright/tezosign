@@ -17,6 +17,7 @@ type (
 	}
 
 	RPCProvider interface {
+		ChainID(ctx context.Context) (chainID string, err error)
 		Script(context.Context, string) (models.BigMap, error)
 		ManagerKey(ctx context.Context, address string) (pubKey string, err error)
 	}

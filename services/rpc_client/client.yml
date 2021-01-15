@@ -22,6 +22,25 @@ paths:
           description: Internal error
       tags:
         - Contracts
+  /chains/main/blocks/head/context/contracts/{contract}/storage:
+    get:
+      operationId: getContractStorage
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: contract
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Endpoint for contract storage
+          schema:
+            type: object
+        '500':
+          description: Internal error
+      tags:
+        - Contracts
   /chains/main/blocks/head/context/contracts/{contract}/manager_key:
     get:
       operationId: getContractManagerKey
@@ -41,5 +60,25 @@ paths:
           description: Internal error
         '404':
           description: Not found
+#        '400':
+#          description: Bad Request
+#          schema:
+#            type: string
       tags:
         - Contracts
+  /chains/main/chain_id:
+    get:
+      operationId: getChaId
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: Endpoint for chain_id
+          schema:
+            type: string
+        '500':
+          description: Internal error
+        '404':
+          description: Not found
+      tags:
+        - Chains

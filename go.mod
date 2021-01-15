@@ -4,6 +4,7 @@ go 1.15
 
 require (
 	blockwatch.cc/tzindex v0.0.0-20200216192617-519bcd88724c
+	github.com/anchorageoss/tezosprotocol/v2 v2.2.0
 	github.com/go-openapi/errors v0.19.2
 	github.com/go-openapi/runtime v0.19.3
 	github.com/go-openapi/strfmt v0.19.2

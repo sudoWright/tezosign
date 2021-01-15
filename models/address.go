@@ -1,23 +1,37 @@
 package models
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/anchorageoss/tezosprotocol/v2"
+)
 
 type Address string
 
 const (
-	AddressLenght  = 36
+	AddressLength  = 36
 	accountPrefix  = "tz"
 	contractPrefix = "KT"
 )
 
-func (a Address) Validate() error {
-	if len(a) != 36 {
+func (a Address) Validate() (err error) {
+	if len(a) != AddressLength {
 		return fmt.Errorf("address len")
 	}
 
+	//Check that address
 	if a[:2] != accountPrefix && contractPrefix != contractPrefix {
 		return fmt.Errorf("address format")
 	}
 
+	//Check base58 format
+	_, _, err = tezosprotocol.Base58CheckDecode(string(a))
+	if err != nil {
+		return fmt.Errorf("wrong base58 format")
+	}
+
 	return nil
+}
+
+func (a Address) String() string {
+	return string(a)
 }

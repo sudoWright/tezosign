@@ -1,12 +1,10 @@
 package infrustructure
 
 import (
-	//"database/sql"
 	"fmt"
 	"msig/repos/postgres"
 	"msig/services/rpc_client"
 
-	//"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"msig/conf"
 	"msig/models"
