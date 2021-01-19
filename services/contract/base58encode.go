@@ -13,6 +13,8 @@ const (
 	p256Prefix      = 0x02
 )
 
+//Deprecated file
+//TODO Remove
 func encodeBase58ToPrimBytes(base58 string) (encodedBytes []byte, err error) {
 	var prefix tezosprotocol.Base58CheckPrefix
 	prefix, encodedBytes, err = tezosprotocol.Base58CheckDecode(base58)
@@ -36,6 +38,8 @@ func encodeBase58ToPrimBytes(base58 string) (encodedBytes []byte, err error) {
 	case tezosprotocol.PrefixContractHash:
 		encodedBytes = append([]byte{contractHashPrefix}, encodedBytes...)
 		encodedBytes = append(encodedBytes, 0x00)
+	case tezosprotocol.PrefixEd25519Signature, tezosprotocol.PrefixP256Signature, tezosprotocol.PrefixSecp256k1Signature, tezosprotocol.PrefixGenericSignature:
+
 	}
 
 	return encodedBytes, nil

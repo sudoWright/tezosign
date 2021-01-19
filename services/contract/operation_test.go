@@ -2,6 +2,7 @@ package contract
 
 import (
 	"msig/models"
+	"msig/types"
 	"reflect"
 	"testing"
 )
@@ -118,7 +119,7 @@ func Test_BuildContractSignPayload(t *testing.T) {
 					ContractID: "KT1LAuGLiaCF9A72qZtFvVhyzzNFg86fwFnV",
 					Type:       models.StorageUpdate,
 					Threshold:  1,
-					Keys:       []string{"edpkuNVuqdPhCsrYqkq21qW2hYTSZWMjQQjfyogoPZ2AfqCmonziNh", "p2pk64iwFyjuvy1SYwkMXeM5GwYGdqQZPwwBViGvhkqM7nGyEwgjpM7", "sppk7d8CHGV9SCVDi9ciUVAyGTSLExWRSBAJN4vcFpqWEYbWf9ZNr8D"},
+					Keys:       []types.PubKey{"edpkuNVuqdPhCsrYqkq21qW2hYTSZWMjQQjfyogoPZ2AfqCmonziNh", "p2pk64iwFyjuvy1SYwkMXeM5GwYGdqQZPwwBViGvhkqM7nGyEwgjpM7", "sppk7d8CHGV9SCVDi9ciUVAyGTSLExWRSBAJN4vcFpqWEYbWf9ZNr8D"},
 				},
 			},
 
@@ -133,7 +134,7 @@ func Test_BuildContractSignPayload(t *testing.T) {
 				operationParams: models.ContractOperationRequest{
 					ContractID:    "KT1WKnsxYnYpTfgCZDuJ9mmv7f6c38Aea9wF",
 					Type:          models.CustomPayload,
-					CustomPayload: []byte(`[{"prim":"PUSH","args":[{"prim": "string"},{"string":"Was inserted"}]},{"prim":"FAILWITH"}]`),
+					CustomPayload: `[{"prim":"PUSH","args":[{"prim": "string"},{"string":"Was inserted"}]},{"prim":"FAILWITH"}]`,
 				},
 			},
 
@@ -148,7 +149,7 @@ func Test_BuildContractSignPayload(t *testing.T) {
 				operationParams: models.ContractOperationRequest{
 					ContractID:    "KT1WKnsxYnYpTfgCZDuJ9mmv7f6c38Aea9wF",
 					Type:          models.CustomPayload,
-					CustomPayload: []byte("0x05020000001707430368010000000c57617320696e7365727465640327"),
+					CustomPayload: "0x05020000001707430368010000000c57617320696e7365727465640327",
 				},
 			},
 

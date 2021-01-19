@@ -73,6 +73,14 @@ func Test_EncodeBase58ToPrimBytes(t *testing.T) {
 			expResult: "0103f713b3d4447a11d5de2c190a67a1164f85b1b265a02331e2b24aee6afbacf286",
 			wantErr:   false,
 		},
+		{
+			name: "edSig",
+			args: args{
+				base58: "edsigtwo6iJyKdGMKKFxSqVT6KvhHuJK1whHdZo4rDF5rRhxpYHiZpnpBHtLRs3BEHyfFW3C8cSCQ7Zu55Kr339cN6M8PbeiMEz",
+			},
+			expResult: "b75be147bbbee4c2cb4b50942453d4c7866da234142537ea70fc3859e4db9e27b731e99c5371ab1d77d6683bcff6a480449011bf52481f98096e322975238c0d",
+			wantErr:   false,
+		},
 	}
 
 	for _, test := range testCases {

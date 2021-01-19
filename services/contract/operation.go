@@ -6,6 +6,7 @@ import (
 	"github.com/anchorageoss/tezosprotocol/v2"
 	"math/big"
 	"msig/models"
+	"msig/types"
 )
 
 const (
@@ -41,13 +42,13 @@ func BuildContractSignPayload(networkID string, counter int64, operationParams m
 }
 
 //Network and contract address params
-func buildNetworkMichelsonArgs(networkID string, contractID models.Address) (params *micheline.Prim, err error) {
+func buildNetworkMichelsonArgs(networkID string, contractID types.Address) (params *micheline.Prim, err error) {
 	_, encodedNetworkID, err := tezosprotocol.Base58CheckDecode(networkID)
 	if err != nil {
 		return params, err
 	}
 
-	encodedContractAddress, err := encodeBase58ToPrimBytes(contractID.String())
+	encodedContractAddress, err := contractID.MarshalBinary()
 	if err != nil {
 		return params, err
 	}

@@ -100,6 +100,7 @@ func (api *API) initialize(handlerArr ...negroni.Handler) {
 		{Path: "/{network}/contract/storage/update", Method: http.MethodPost, Func: api.ContractStorageUpdate},
 		{Path: "/{network}/contract/operation", Method: http.MethodPost, Func: api.ContractOperation},
 		{Path: "/{network}/contract/operation/signature", Method: http.MethodPost, Func: api.ContractOperationSignature},
+		{Path: "/{network}/contract/operation/{tx_id}/build", Method: http.MethodGet, Func: api.ContractOperationBuild},
 	})
 
 	api.server = &http.Server{Addr: fmt.Sprintf(":%d", api.cfg.API.ListenOnPort), Handler: api.router}

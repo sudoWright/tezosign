@@ -1,11 +1,11 @@
-package models
+package types
 
 import (
 	"fmt"
 	"github.com/anchorageoss/tezosprotocol/v2"
 )
 
-type Address string
+type Address tezosprotocol.ContractID
 
 const (
 	AddressLength  = 36
@@ -34,4 +34,8 @@ func (a Address) Validate() (err error) {
 
 func (a Address) String() string {
 	return string(a)
+}
+
+func (a Address) MarshalBinary() ([]byte, error) {
+	return tezosprotocol.ContractID(a).MarshalBinary()
 }

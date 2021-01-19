@@ -67,3 +67,18 @@ func (t *Tezos) ChainID(ctx context.Context) (chainID string, err error) {
 
 	return resp.Payload, nil
 }
+
+func (t *Tezos) Storage(ctx context.Context, contractAddress string) (storage string, err error) {
+	params := contracts.NewGetContractStorageParamsWithContext(ctx).WithContract(contractAddress)
+	resp, err := t.client.Contracts.GetContractStorage(params)
+	if err != nil {
+		return storage, err
+	}
+
+	bt, err := json.Marshal(resp.Payload)
+	if err != nil {
+		return storage, err
+	}
+
+	return string(bt), nil
+}

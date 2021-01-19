@@ -3,7 +3,7 @@ package services
 import (
 	"context"
 	"msig/models"
-	contract "msig/repos/constract"
+	"msig/repos/contract"
 )
 
 type (
@@ -18,6 +18,7 @@ type (
 
 	RPCProvider interface {
 		ChainID(ctx context.Context) (chainID string, err error)
+		Storage(ctx context.Context, contractAddress string) (storage string, err error)
 		Script(context.Context, string) (models.BigMap, error)
 		ManagerKey(ctx context.Context, address string) (pubKey string, err error)
 	}

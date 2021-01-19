@@ -15,13 +15,7 @@ import (
 
 func (api *API) ContractStorageInit(w http.ResponseWriter, r *http.Request) {
 	//TODO move to middleware
-	network, ok := mux.Vars(r)["network"]
-	if !ok || network == "" {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "network"))
-		return
-	}
-
-	net, err := ToNetwork(network)
+	net, err := ToNetwork(mux.Vars(r)["network"])
 	if err != nil {
 		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "network"))
 		return
@@ -67,13 +61,7 @@ func (api *API) ContractStorageInit(w http.ResponseWriter, r *http.Request) {
 
 func (api *API) ContractStorageUpdate(w http.ResponseWriter, r *http.Request) {
 	//TODO move to middleware
-	network, ok := mux.Vars(r)["network"]
-	if !ok || network == "" {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "network"))
-		return
-	}
-
-	net, err := ToNetwork(network)
+	net, err := ToNetwork(mux.Vars(r)["network"])
 	if err != nil {
 		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "network"))
 		return
@@ -119,13 +107,7 @@ func (api *API) ContractStorageUpdate(w http.ResponseWriter, r *http.Request) {
 
 func (api *API) ContractOperation(w http.ResponseWriter, r *http.Request) {
 	//TODO move to middleware
-	network, ok := mux.Vars(r)["network"]
-	if !ok || network == "" {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "network"))
-		return
-	}
-
-	net, err := ToNetwork(network)
+	net, err := ToNetwork(mux.Vars(r)["network"])
 	if err != nil {
 		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "network"))
 		return
@@ -158,17 +140,95 @@ func (api *API) ContractOperation(w http.ResponseWriter, r *http.Request) {
 
 	service := services.New(repos.New(db), client, net)
 
-	resp, err := service.BuildContractOperation(req)
+	resp, err := service.BuildContractOperationToSign(req)
 	if err != nil {
 		log.Error("BuildContractInitStorage error: ", zap.Error(err))
 		response.JsonError(w, err)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.Write([]byte(resp))
+	response.Json(w, resp)
 }
 
 func (api *API) ContractOperationSignature(w http.ResponseWriter, r *http.Request) {
-	//Todo implement
+	//TODO move to middleware
+	net, err := ToNetwork(mux.Vars(r)["network"])
+	if err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "network"))
+		return
+	}
+
+	db, err := api.provider.GetDb(net)
+	if err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam))
+		return
+	}
+
+	client, err := api.provider.GetRPCClient(net)
+	if err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam))
+		return
+	}
+
+	var req models.OperationSignature
+	err = json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadRequest))
+		return
+	}
+
+	err = req.Validate()
+	if err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadRequest, err.Error()))
+		return
+	}
+
+	service := services.New(repos.New(db), client, net)
+
+	resp, err := service.SaveContractOperationSignature(req)
+	if err != nil {
+		log.Error("BuildContractInitStorage error: ", zap.Error(err))
+		response.JsonError(w, err)
+		return
+	}
+
+	response.Json(w, resp)
+}
+
+func (api *API) ContractOperationBuild(w http.ResponseWriter, r *http.Request) {
+	//TODO move to middleware
+	net, err := ToNetwork(mux.Vars(r)["network"])
+	if err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "network"))
+		return
+	}
+
+	db, err := api.provider.GetDb(net)
+	if err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam))
+		return
+	}
+
+	client, err := api.provider.GetRPCClient(net)
+	if err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam))
+		return
+	}
+
+	txID, ok := mux.Vars(r)["tx_id"]
+	if !ok || len(txID) == 0 {
+		response.JsonError(w, apperrors.NewWithDesc(apperrors.ErrBadParam, "tx_id"))
+		return
+	}
+
+	service := services.New(repos.New(db), client, net)
+
+	resp, err := service.BuildContractOperation(txID)
+	if err != nil {
+		log.Error("BuildContractInitStorage error: ", zap.Error(err))
+		response.JsonError(w, err)
+		return
+	}
+
+	response.Json(w, resp)
 }

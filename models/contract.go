@@ -1,14 +1,17 @@
 package models
 
-import "fmt"
+import (
+	"fmt"
+	"msig/types"
+)
 
 type ContractStorageRequest struct {
-	Threshold uint      `json:"threshold"`
-	Addresses []Address `json:"addresses"`
+	Threshold uint            `json:"threshold"`
+	Addresses []types.Address `json:"addresses"`
 }
 
 func (r ContractStorageRequest) Validate() (err error) {
-	if r.Threshold == 0 {
+	if r.Threshold <= 0 {
 		return fmt.Errorf("zero threshold")
 	}
 
@@ -27,20 +30,20 @@ func (r ContractStorageRequest) Validate() (err error) {
 }
 
 type ContractOperationRequest struct {
-	ContractID Address    `json:"contract_id"`
-	Type       ActionType `json:"type"`
+	ContractID types.Address `json:"contract_id"`
+	Type       ActionType    `json:"type"`
 
 	Amount uint64 `json:"amount"`
 	//Transfer Delegation
-	To      Address `json:"to"`
-	From    Address `json:"from"`
-	AssetID Address `json:"asset_id"`
+	To      types.Address `json:"to"`
+	From    types.Address `json:"from"`
+	AssetID types.Address `json:"asset_id"`
 	//Custom json michelson payload
-	CustomPayload []byte `json:"custom_payload"`
+	CustomPayload types.Payload `json:"custom_payload"`
 	//Internal params
 	//Update storage
-	Threshold uint     `json:"-"`
-	Keys      []string `json:"-"`
+	Threshold uint           `json:"-"`
+	Keys      []types.PubKey `json:"-"`
 }
 
 func (r ContractOperationRequest) Validate() (err error) {
@@ -54,21 +57,17 @@ func (r ContractOperationRequest) Validate() (err error) {
 		return err
 	}
 
-	//if r.Amount == 0 {
-	//	return fmt.Errorf("amount")
-	//}
-
 	return nil
 }
 
 type OperationSignature struct {
-	ContractID Address `json:"contract_id"`
-	PubKey     string  `json:"pub_key"`
-	Payload    string  `json:"payload"`
-	Signature  string  `json:"signature"`
+	ContractID types.Address   `json:"contract_id"`
+	PubKey     types.PubKey    `json:"pub_key"`
+	Payload    types.Payload   `json:"payload"`
+	Signature  types.Signature `json:"signature"`
 }
 
 func (r OperationSignature) Validate() (err error) {
-
+	//TODO add validation
 	return nil
 }

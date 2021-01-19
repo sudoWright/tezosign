@@ -2,7 +2,6 @@ package contract
 
 import (
 	"blockwatch.cc/tzindex/micheline"
-	"encoding/hex"
 	"fmt"
 	"math/big"
 	"msig/models"
@@ -12,7 +11,7 @@ func buildActionParams(operationParams models.ContractOperationRequest) (actionP
 
 	switch operationParams.Type {
 	case models.Transfer:
-		encodedDestinationAddress, err := encodeBase58ToPrimBytes(operationParams.To.String())
+		encodedDestinationAddress, err := operationParams.To.MarshalBinary()
 		if err != nil {
 			return actionParams, err
 		}
@@ -46,8 +45,7 @@ func buildActionParams(operationParams models.ContractOperationRequest) (actionP
 			}
 			break
 		}
-
-		encodedDestinationAddress, err := encodeBase58ToPrimBytes(operationParams.To.String())
+		encodedDestinationAddress, err := operationParams.To.MarshalBinary()
 		if err != nil {
 			return actionParams, err
 		}
@@ -71,8 +69,7 @@ func buildActionParams(operationParams models.ContractOperationRequest) (actionP
 			return actionParams, err
 		}
 	case models.FATransfer:
-
-		encodedAssetAddress, err := encodeBase58ToPrimBytes(operationParams.AssetID.String())
+		encodedAssetAddress, err := operationParams.AssetID.MarshalBinary()
 		if err != nil {
 			return actionParams, err
 		}
@@ -83,12 +80,12 @@ func buildActionParams(operationParams models.ContractOperationRequest) (actionP
 			from = operationParams.From
 		}
 
-		encodedFromAddress, err := encodeBase58ToPrimBytes(from.String())
+		encodedFromAddress, err := from.MarshalBinary()
 		if err != nil {
 			return actionParams, err
 		}
 
-		encodedDestinationAddress, err := encodeBase58ToPrimBytes(operationParams.To.String())
+		encodedDestinationAddress, err := operationParams.To.MarshalBinary()
 		if err != nil {
 			return actionParams, err
 		}
@@ -144,8 +141,8 @@ func buildActionParams(operationParams models.ContractOperationRequest) (actionP
 		}
 
 		//Hex payload
-		if string(operationParams.CustomPayload[:2]) == "0x" {
-			bt, err := hex.DecodeString(string(operationParams.CustomPayload[2:]))
+		if operationParams.CustomPayload.HasPrefix() {
+			bt, err := operationParams.CustomPayload.MarshalBinary()
 			if err != nil {
 				return actionParams, err
 			}
@@ -159,7 +156,7 @@ func buildActionParams(operationParams models.ContractOperationRequest) (actionP
 
 			err = actionParams.UnmarshalBinary(bt)
 		} else {
-			err = actionParams.UnmarshalJSON(operationParams.CustomPayload)
+			err = actionParams.UnmarshalJSON([]byte(operationParams.CustomPayload.String()))
 		}
 
 	default:
