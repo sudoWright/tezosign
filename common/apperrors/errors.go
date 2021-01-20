@@ -1,6 +1,7 @@
 package apperrors
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 )
@@ -92,6 +93,15 @@ func NewWithDesc(code ErrCode, desc string, value ...string) *Error {
 		e.Value = value[0]
 	}
 	return e
+}
+
+func Unwrap(err error) (error, bool) {
+	unwrapErr := errors.Unwrap(err)
+	if _, ok := unwrapErr.(*Error); !ok {
+		return err, false
+	}
+
+	return unwrapErr, true
 }
 
 // FromError creates a new Error (ErrService) from common golang error

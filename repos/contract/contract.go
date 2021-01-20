@@ -18,11 +18,11 @@ type (
 		GetOrCreateContract(address types.Address) (contract models.Contract, err error)
 		GetContractByID(id uint64) (contract models.Contract, err error)
 		SavePayload(request models.Request) error
+		GetPayloadByHash(id string) (models.Request, bool, error)
+		GetSignaturesByPayloadID(id uint64) ([]models.Signature, error)
+		SavePayloadSignature(signature models.Signature) error
 		GetPayloadSignature(sig types.Signature) (signature models.Signature, isFound bool, err error)
-		SavePayloadSignature(sign models.Signature) error
 		GetSignaturesCount(id uint64) (count int64, err error)
-		GetPayload(id string) (models.Request, bool, error)
-		GetSignaturesByPayloadHash(id uint64) ([]models.Signature, error)
 	}
 )
 
@@ -67,7 +67,7 @@ func (r *Repository) GetSignaturesCount(id uint64) (count int64, err error) {
 	return count, nil
 }
 
-func (r *Repository) GetPayload(id string) (payload models.Request, isFound bool, err error) {
+func (r *Repository) GetPayloadByHash(id string) (payload models.Request, isFound bool, err error) {
 	err = r.db.Model(models.Request{}).
 		Where("req_hash = ?", id).
 		First(&payload).Error
@@ -92,7 +92,7 @@ func (r *Repository) SavePayload(request models.Request) (err error) {
 	return nil
 }
 
-func (r *Repository) GetSignaturesByPayloadHash(id uint64) (signatures []models.Signature, err error) {
+func (r *Repository) GetSignaturesByPayloadID(id uint64) (signatures []models.Signature, err error) {
 	err = r.db.Model(models.Signature{}).
 		Where("req_id = ?", id).
 		Find(&signatures).Error

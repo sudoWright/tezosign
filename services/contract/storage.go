@@ -94,19 +94,19 @@ func NewContractStorageContainer(rawStorage string) (c ContractStorageContainer,
 	//Validate storage params
 	//TODO make errors wrap
 	if storage.OpCode != micheline.D_PAIR && len(storage.Args) != 2 {
-		return c, fmt.Errorf("Wrong storage struct")
+		return c, fmt.Errorf("wrong storage struct")
 	}
 
 	//Counter
 	if storage.Args[0].OpCode != micheline.K_PARAMETER {
-		return c, fmt.Errorf("Wrong counter type")
+		return c, fmt.Errorf("wrong counter type")
 	}
 
 	c.counter = storage.Args[0].Int.Int64()
 
 	//pair(int * list(key)
 	if storage.Args[1].OpCode != micheline.D_PAIR && len(storage.Args[1].Args) != 2 {
-		return c, fmt.Errorf("Wrong storage pair struct")
+		return c, fmt.Errorf("wrong storage pair struct")
 	}
 
 	//Threshold

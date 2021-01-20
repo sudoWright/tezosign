@@ -11,11 +11,9 @@ import (
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/pkg/errors"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
-	"go.uber.org/zap"
 	"golang.org/x/crypto/blake2b"
 	"math/big"
 	"msig/common/apperrors"
-	"msig/common/log"
 	"msig/models"
 	"msig/services/contract"
 	"msig/types"
@@ -100,13 +98,8 @@ func (s *ServiceFacade) BuildContractOperationToSign(req models.ContractOperatio
 		return resp, err
 	}
 
-	//TODO get counter from contract storage
-	rawStorage, err := s.rpcClient.Storage(context.Background(), req.ContractID.String())
-	if err != nil {
-		return resp, err
-	}
-
-	storage, err := contract.NewContractStorageContainer(rawStorage)
+	//Get contact
+	storage, err := s.getContractStorage(req.ContractID.String())
 	if err != nil {
 		return resp, err
 	}
@@ -121,7 +114,7 @@ func (s *ServiceFacade) BuildContractOperationToSign(req models.ContractOperatio
 	operationID := operationID(payload.String())
 	repo := s.repoProvider.GetContract()
 	//Try to found already exists payload
-	_, isFound, err := repo.GetPayload(operationID)
+	_, isFound, err := repo.GetPayloadByHash(operationID)
 	if err != nil {
 		return resp, err
 	}
@@ -156,7 +149,7 @@ func (s *ServiceFacade) BuildContractOperation(txID string) (resp models.Operati
 	//get payload by ID
 	repo := s.repoProvider.GetContract()
 
-	payload, isFound, err := repo.GetPayload(txID)
+	payload, isFound, err := repo.GetPayloadByHash(txID)
 	if err != nil {
 		return resp, err
 	}
@@ -171,19 +164,13 @@ func (s *ServiceFacade) BuildContractOperation(txID string) (resp models.Operati
 	}
 
 	//Get contact
-	rawStorage, err := s.rpcClient.Storage(context.Background(), contr.Address.String())
+	storage, err := s.getContractStorage(contr.Address.String())
 	if err != nil {
 		return resp, err
 	}
 
-	storage, err := contract.NewContractStorageContainer(rawStorage)
-	if err != nil {
-		log.Debug("NewContractStorageContainer error", zap.Error(err))
-		return resp, apperrors.NewWithDesc(apperrors.ErrBadParam, "contract_id")
-	}
-
 	//get signatures by payload ID
-	sigs, err := repo.GetSignaturesByPayloadHash(payload.ID)
+	sigs, err := repo.GetSignaturesByPayloadID(payload.ID)
 	if err != nil {
 		return resp, err
 	}
@@ -207,19 +194,14 @@ func (s *ServiceFacade) BuildContractOperation(txID string) (resp models.Operati
 
 func (s *ServiceFacade) SaveContractOperationSignature(req models.OperationSignature) (resp models.OperationSignatureResp, err error) {
 
-	rawStorage, err := s.rpcClient.Storage(context.Background(), req.ContractID.String())
-	if err != nil {
-		return resp, err
-	}
-
-	storage, err := contract.NewContractStorageContainer(rawStorage)
+	storage, err := s.getContractStorage(req.ContractID.String())
 	if err != nil {
 		return resp, err
 	}
 
 	index, isFound := storage.Contains(req.PubKey)
 	if !isFound {
-		return resp, fmt.Errorf("pubkey not contains in storage")
+		return resp, apperrors.NewWithDesc(apperrors.ErrNotAllowed, "pubkey not contains in storage")
 	}
 
 	//Check sign with pubkey
@@ -242,7 +224,7 @@ func (s *ServiceFacade) SaveContractOperationSignature(req models.OperationSigna
 
 	repo := s.repoProvider.GetContract()
 
-	payload, isFound, err := repo.GetPayload(payloadID)
+	payload, isFound, err := repo.GetPayloadByHash(payloadID)
 	if err != nil {
 		return resp, err
 	}
@@ -277,6 +259,20 @@ func (s *ServiceFacade) SaveContractOperationSignature(req models.OperationSigna
 		SigCount:  count,
 		Threshold: storage.Threshold(),
 	}, nil
+}
+
+func (s *ServiceFacade) getContractStorage(contractID string) (storage contract.ContractStorageContainer, err error) {
+	rawStorage, err := s.rpcClient.Storage(context.Background(), contractID)
+	if err != nil {
+		return storage, err
+	}
+
+	storage, err = contract.NewContractStorageContainer(rawStorage)
+	if err != nil {
+		return storage, fmt.Errorf("%v; %w", err, apperrors.NewWithDesc(apperrors.ErrBadParam, "wrong contract type"))
+	}
+
+	return storage, err
 }
 
 func operationID(payload string) string {

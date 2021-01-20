@@ -58,7 +58,7 @@ func Test_BuildFullTxPayload(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
-			got, gotErr := BuildFullTxPayload(test.args.payload, test.args.signatures)
+			got, _, gotErr := BuildFullTxPayload(test.args.payload, test.args.signatures)
 			if test.wantErr && gotErr == nil {
 				t.Errorf("wantErr: %t | results %s == %s | err: %v", test.wantErr, got, test.expResult, gotErr)
 			}

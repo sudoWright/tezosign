@@ -50,7 +50,12 @@ func (api *API) ContractStorageInit(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := service.BuildContractInitStorage(req)
 	if err != nil {
-		log.Error("BuildContractInitStorage error: ", zap.Error(err))
+		//Unwrap apperror
+		err, IsAppErr := apperrors.Unwrap(err)
+		if !IsAppErr {
+			log.Error("BuildContractInitStorage error: ", zap.Error(err))
+		}
+
 		response.JsonError(w, err)
 		return
 	}
@@ -96,7 +101,12 @@ func (api *API) ContractStorageUpdate(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := service.BuildContractStorageUpdateOperation(req)
 	if err != nil {
-		log.Error("ContractStorageUpdate error: ", zap.Error(err))
+		//Unwrap apperror
+		err, IsAppErr := apperrors.Unwrap(err)
+		if !IsAppErr {
+			log.Error("ContractStorageUpdate error: ", zap.Error(err))
+		}
+
 		response.JsonError(w, err)
 		return
 	}
@@ -141,7 +151,12 @@ func (api *API) ContractOperation(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := service.BuildContractOperationToSign(req)
 	if err != nil {
-		log.Error("BuildContractOperationToSign error: ", zap.Error(err))
+		//Unwrap apperror
+		err, IsAppErr := apperrors.Unwrap(err)
+		if !IsAppErr {
+			log.Error("BuildContractOperationToSign error: ", zap.Error(err))
+		}
+
 		response.JsonError(w, err)
 		return
 	}
@@ -186,7 +201,12 @@ func (api *API) ContractOperationSignature(w http.ResponseWriter, r *http.Reques
 
 	resp, err := service.SaveContractOperationSignature(req)
 	if err != nil {
-		log.Error("ContractOperationSignature error: ", zap.Error(err))
+		//Unwrap apperror
+		err, IsAppErr := apperrors.Unwrap(err)
+		if !IsAppErr {
+			log.Error("ContractOperationSignature error: ", zap.Error(err))
+		}
+
 		response.JsonError(w, err)
 		return
 	}
@@ -224,7 +244,12 @@ func (api *API) ContractOperationBuild(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := service.BuildContractOperation(txID)
 	if err != nil {
-		log.Error("ContractOperationBuild error: ", zap.Error(err))
+		//Unwrap apperror
+		err, IsAppErr := apperrors.Unwrap(err)
+		if !IsAppErr {
+			log.Error("ContractOperationBuild error: ", zap.Error(err))
+		}
+
 		response.JsonError(w, err)
 		return
 	}
