@@ -10,10 +10,11 @@ import (
 )
 
 const (
-	TextWatermark = 0x05
+	TextWatermark  = 0x05
+	MainEntrypoint = "%main_parameter"
 )
 
-func BuildContractSignPayload(networkID string, counter int64, operationParams models.ContractOperationRequest) (resp string, err error) {
+func BuildContractSignPayload(networkID string, counter int64, operationParams models.ContractOperationRequest) (resp types.Payload, err error) {
 
 	networkArgs, err := buildNetworkMichelsonArgs(networkID, operationParams.ContractID)
 	if err != nil {
@@ -38,7 +39,7 @@ func BuildContractSignPayload(networkID string, counter int64, operationParams m
 
 	bt = append([]byte{TextWatermark}, bt...)
 
-	return hex.EncodeToString(bt), nil
+	return types.Payload(hex.EncodeToString(bt)), nil
 }
 
 //Network and contract address params

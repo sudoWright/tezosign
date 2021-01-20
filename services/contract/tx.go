@@ -6,11 +6,11 @@ import (
 	"msig/types"
 )
 
-func BuildFullTxPayload(payload types.Payload, signatures []types.Signature) (resp []byte, err error) {
+func BuildFullTxPayload(payload types.Payload, signatures []types.Signature) (resp []byte, entrypoint string, err error) {
 
 	rawPayload, err := payload.MarshalBinary()
 	if err != nil {
-		return resp, err
+		return resp, entrypoint, err
 	}
 
 	if rawPayload[0] == TextWatermark {
@@ -20,11 +20,11 @@ func BuildFullTxPayload(payload types.Payload, signatures []types.Signature) (re
 	michelsonPayload := &micheline.Prim{}
 	err = michelsonPayload.UnmarshalBinary(rawPayload)
 	if err != nil {
-		return resp, err
+		return resp, entrypoint, err
 	}
 
 	if michelsonPayload.OpCode != micheline.D_PAIR || len(michelsonPayload.Args) != 2 {
-		return nil, fmt.Errorf("Wrong michelson payload")
+		return nil, entrypoint, fmt.Errorf("Wrong michelson payload")
 	}
 
 	signaturesParam := make([]*micheline.Prim, len(signatures))
@@ -40,7 +40,7 @@ func BuildFullTxPayload(payload types.Payload, signatures []types.Signature) (re
 
 		marshaledSig, err = signatures[i].MarshalBinary()
 		if err != nil {
-			return resp, err
+			return resp, entrypoint, err
 		}
 		signaturesParam[i] = &micheline.Prim{
 			Type:   micheline.PrimUnary,
@@ -72,8 +72,8 @@ func BuildFullTxPayload(payload types.Payload, signatures []types.Signature) (re
 
 	resp, err = actionParams.MarshalJSON()
 	if err != nil {
-		return resp, err
+		return resp, entrypoint, err
 	}
 
-	return resp, nil
+	return resp, MainEntrypoint, nil
 }

@@ -5,6 +5,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/ed25519"
 	"crypto/elliptic"
+	"fmt"
 	"github.com/anchorageoss/tezosprotocol/v2"
 	"github.com/pkg/errors"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
@@ -13,7 +14,18 @@ import (
 type PubKey tezosprotocol.PublicKey
 
 func (a PubKey) Validate() (err error) {
-	//Todo add validation
+	b58prefix, _, err := tezosprotocol.Base58CheckDecode(string(a))
+	if err != nil {
+		return fmt.Errorf("wrong pubKey format")
+	}
+
+	switch b58prefix {
+	case tezosprotocol.PrefixEd25519PublicKey, tezosprotocol.PrefixSecp256k1PublicKey, tezosprotocol.PrefixP256PublicKey:
+		return nil
+	default:
+		return fmt.Errorf("wrong pubKey prefix")
+	}
+
 	return nil
 }
 

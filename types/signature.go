@@ -1,11 +1,25 @@
 package types
 
-import "github.com/anchorageoss/tezosprotocol/v2"
+import (
+	"fmt"
+	"github.com/anchorageoss/tezosprotocol/v2"
+)
 
 type Signature tezosprotocol.Signature
 
 func (s Signature) Validate() (err error) {
-	//Todo add validation
+	b58prefix, _, err := tezosprotocol.Base58CheckDecode(string(s))
+	if err != nil {
+		return fmt.Errorf("wrong signature format")
+	}
+
+	switch b58prefix {
+	case tezosprotocol.PrefixEd25519Signature, tezosprotocol.PrefixSecp256k1Signature, tezosprotocol.PrefixP256Signature, tezosprotocol.PrefixGenericSignature:
+		return nil
+	default:
+		return fmt.Errorf("wrong signature prefix")
+	}
+
 	return nil
 }
 

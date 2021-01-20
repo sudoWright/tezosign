@@ -96,13 +96,12 @@ func (api *API) ContractStorageUpdate(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := service.BuildContractStorageUpdateOperation(req)
 	if err != nil {
-		log.Error("BuildContractInitStorage error: ", zap.Error(err))
+		log.Error("ContractStorageUpdate error: ", zap.Error(err))
 		response.JsonError(w, err)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.Write([]byte(resp))
+	response.Json(w, resp)
 }
 
 func (api *API) ContractOperation(w http.ResponseWriter, r *http.Request) {
@@ -142,7 +141,7 @@ func (api *API) ContractOperation(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := service.BuildContractOperationToSign(req)
 	if err != nil {
-		log.Error("BuildContractInitStorage error: ", zap.Error(err))
+		log.Error("BuildContractOperationToSign error: ", zap.Error(err))
 		response.JsonError(w, err)
 		return
 	}
@@ -187,7 +186,7 @@ func (api *API) ContractOperationSignature(w http.ResponseWriter, r *http.Reques
 
 	resp, err := service.SaveContractOperationSignature(req)
 	if err != nil {
-		log.Error("BuildContractInitStorage error: ", zap.Error(err))
+		log.Error("ContractOperationSignature error: ", zap.Error(err))
 		response.JsonError(w, err)
 		return
 	}
@@ -225,7 +224,7 @@ func (api *API) ContractOperationBuild(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := service.BuildContractOperation(txID)
 	if err != nil {
-		log.Error("BuildContractInitStorage error: ", zap.Error(err))
+		log.Error("ContractOperationBuild error: ", zap.Error(err))
 		response.JsonError(w, err)
 		return
 	}

@@ -39,7 +39,7 @@ func New(params types.DBParams) (*gorm.DB, error) {
 
 func newConn(params types.DBParams) (*gorm.DB, error) {
 
-	sqlDB, err := sql.Open("postgres", fmt.Sprintf("postgresql://%s:%s@%s:%d/%s?sslmode=disable", params.User, params.Password, params.Host, params.Port, params.Database))
+	sqlDB, err := sql.Open("postgres", fmt.Sprintf("postgresql://%s:%s@%s:%d/%s?sslmode=disable&search_path=%s", params.User, params.Password, params.Host, params.Port, params.Database, params.Schema))
 	if err != nil {
 		return nil, err
 	}
@@ -52,18 +52,12 @@ func newConn(params types.DBParams) (*gorm.DB, error) {
 	db, err := gorm.Open(postgres.New(postgres.Config{
 		Conn:                 sqlDB,
 		PreferSimpleProtocol: true, // disables implicit prepared statement usage
-	}), &gorm.Config{})
+	}), &gorm.Config{
+		SkipDefaultTransaction: true,
+	})
 	if err != nil {
 		return nil, err
 	}
-
-	//gorm.DefaultTableNameHandler = func(db *gorm.DB, defaultTableName string) string {
-	//	if strings.Contains(defaultTableName, "views") {
-	//		defaultTableName = defaultTableName[:len(defaultTableName)-1]
-	//	}
-	//	//TODO check connect to db
-	//	return defaultTableName
-	//}
 
 	return db, nil
 }

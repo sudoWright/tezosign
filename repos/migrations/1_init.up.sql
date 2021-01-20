@@ -7,7 +7,7 @@ create table msig.contracts
 );
 
 create unique index contracts_address_uindex
-	on msig.contracts (address);
+	on msig.contracts (ctr_address);
 
 create table msig.requests
 (
@@ -18,7 +18,7 @@ create table msig.requests
 		constraint requests_contracts_id_fk
 			references msig.contracts,
     req_hash varchar(32) not null,
-	req_status varchar default 'wait',
+	req_status varchar default 'wait' not null,
 	req_counter int not null,
 	req_data text not null
 );

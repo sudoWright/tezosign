@@ -68,6 +68,26 @@ type OperationSignature struct {
 }
 
 func (r OperationSignature) Validate() (err error) {
-	//TODO add validation
+
+	err = r.Payload.Validate()
+	if err != nil {
+		return err
+	}
+
+	err = r.PubKey.Validate()
+	if err != nil {
+		return err
+	}
+
+	err = r.Signature.Validate()
+	if err != nil {
+		return err
+	}
+
+	err = r.ContractID.Validate()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
