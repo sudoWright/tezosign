@@ -11,7 +11,7 @@ import (
 
 const (
 	TextWatermark  = 0x05
-	MainEntrypoint = "%main_parameter"
+	MainEntrypoint = "main_parameter"
 )
 
 func BuildContractSignPayload(networkID string, counter int64, operationParams models.ContractOperationRequest) (resp types.Payload, err error) {
