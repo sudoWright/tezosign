@@ -3,7 +3,9 @@ package services
 import (
 	"context"
 	"msig/models"
+	"msig/repos/auth"
 	"msig/repos/contract"
+	"msig/types"
 )
 
 type (
@@ -14,6 +16,7 @@ type (
 	Provider interface {
 		Health() error
 		GetContract() contract.Repo
+		GetAuth() auth.Repo
 	}
 
 	RPCProvider interface {
@@ -23,17 +26,26 @@ type (
 		ManagerKey(ctx context.Context, address string) (pubKey string, err error)
 	}
 
+	AuthProvider interface {
+		GenerateAuthTokens(address types.Address) (string, string, error)
+
+		EncodeSessionCookie(data map[string]string) (string, error)
+		DecodeSessionCookie(cookie string) (map[string]string, error)
+	}
+
 	ServiceFacade struct {
 		repoProvider Provider
 		rpcClient    RPCProvider
+		auth         AuthProvider
 		net          models.Network
 	}
 )
 
-func New(rp Provider, rpcClient RPCProvider, net models.Network) *ServiceFacade {
+func New(rp Provider, rpcClient RPCProvider, auth AuthProvider, net models.Network) *ServiceFacade {
 
 	return &ServiceFacade{
 		repoProvider: rp,
+		auth:         auth,
 		rpcClient:    rpcClient,
 		net:          net,
 	}

@@ -46,7 +46,7 @@ func (api *API) ContractStorageInit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	service := services.New(repos.New(db), client, net)
+	service := services.New(repos.New(db), client, nil, net)
 
 	resp, err := service.BuildContractInitStorage(req)
 	if err != nil {
@@ -97,7 +97,7 @@ func (api *API) ContractStorageUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	service := services.New(repos.New(db), client, net)
+	service := services.New(repos.New(db), client, nil, net)
 
 	resp, err := service.BuildContractStorageUpdateOperation(req)
 	if err != nil {
@@ -147,7 +147,7 @@ func (api *API) ContractOperation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	service := services.New(repos.New(db), client, net)
+	service := services.New(repos.New(db), client, nil, net)
 
 	resp, err := service.BuildContractOperationToSign(req)
 	if err != nil {
@@ -197,7 +197,7 @@ func (api *API) ContractOperationSignature(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	service := services.New(repos.New(db), client, net)
+	service := services.New(repos.New(db), client, nil, net)
 
 	resp, err := service.SaveContractOperationSignature(req)
 	if err != nil {
@@ -240,7 +240,7 @@ func (api *API) ContractOperationBuild(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	service := services.New(repos.New(db), client, net)
+	service := services.New(repos.New(db), client, nil, net)
 
 	resp, err := service.BuildContractOperation(txID)
 	if err != nil {

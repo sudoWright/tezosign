@@ -23,8 +23,6 @@ const (
 	ErrBadSignature        ErrCode = "ERR_BAD_SIGNATURE"
 	ErrBadAuthCookie       ErrCode = "ERR_BAD_AUTH_COOKIE"
 	ErrNotEnoughPermission ErrCode = "ERR_NOT_ENOUGH_PERMISSION"
-
-	ErrUserAlreadyVerified ErrCode = "ERR_ALREADY_VERYFIED"
 )
 
 type (

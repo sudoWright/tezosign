@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
+	"msig/repos/auth"
 	"msig/repos/contract"
 )
 
@@ -44,6 +45,10 @@ func (u *Provider) Health() (err error) {
 
 func (u *Provider) GetContract() contract.Repo {
 	return contract.New(u.getDB())
+}
+
+func (u *Provider) GetAuth() auth.Repo {
+	return auth.New(u.getDB())
 }
 
 func (u *Provider) Start(ctx context.Context) {

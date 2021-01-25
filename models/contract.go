@@ -61,25 +61,13 @@ func (r ContractOperationRequest) Validate() (err error) {
 }
 
 type OperationSignature struct {
-	ContractID types.Address   `json:"contract_id"`
-	PubKey     types.PubKey    `json:"pub_key"`
-	Payload    types.Payload   `json:"payload"`
-	Signature  types.Signature `json:"signature"`
+	ContractID types.Address `json:"contract_id"`
+	SignatureReq
 }
 
 func (r OperationSignature) Validate() (err error) {
 
-	err = r.Payload.Validate()
-	if err != nil {
-		return err
-	}
-
-	err = r.PubKey.Validate()
-	if err != nil {
-		return err
-	}
-
-	err = r.Signature.Validate()
+	err = r.SignatureReq.Validate()
 	if err != nil {
 		return err
 	}

@@ -12,6 +12,7 @@ import (
 	"msig/common/log"
 	"msig/conf"
 	"msig/models"
+	"msig/services/auth"
 	"msig/services/rpc_client"
 	"net/http"
 	"time"
@@ -43,6 +44,7 @@ type (
 type NetworkContextProvider interface {
 	GetDb(models.Network) (*gorm.DB, error)
 	GetRPCClient(net models.Network) (*rpc_client.Tezos, error)
+	GetAuthProvider(net models.Network) (*auth.Auth, error)
 }
 
 func NewAPI(cfg conf.Config, provider NetworkContextProvider) *API {
@@ -101,6 +103,19 @@ func (api *API) initialize(handlerArr ...negroni.Handler) {
 		{Path: "/{network}/contract/operation", Method: http.MethodPost, Func: api.ContractOperation},
 		{Path: "/{network}/contract/operation/signature", Method: http.MethodPost, Func: api.ContractOperationSignature},
 		{Path: "/{network}/contract/operation/{tx_id}/build", Method: http.MethodGet, Func: api.ContractOperationBuild},
+
+		{Path: "/{network}/auth/request", Method: http.MethodPost, Func: api.AuthRequest},
+		{Path: "/{network}/auth", Method: http.MethodPost, Func: api.Auth},
+		{Path: "/{network}/auth/refresh", Method: http.MethodPost, Func: api.RefreshAuth},
+	})
+
+	mw := []negroni.HandlerFunc{
+		api.RequireJWT,
+	}
+
+	//Todo remove after tests
+	HandleActions(api.router, wrapper, actionsAPIPrefix, []*Route{
+		{Path: "/{network}/underauth", Method: http.MethodGet, Func: api.UnderAuthRequest, Middleware: mw},
 	})
 
 	api.server = &http.Server{Addr: fmt.Sprintf(":%d", api.cfg.API.ListenOnPort), Handler: api.router}

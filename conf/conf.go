@@ -23,12 +23,16 @@ type (
 	Network struct {
 		Name    models.Network
 		Params  types.DBParams
+		AuthKey string
 		NodeRpc client.TransportConfig
 	}
 )
 
 const (
-	Service = "msig"
+	Service         = "msig"
+	TtlRefreshToken = 3 * 60 * 60 // 3 hours in seconds
+	TtlJWT          = 1 * 60 * 60 // 1 hour in seconds
+	TtlCookie       = 3 * 60 * 60 // in seconds
 )
 
 func NewFromFile(cfgFile *string) (cfg Config, err error) {
