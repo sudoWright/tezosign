@@ -2,10 +2,12 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gorilla/mux"
 	"log"
 	"msig/api/response"
 	"msig/common/apperrors"
+	"msig/conf"
 	"msig/models"
 	"msig/repos"
 	"msig/services"
@@ -108,16 +110,16 @@ func (api *API) Auth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//cookie := &http.Cookie{
-	//	Name:     "session",
-	//	Value:    "ar.EncodedCookie",
-	//	Path:     "/",
-	//	MaxAge:   conf.TtlCookie,
-	//	Secure:   true, //api.config.IsProtocolHttps,
-	//	HttpOnly: true,
-	//}
-	//
-	//http.SetCookie(w, cookie)
+	cookie := &http.Cookie{
+		Name:     getCookieName(net),
+		Value:    resp.EncodedCookie,
+		Path:     "/",
+		MaxAge:   conf.TtlCookie,
+		Secure:   api.cfg.API.IsProtocolHttps,
+		HttpOnly: true,
+	}
+
+	http.SetCookie(w, cookie)
 
 	response.Json(w, resp)
 }
@@ -164,16 +166,102 @@ func (api *API) RefreshAuth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//cookie := &http.Cookie{
-	//	Name:     "session",
-	//	Value:    ar.EncodedCookie,
-	//	Path:     "/",
-	//	MaxAge:   conf.TtlCookie,
-	//	Secure:   this.config.IsProtocolHttps,
-	//	HttpOnly: true,
-	//}
-	//
-	//http.SetCookie(w, cookie)
+	cookie := &http.Cookie{
+		Name:     getCookieName(net),
+		Value:    resp.EncodedCookie,
+		Path:     "/",
+		MaxAge:   conf.TtlCookie,
+		Secure:   api.cfg.API.IsProtocolHttps,
+		HttpOnly: true,
+	}
+
+	http.SetCookie(w, cookie)
 
 	response.Json(w, resp)
+}
+
+func (api *API) RestoreAuth(w http.ResponseWriter, r *http.Request) {
+	net, err := ToNetwork(mux.Vars(r)["network"])
+	if err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "network"))
+		return
+	}
+
+	cookie, err := r.Cookie(getCookieName(net))
+	if err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadAuth))
+		return
+	}
+
+	//TODO move to service
+	auth, err := api.provider.GetAuthProvider(net)
+	if err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam))
+		return
+	}
+
+	tokens, err := auth.DecodeSessionCookie(cookie.Value)
+	if err != nil {
+		response.JsonError(w, err)
+		return
+	}
+
+	response.Json(w, map[string]interface{}{
+		"tokens": tokens,
+	})
+}
+
+func (api *API) Logout(w http.ResponseWriter, r *http.Request) {
+	net, err := ToNetwork(mux.Vars(r)["network"])
+	if err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "network"))
+		return
+	}
+
+	cookie, err := r.Cookie(getCookieName(net))
+	if err != nil || cookie.Value == "" {
+		response.Json(w, map[string]interface{}{"message": "success"})
+		return
+	}
+
+	auth, err := api.provider.GetAuthProvider(net)
+	if err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam))
+		return
+	}
+
+	db, err := api.provider.GetDb(net)
+	if err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam))
+		return
+	}
+
+	defer api.clearCookie(net, w)
+
+	service := services.New(repos.New(db), nil, auth, net)
+
+	err = service.Logout(cookie.Value)
+	if err != nil {
+		response.JsonError(w, err)
+		return
+	}
+
+	response.Json(w, map[string]interface{}{"message": "success"})
+}
+
+func getCookieName(net models.Network) string {
+	return fmt.Sprintf("%s_%s", "session", string(net))
+}
+
+func (api *API) clearCookie(network models.Network, w http.ResponseWriter) {
+	clearCookie := &http.Cookie{
+		Name:     getCookieName(network),
+		Value:    "{}",
+		Path:     "/",
+		MaxAge:   conf.TtlCookie,
+		Secure:   api.cfg.API.IsProtocolHttps,
+		HttpOnly: true,
+	}
+
+	http.SetCookie(w, clearCookie)
 }

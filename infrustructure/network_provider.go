@@ -34,7 +34,7 @@ func New(configs []conf.Network) (*Provider, error) {
 
 		rpcClient := rpc_client.New(configs[i].NodeRpc, configs[i].Name, configs[i].Name != models.NetworkMain)
 
-		authProvider, err := auth.NewAuthProvider(configs[i].AuthKey, configs[i].Name)
+		authProvider, err := auth.NewAuthProvider(configs[i].Auth, configs[i].Name)
 		if err != nil {
 			return nil, err
 		}

@@ -132,6 +132,37 @@ func (s *ServiceFacade) RefreshAuthSession(oldRefreshToken string) (resp AuthRes
 	return resp, nil
 }
 
+func (s *ServiceFacade) Logout(value string) (err error) {
+
+	tokens, err := s.auth.DecodeSessionCookie(value)
+	if err != nil {
+		return nil
+	}
+
+	refreshToken, ok := tokens["refresh_token"]
+	if !ok || refreshToken == "" {
+		return nil
+	}
+
+	authRepo := s.repoProvider.GetAuth()
+
+	token, isFound, err := authRepo.GetAuthToken(refreshToken)
+	if err != nil {
+		return err
+	}
+
+	if !isFound {
+		return nil
+	}
+
+	err = authRepo.MarkAsUsedAuthToken(token.ID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (s *ServiceFacade) generateAuthData(userAddress types.Address) (accessToken string, refreshToken string, encodedCookie string, err error) {
 	accessToken, refreshToken, err = s.auth.GenerateAuthTokens(userAddress)
 	if err != nil {
@@ -149,16 +180,15 @@ func (s *ServiceFacade) generateAuthData(userAddress types.Address) (accessToken
 		return "", "", "", err
 	}
 
-	//Temp disabled
-	//tokens := map[string]string{
-	//	"access_token":  accessToken,
-	//	"refresh_token": refreshToken,
-	//}
+	tokens := map[string]string{
+		"access_token":  accessToken,
+		"refresh_token": refreshToken,
+	}
 
-	//encodedCookie, err := s.auth.EncodeSessionCookie(tokens)
-	//if err != nil {
-	//	return "", "", "", err
-	//}
+	encodedCookie, err = s.auth.EncodeSessionCookie(tokens)
+	if err != nil {
+		return "", "", "", err
+	}
 
 	return accessToken, refreshToken, encodedCookie, nil
 }

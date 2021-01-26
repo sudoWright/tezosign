@@ -107,6 +107,8 @@ func (api *API) initialize(handlerArr ...negroni.Handler) {
 		{Path: "/{network}/auth/request", Method: http.MethodPost, Func: api.AuthRequest},
 		{Path: "/{network}/auth", Method: http.MethodPost, Func: api.Auth},
 		{Path: "/{network}/auth/refresh", Method: http.MethodPost, Func: api.RefreshAuth},
+		{Path: "/{network}/auth/restore", Method: http.MethodGet, Func: api.RestoreAuth},
+		{Path: "/{network}/logout", Method: http.MethodGet, Func: api.Logout},
 	})
 
 	mw := []negroni.HandlerFunc{

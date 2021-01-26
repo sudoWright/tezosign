@@ -18,12 +18,19 @@ type (
 	API struct {
 		ListenOnPort       uint64
 		CORSAllowedOrigins []string
+		IsProtocolHttps    bool
+	}
+
+	Auth struct {
+		AuthKey         string
+		SessionHashKey  string
+		SessionBlockKey string
 	}
 
 	Network struct {
 		Name    models.Network
 		Params  types.DBParams
-		AuthKey string
+		Auth    Auth
 		NodeRpc client.TransportConfig
 	}
 )

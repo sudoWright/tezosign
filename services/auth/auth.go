@@ -2,7 +2,8 @@ package auth
 
 import (
 	"crypto/ecdsa"
-	"encoding/base64"
+	"crypto/x509"
+	"encoding/hex"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/securecookie"
@@ -29,30 +30,43 @@ const (
 	networkHeader       = "network"
 )
 
-func NewAuthProvider(privateKey string, network models.Network) (*Auth, error) {
-	pem, err := base64.StdEncoding.DecodeString(privateKey)
+func NewAuthProvider(authConf conf.Auth, network models.Network) (*Auth, error) {
+
+	bt, err := hex.DecodeString(authConf.AuthKey)
 	if err != nil {
 		return nil, err
 	}
 
-	privKey, err := jwt.ParseECPrivateKeyFromPEM(pem)
+	privKey, err := x509.ParseECPrivateKey(bt)
 	if err != nil {
 		return nil, err
 	}
-	//ecdsa.PublicKey{privKey}
-	//hex.EncodeToString(privateKey[:])
 
-	//TODO init securecookie
-	return &Auth{privateKey: privKey, pubKey: &privKey.PublicKey, network: network}, nil
+	// Hash keys should be at least 32 bytes long
+	hashKey, err := hex.DecodeString(authConf.SessionHashKey)
+	if err != nil {
+		return nil, fmt.Errorf("Can not decode hash key: %s", err.Error())
+	}
+
+	// Block keys should be 16 bytes (AES-128) or 32 bytes (AES-256) long.
+	// Shorter keys may weaken the encryption used.
+	blockKey, err := hex.DecodeString(authConf.SessionBlockKey)
+	if err != nil {
+		return nil, fmt.Errorf("Can not decode hash key: %s", err.Error())
+	}
+
+	sc := securecookie.New(hashKey, blockKey)
+
+	return &Auth{privateKey: privKey, pubKey: &privKey.PublicKey, secureCookie: sc, network: network}, nil
 }
 
-func (a *Auth) GenerateAuthTokens(address types.Address) (string, string, error) {
-	accessToken, err := a.generateAccessToken(address)
+func (a *Auth) GenerateAuthTokens(address types.Address) (accessToken, refreshToken string, err error) {
+	accessToken, err = a.generateAccessToken(address)
 	if err != nil {
 		return "", "", err
 	}
 
-	refreshToken, err := a.generateRefreshToken(address)
+	refreshToken, err = a.generateRefreshToken(address)
 	if err != nil {
 		return "", "", err
 	}
@@ -86,8 +100,8 @@ func (a *Auth) generateRefreshToken(address types.Address) (token string, err er
 	return uuid.NewV4().String(), nil
 }
 
-func (a *Auth) EncodeSessionCookie(data map[string]string) (string, error) {
-	encodedCookie, err := a.secureCookie.Encode("session", data)
+func (a *Auth) EncodeSessionCookie(data map[string]string) (encodedCookie string, err error) {
+	encodedCookie, err = a.secureCookie.Encode("session", data)
 	if err != nil {
 		return "", err
 	}
@@ -100,9 +114,8 @@ func (a *Auth) DecodeSessionCookie(cookie string) (map[string]string, error) {
 		return nil, apperrors.New(apperrors.ErrBadAuth)
 	}
 
-	value := make(map[string]string)
+	value := map[string]string{}
 	err := a.secureCookie.Decode("session", cookie, &value)
-
 	if err != nil {
 		return nil, apperrors.New(apperrors.ErrBadAuth)
 	}
