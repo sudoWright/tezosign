@@ -41,6 +41,25 @@ paths:
           description: Internal error
       tags:
         - Contracts
+  /chains/main/blocks/head/context/contracts/{contract}/balance:
+    get:
+      operationId: getContractBalance
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: contract
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Endpoint for contract balance
+          schema:
+            type: string
+        '500':
+          description: Internal error
+      tags:
+        - Contracts
   /chains/main/blocks/head/context/contracts/{contract}/manager_key:
     get:
       operationId: getContractManagerKey

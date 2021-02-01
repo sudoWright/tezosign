@@ -24,6 +24,7 @@ type (
 		Storage(ctx context.Context, contractAddress string) (storage string, err error)
 		Script(context.Context, string) (models.BigMap, error)
 		ManagerKey(ctx context.Context, address string) (pubKey string, err error)
+		Balance(ctx context.Context, address string) (balance int64, err error)
 	}
 
 	AuthProvider interface {

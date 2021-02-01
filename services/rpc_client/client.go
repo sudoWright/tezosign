@@ -7,6 +7,7 @@ import (
 	"msig/services/rpc_client/client"
 	"msig/services/rpc_client/client/chains"
 	"msig/services/rpc_client/client/contracts"
+	"strconv"
 )
 
 const headBlock = "head"
@@ -81,4 +82,19 @@ func (t *Tezos) Storage(ctx context.Context, contractAddress string) (storage st
 	}
 
 	return string(bt), nil
+}
+
+func (t *Tezos) Balance(ctx context.Context, address string) (balance int64, err error) {
+	params := contracts.NewGetContractBalanceParamsWithContext(ctx).WithContract(address)
+	resp, err := t.client.Contracts.GetContractBalance(params)
+	if err != nil {
+		return balance, err
+	}
+
+	balance, err = strconv.ParseInt(resp.Payload, 10, 64)
+	if err != nil {
+		return balance, err
+	}
+
+	return balance, nil
 }

@@ -115,8 +115,14 @@ func (s *ServiceFacade) ContractInfo(contractID types.Address) (resp models.Cont
 		}
 	}
 
+	balance, err := s.rpcClient.Balance(context.Background(), contractID.String())
+	if err != nil {
+		return resp, err
+	}
+
 	return models.ContractInfo{
 		Address:   contractID,
+		Balance:   balance,
 		Threshold: storage.Threshold(),
 		Counter:   storage.Counter(),
 		Owners:    owners,
