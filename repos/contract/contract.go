@@ -1,6 +1,7 @@
 package contract
 
 import (
+	"database/sql"
 	"errors"
 	"gorm.io/gorm"
 	"msig/models"
@@ -17,7 +18,7 @@ type (
 	Repo interface {
 		GetOrCreateContract(address types.Address) (contract models.Contract, err error)
 		GetContractByID(id uint64) (contract models.Contract, err error)
-		GetMaxContractPendingNone(contractID uint64) (int64, error)
+		GetMaxContractPendingNone(contractID uint64) (sql.NullInt64, error)
 		SavePayload(request models.Request) error
 		GetPayloadByHash(id string) (models.Request, bool, error)
 		GetPayloadsReportByContractID(id uint64) ([]models.RequestReport, error)
@@ -101,16 +102,16 @@ func (r *Repository) GetContractByID(id uint64) (contract models.Contract, err e
 	return contract, nil
 }
 
-func (r *Repository) GetMaxContractPendingNone(contractID uint64) (max int64, err error) {
+func (r *Repository) GetMaxContractPendingNone(contractID uint64) (max sql.NullInt64, err error) {
 	m := struct {
-		M int64
+		M sql.NullInt64
 	}{}
 
 	err = r.db.Select("max(req_counter) as m").Table("requests").
 		Where("ctr_id = ?", contractID).
 		Take(&m).Error
 	if err != nil {
-		return 0, err
+		return max, err
 	}
 
 	return m.M, nil

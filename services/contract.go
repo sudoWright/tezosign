@@ -155,9 +155,10 @@ func (s *ServiceFacade) ContractOperation(req models.ContractOperationRequest) (
 		return resp, err
 	}
 
-	if pendingNonce >= counter {
+	//Increment counter only if pending nonce exist
+	if pendingNonce.Valid && pendingNonce.Int64 >= counter {
 		//Increment counter for next operation
-		counter = pendingNonce + 1
+		counter = pendingNonce.Int64 + 1
 	}
 
 	//TODO change format

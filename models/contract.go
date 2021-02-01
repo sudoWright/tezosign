@@ -68,19 +68,51 @@ type ContractOperationRequest struct {
 
 func (r ContractOperationRequest) Validate() (err error) {
 
-	//TODO refactor
-	err = r.To.Validate()
-	//Empty delegation
-	if r.Type == Delegation && r.To == "" {
-		err = nil
-	}
+	err = r.ContractID.Validate()
 	if err != nil {
 		return err
 	}
 
-	err = r.ContractID.Validate()
-	if err != nil {
-		return err
+	switch r.Type {
+	case Delegation:
+		//Delegation destination can be empty
+		if r.To.String() != "" {
+			err = r.To.Validate()
+		}
+		if err != nil {
+			return err
+		}
+	case FATransfer:
+		err = r.AssetID.Validate()
+		if err != nil {
+			return err
+		}
+
+		//If From field not presented send from current contract
+		if r.From.String() != "" {
+			err = r.To.Validate()
+		}
+		if err != nil {
+			return err
+		}
+
+		fallthrough
+	case Transfer:
+		err = r.To.Validate()
+		if err != nil {
+			return err
+		}
+
+		if r.Amount == 0 {
+			return fmt.Errorf("wrong amount")
+		}
+	case CustomPayload:
+		if !json.Valid([]byte(r.CustomPayload)) {
+			return fmt.Errorf("wrong custom payload")
+		}
+
+	default:
+		return fmt.Errorf("wrong operation type")
 	}
 
 	return nil

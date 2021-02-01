@@ -1,6 +1,7 @@
 package types
 
 import (
+	"database/sql/driver"
 	"encoding/json"
 	"time"
 )
@@ -13,4 +14,8 @@ func (t JSONTimestamp) MarshalJSON() ([]byte, error) {
 
 func (t JSONTimestamp) Time() time.Time {
 	return time.Time(t)
+}
+
+func (t JSONTimestamp) Value() (driver.Value, error) {
+	return t.Time(), nil
 }
