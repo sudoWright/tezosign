@@ -17,6 +17,7 @@ import (
 	"msig/models"
 	"msig/services/contract"
 	"msig/types"
+	"time"
 )
 
 const maxAddressesNum = 20
@@ -44,7 +45,7 @@ func (s *ServiceFacade) BuildContractInitStorage(req models.ContractStorageReque
 	return resp, nil
 }
 
-func (s *ServiceFacade) BuildContractStorageUpdateOperation(req models.ContractStorageRequest) (resp interface{}, err error) {
+func (s *ServiceFacade) BuildContractStorageUpdateOperation(contractID types.Address, req models.ContractStorageRequest) (resp models.Request, err error) {
 	if req.Threshold > uint(len(req.Addresses)) {
 		return resp, apperrors.New(apperrors.ErrBadParam, "threshold")
 	}
@@ -58,10 +59,11 @@ func (s *ServiceFacade) BuildContractStorageUpdateOperation(req models.ContractS
 		return resp, err
 	}
 
-	resp, err = s.BuildContractOperationToSign(models.ContractOperationRequest{
-		Type:      models.StorageUpdate,
-		Threshold: req.Threshold,
-		Keys:      pubKeys,
+	resp, err = s.ContractOperation(models.ContractOperationRequest{
+		ContractID: contractID,
+		Type:       models.StorageUpdate,
+		Threshold:  req.Threshold,
+		Keys:       pubKeys,
 	})
 	if err != nil {
 		return resp, err
@@ -91,7 +93,37 @@ func (s *ServiceFacade) getPubKeysByAddresses(threshold uint, addresses []types.
 	return pubKeys, err
 }
 
-func (s *ServiceFacade) BuildContractOperationToSign(req models.ContractOperationRequest) (resp models.OperationToSignResp, err error) {
+func (s *ServiceFacade) ContractInfo(contractID types.Address) (resp models.ContractInfo, err error) {
+	//Get contact
+	storage, err := s.getContractStorage(contractID.String())
+	if err != nil {
+		return resp, err
+	}
+
+	var address types.Address
+	owners := make([]models.Owner, len(storage.PubKeys()))
+	for i := range storage.PubKeys() {
+
+		address, err = storage.PubKeys()[i].Address()
+		if err != nil {
+			return resp, err
+		}
+
+		owners[i] = models.Owner{
+			PubKey:  storage.PubKeys()[i],
+			Address: address,
+		}
+	}
+
+	return models.ContractInfo{
+		Address:   contractID,
+		Threshold: storage.Threshold(),
+		Counter:   storage.Counter(),
+		Owners:    owners,
+	}, nil
+}
+
+func (s *ServiceFacade) ContractOperation(req models.ContractOperationRequest) (resp models.Request, err error) {
 
 	chainID, err := s.rpcClient.ChainID(context.Background())
 	if err != nil {
@@ -104,46 +136,114 @@ func (s *ServiceFacade) BuildContractOperationToSign(req models.ContractOperatio
 		return resp, err
 	}
 
-	//TODO check another txs with same counter
-
-	payload, err := contract.BuildContractSignPayload(chainID, storage.Counter(), req)
+	repo := s.repoProvider.GetContract()
+	contr, err := repo.GetOrCreateContract(req.ContractID)
 	if err != nil {
 		return resp, err
 	}
 
-	operationID := operationID(payload.String())
-	repo := s.repoProvider.GetContract()
+	//Counter
+	counter := storage.Counter()
+	pendingNonce, err := repo.GetMaxContractPendingNone(contr.ID)
+	if err != nil {
+		return resp, err
+	}
+
+	if pendingNonce >= counter {
+		//Increment counter for next operation
+		counter = pendingNonce + 1
+	}
+
+	//TODO change format
+	operationID := operationID(fmt.Sprintf("nonce%dnetwork%scontract%spayload%x", counter, chainID, req.ContractID, req))
+
 	//Try to found already exists payload
 	_, isFound, err := repo.GetPayloadByHash(operationID)
 	if err != nil {
 		return resp, err
 	}
 
+	request := models.Request{
+		ContractID: contr.ID,
+		Hash:       operationID,
+		Counter:    counter,
+		Info:       req,
+		NetworkID:  chainID,
+		Status:     models.StatusPending,
+		CreatedAt:  time.Now(),
+	}
+
 	//Create new
 	if !isFound {
-		contract, err := repo.GetOrCreateContract(req.ContractID)
-		if err != nil {
-			return resp, err
-		}
-
-		err = repo.SavePayload(models.Request{
-			ContractID: contract.ID,
-			Hash:       operationID,
-			Counter:    storage.Counter(),
-			Data:       payload,
-		})
+		err = repo.SavePayload(request)
 		if err != nil {
 			return resp, err
 		}
 	}
 
+	return request, nil
+}
+
+func (s *ServiceFacade) GetUserAllowance(userAddress, contractAddress types.Address) (isOwner bool, err error) {
+
+	storage, err := s.getContractStorage(contractAddress.String())
+	if err != nil {
+		return false, err
+	}
+
+	pubKey, err := s.rpcClient.ManagerKey(context.Background(), userAddress.String())
+	if err != nil {
+		return false, err
+	}
+
+	_, isOwner = storage.Contains(types.PubKey(pubKey))
+
+	return isOwner, nil
+}
+
+func (s *ServiceFacade) BuildContractOperationToSign(user types.Address, txID string, payloadType models.PayloadType) (resp models.OperationToSignResp, err error) {
+
+	repo := s.repoProvider.GetContract()
+	operationReq, isFound, err := repo.GetPayloadByHash(txID)
+	if err != nil {
+		return resp, err
+	}
+
+	if !isFound {
+		return resp, apperrors.NewWithDesc(apperrors.ErrNotFound, "payload")
+	}
+
+	contractModel, err := repo.GetContractByID(operationReq.ContractID)
+	if err != nil {
+		return resp, err
+	}
+
+	isOwner, err := s.GetUserAllowance(user, contractModel.Address)
+	if err != nil {
+		return resp, err
+	}
+
+	if !isOwner {
+		return resp, apperrors.NewWithDesc(apperrors.ErrNotAllowed, "pubkey not contains in storage")
+	}
+
+	var signPayload types.Payload
+	if payloadType == models.TypeReject {
+		signPayload, err = contract.BuildRejectSignPayload(operationReq.NetworkID, operationReq.Counter, contractModel.Address)
+	} else {
+		signPayload, err = contract.BuildContractSignPayload(operationReq.NetworkID, operationReq.Counter, operationReq.Info)
+	}
+	if err != nil {
+		return resp, err
+	}
+
 	return models.OperationToSignResp{
-		OperationID: operationID,
-		Payload:     payload.String(),
+		OperationID: operationReq.Hash,
+		Payload:     signPayload,
 	}, nil
 }
 
-func (s *ServiceFacade) BuildContractOperation(txID string) (resp models.OperationParameter, err error) {
+func (s *ServiceFacade) BuildContractOperation(userAddress types.Address, txID string, payloadType models.PayloadType) (resp models.OperationParameter, err error) {
 	//TODO check sender Err not allowed
 
 	//get payload by ID
@@ -170,7 +270,7 @@ func (s *ServiceFacade) BuildContractOperation(txID string) (resp models.Operati
 	}
 
 	//get signatures by payload ID
-	sigs, err := repo.GetSignaturesByPayloadID(payload.ID)
+	sigs, err := repo.GetSignaturesByPayloadID(payload.ID, payloadType)
 	if err != nil {
 		return resp, err
 	}
@@ -181,7 +281,12 @@ func (s *ServiceFacade) BuildContractOperation(txID string) (resp models.Operati
 		signatures[sigs[i].Index] = sigs[i].Signature
 	}
 
-	rawTx, entrypoint, err := contract.BuildFullTxPayload(payload.Data, signatures)
+	operationPayload, err := s.BuildContractOperationToSign(userAddress, txID, payloadType)
+	if err != nil {
+		return resp, err
+	}
+
+	rawTx, entrypoint, err := contract.BuildFullTxPayload(operationPayload.Payload, signatures)
 	if err != nil {
 		return resp, err
 	}
@@ -192,7 +297,7 @@ func (s *ServiceFacade) BuildContractOperation(txID string) (resp models.Operati
 	}, nil
 }
 
-func (s *ServiceFacade) SaveContractOperationSignature(req models.OperationSignature) (resp models.OperationSignatureResp, err error) {
+func (s *ServiceFacade) SaveContractOperationSignature(userAddress types.Address, operationID string, req models.OperationSignature) (resp models.OperationSignatureResp, err error) {
 
 	storage, err := s.getContractStorage(req.ContractID.String())
 	if err != nil {
@@ -204,13 +309,29 @@ func (s *ServiceFacade) SaveContractOperationSignature(req models.OperationSigna
 		return resp, apperrors.NewWithDesc(apperrors.ErrNotAllowed, "pubkey not contains in storage")
 	}
 
+	repo := s.repoProvider.GetContract()
+
+	payload, isFound, err := repo.GetPayloadByHash(operationID)
+	if err != nil {
+		return resp, err
+	}
+
+	if !isFound {
+		return resp, apperrors.NewWithDesc(apperrors.ErrNotFound, "operation")
+	}
+
 	//Check sign with pubkey
 	pubKey, err := req.PubKey.CryptoPublicKey()
 	if err != nil {
 		return resp, err
 	}
 
-	bt, err := req.Payload.MarshalBinary()
+	operationPayload, err := s.BuildContractOperationToSign(userAddress, operationID, req.Type)
+	if err != nil {
+		return resp, err
+	}
+
+	bt, err := operationPayload.Payload.MarshalBinary()
 	if err != nil {
 		return resp, err
 	}
@@ -218,19 +339,6 @@ func (s *ServiceFacade) SaveContractOperationSignature(req models.OperationSigna
 	err = verifySign(bt, req.Signature.String(), pubKey)
 	if err != nil {
 		return resp, err
-	}
-
-	payloadID := operationID(req.Payload.WithoutPrefix())
-
-	repo := s.repoProvider.GetContract()
-
-	payload, isFound, err := repo.GetPayloadByHash(payloadID)
-	if err != nil {
-		return resp, err
-	}
-
-	if !isFound {
-		return resp, apperrors.NewWithDesc(apperrors.ErrNotFound, "payload")
 	}
 
 	_, isFound, err = repo.GetPayloadSignature(req.Signature)
@@ -244,6 +352,7 @@ func (s *ServiceFacade) SaveContractOperationSignature(req models.OperationSigna
 			RequestID: payload.ID,
 			Index:     index,
 			Signature: req.Signature,
+			Type:      req.Type,
 		})
 		if err != nil {
 			return resp, err

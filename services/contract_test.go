@@ -49,6 +49,16 @@ func Test_verifysign(t *testing.T) {
 			expResult: "",
 			wantErr:   false,
 		},
+		{
+			name: "Ledger signature",
+			args: args{
+				payload:   "05070707070a00000004a83650210a00000016019ce13845659ff2582555ec08dc322007f6493e800007070000050505050505050507070a00000016000032bb7d0084f79711f757d66b791d5290f88eb28000a80f",
+				pubKey:    "p2pk656iwbDQFtqG6aAPuqvVwffSYa8FvdQ2ibjyLJmZjFpUBfhdpvC",
+				signature: "edsigtfnqxtJiN1RyyrJNyaFeScwHwxEWg8tMfs8moAgc5MhbjETPyA4oscpLrdLc6UuA8JWAQwyzQR5ss8aw7sfL2gXqAm9UAH",
+			},
+			expResult: "",
+			wantErr:   false,
+		},
 	}
 
 	for _, test := range testCases {

@@ -7,9 +7,10 @@ import (
 	"msig/api/response"
 	"msig/common/apperrors"
 	"msig/common/log"
-	models "msig/models"
+	"msig/models"
 	"msig/repos"
 	"msig/services"
+	"msig/types"
 	"net/http"
 )
 
@@ -65,10 +66,18 @@ func (api *API) ContractStorageInit(w http.ResponseWriter, r *http.Request) {
 }
 
 func (api *API) ContractStorageUpdate(w http.ResponseWriter, r *http.Request) {
+	//todo add user
+
 	//TODO move to middleware
 	net, err := ToNetwork(mux.Vars(r)["network"])
 	if err != nil {
 		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "network"))
+		return
+	}
+
+	contractID := types.Address(mux.Vars(r)["contract_id"])
+	if contractID == "" || contractID.Validate() != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "contract_id"))
 		return
 	}
 
@@ -99,12 +108,55 @@ func (api *API) ContractStorageUpdate(w http.ResponseWriter, r *http.Request) {
 
 	service := services.New(repos.New(db), client, nil, net)
 
-	resp, err := service.BuildContractStorageUpdateOperation(req)
+	resp, err := service.BuildContractStorageUpdateOperation(contractID, req)
 	if err != nil {
 		//Unwrap apperror
 		err, IsAppErr := apperrors.Unwrap(err)
 		if !IsAppErr {
 			log.Error("ContractStorageUpdate error: ", zap.Error(err))
+		}
+
+		response.JsonError(w, err)
+		return
+	}
+
+	response.Json(w, resp)
+}
+
+func (api *API) ContractInfo(w http.ResponseWriter, r *http.Request) {
+	//TODO move to middleware
+	net, err := ToNetwork(mux.Vars(r)["network"])
+	if err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "network"))
+		return
+	}
+
+	db, err := api.provider.GetDb(net)
+	if err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam))
+		return
+	}
+
+	client, err := api.provider.GetRPCClient(net)
+	if err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam))
+		return
+	}
+
+	contractID := types.Address(mux.Vars(r)["contract_id"])
+	if err = contractID.Validate(); err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "contract_id"))
+		return
+	}
+
+	service := services.New(repos.New(db), client, nil, net)
+
+	resp, err := service.ContractInfo(contractID)
+	if err != nil {
+		//Unwrap apperror
+		err, IsAppErr := apperrors.Unwrap(err)
+		if !IsAppErr {
+			log.Error("BuildContractOperationToSign error: ", zap.Error(err))
 		}
 
 		response.JsonError(w, err)
@@ -149,7 +201,7 @@ func (api *API) ContractOperation(w http.ResponseWriter, r *http.Request) {
 
 	service := services.New(repos.New(db), client, nil, net)
 
-	resp, err := service.BuildContractOperationToSign(req)
+	resp, err := service.ContractOperation(req)
 	if err != nil {
 		//Unwrap apperror
 		err, IsAppErr := apperrors.Unwrap(err)
@@ -164,11 +216,78 @@ func (api *API) ContractOperation(w http.ResponseWriter, r *http.Request) {
 	response.Json(w, resp)
 }
 
+func (api *API) OperationSignPayload(w http.ResponseWriter, r *http.Request) {
+	user, isUser := r.Context().Value(ContextUserKey).(types.Address)
+	if !isUser || (user.Validate() != nil) {
+		response.JsonError(w, apperrors.New(apperrors.ErrService))
+		return
+	}
+
+	net, err := ToNetwork(mux.Vars(r)["network"])
+	if err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "network"))
+		return
+	}
+
+	operationID := mux.Vars(r)["operation_id"]
+	if operationID == "" {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "operation_id"))
+		return
+	}
+
+	payloadType := models.PayloadType(r.URL.Query().Get("type"))
+	err = payloadType.Validate()
+	if err != nil {
+		response.JsonError(w, apperrors.NewWithDesc(apperrors.ErrBadParam, "type"))
+		return
+	}
+
+	db, err := api.provider.GetDb(net)
+	if err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam))
+		return
+	}
+
+	client, err := api.provider.GetRPCClient(net)
+	if err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam))
+		return
+	}
+
+	service := services.New(repos.New(db), client, nil, net)
+
+	resp, err := service.BuildContractOperationToSign(user, operationID, payloadType)
+	if err != nil {
+		//Unwrap apperror
+		err, IsAppErr := apperrors.Unwrap(err)
+		if !IsAppErr {
+			log.Error("BuildContractOperationReject error: ", zap.Error(err))
+		}
+
+		response.JsonError(w, err)
+		return
+	}
+
+	response.Json(w, resp)
+}
+
 func (api *API) ContractOperationSignature(w http.ResponseWriter, r *http.Request) {
+	user, isUser := r.Context().Value(ContextUserKey).(types.Address)
+	if !isUser || (user.Validate() != nil) {
+		response.JsonError(w, apperrors.New(apperrors.ErrService))
+		return
+	}
+
 	//TODO move to middleware
 	net, err := ToNetwork(mux.Vars(r)["network"])
 	if err != nil {
 		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "network"))
+		return
+	}
+
+	operationID := mux.Vars(r)["operation_id"]
+	if operationID == "" {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "operation_id"))
 		return
 	}
 
@@ -199,12 +318,12 @@ func (api *API) ContractOperationSignature(w http.ResponseWriter, r *http.Reques
 
 	service := services.New(repos.New(db), client, nil, net)
 
-	resp, err := service.SaveContractOperationSignature(req)
+	resp, err := service.SaveContractOperationSignature(user, operationID, req)
 	if err != nil {
 		//Unwrap apperror
 		err, IsAppErr := apperrors.Unwrap(err)
 		if !IsAppErr {
-			log.Error("ContractOperationSignature error: ", zap.Error(err))
+			log.Error("SaveContractOperationSignature error: ", zap.Error(err))
 		}
 
 		response.JsonError(w, err)
@@ -215,6 +334,12 @@ func (api *API) ContractOperationSignature(w http.ResponseWriter, r *http.Reques
 }
 
 func (api *API) ContractOperationBuild(w http.ResponseWriter, r *http.Request) {
+	user, isUser := r.Context().Value(ContextUserKey).(types.Address)
+	if !isUser || (user.Validate() != nil) {
+		response.JsonError(w, apperrors.New(apperrors.ErrService))
+		return
+	}
+
 	//TODO move to middleware
 	net, err := ToNetwork(mux.Vars(r)["network"])
 	if err != nil {
@@ -234,15 +359,21 @@ func (api *API) ContractOperationBuild(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	txID, ok := mux.Vars(r)["tx_id"]
-	if !ok || len(txID) == 0 {
+	operationID, ok := mux.Vars(r)["operation_id"]
+	if !ok || len(operationID) == 0 {
 		response.JsonError(w, apperrors.NewWithDesc(apperrors.ErrBadParam, "tx_id"))
+		return
+	}
+
+	payloadType := models.PayloadType(r.URL.Query().Get("type"))
+	if err = payloadType.Validate(); err != nil {
+		response.JsonError(w, apperrors.NewWithDesc(apperrors.ErrBadParam, "type"))
 		return
 	}
 
 	service := services.New(repos.New(db), client, nil, net)
 
-	resp, err := service.BuildContractOperation(txID)
+	resp, err := service.BuildContractOperation(user, operationID, payloadType)
 	if err != nil {
 		//Unwrap apperror
 		err, IsAppErr := apperrors.Unwrap(err)

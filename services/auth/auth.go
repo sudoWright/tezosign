@@ -95,7 +95,6 @@ func (a *Auth) generateAccessToken(address types.Address) (accessToken string, e
 	return accessToken, nil
 }
 
-//TODO Check
 func (a *Auth) generateRefreshToken(address types.Address) (token string, err error) {
 	return uuid.NewV4().String(), nil
 }

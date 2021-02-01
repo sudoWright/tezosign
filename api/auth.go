@@ -4,14 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
-	"log"
 	"msig/api/response"
 	"msig/common/apperrors"
 	"msig/conf"
 	"msig/models"
 	"msig/repos"
 	"msig/services"
-	"msig/types"
 	"net/http"
 )
 
@@ -58,18 +56,6 @@ func (api *API) AuthRequest(w http.ResponseWriter, r *http.Request) {
 	response.Json(w, resp)
 }
 
-func (api *API) UnderAuthRequest(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	user, isUser := ctx.Value(ContextUserKey).(types.Address)
-	if !isUser || (user.Validate() != nil) {
-		response.JsonError(w, apperrors.New(apperrors.ErrService))
-		return
-	}
-
-	log.Print(r.Context())
-	response.Json(w, "success")
-}
-
 func (api *API) Auth(w http.ResponseWriter, r *http.Request) {
 	net, err := ToNetwork(mux.Vars(r)["network"])
 	if err != nil {
@@ -110,16 +96,7 @@ func (api *API) Auth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cookie := &http.Cookie{
-		Name:     getCookieName(net),
-		Value:    resp.EncodedCookie,
-		Path:     "/",
-		MaxAge:   conf.TtlCookie,
-		Secure:   api.cfg.API.IsProtocolHttps,
-		HttpOnly: true,
-	}
-
-	http.SetCookie(w, cookie)
+	api.setCookie(net, resp.EncodedCookie, w)
 
 	response.Json(w, resp)
 }
@@ -166,16 +143,7 @@ func (api *API) RefreshAuth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cookie := &http.Cookie{
-		Name:     getCookieName(net),
-		Value:    resp.EncodedCookie,
-		Path:     "/",
-		MaxAge:   conf.TtlCookie,
-		Secure:   api.cfg.API.IsProtocolHttps,
-		HttpOnly: true,
-	}
-
-	http.SetCookie(w, cookie)
+	api.setCookie(net, resp.EncodedCookie, w)
 
 	response.Json(w, resp)
 }
@@ -251,6 +219,23 @@ func (api *API) Logout(w http.ResponseWriter, r *http.Request) {
 
 func getCookieName(net models.Network) string {
 	return fmt.Sprintf("%s_%s", "session", string(net))
+}
+
+func (api *API) setCookie(net models.Network, encodedCookie string, w http.ResponseWriter) {
+
+	cookie := &http.Cookie{
+		Name:     getCookieName(net),
+		Value:    encodedCookie,
+		Path:     "/",
+		MaxAge:   conf.TtlCookie,
+		Secure:   api.cfg.API.IsProtocolHttps,
+		HttpOnly: true,
+
+		//TODO remove after tests
+		SameSite: http.SameSiteNoneMode,
+	}
+
+	http.SetCookie(w, cookie)
 }
 
 func (api *API) clearCookie(network models.Network, w http.ResponseWriter) {

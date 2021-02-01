@@ -117,7 +117,8 @@ func NewContractStorageContainer(rawStorage string) (c ContractStorageContainer,
 	c.threshold = storage.Args[1].Args[0].Int.Int64()
 
 	//Keys
-	if storage.Args[1].Args[1].OpCode != micheline.T_LIST && len(storage.Args[1].Args[1].Args) < 2 {
+	//TODO remove after tests
+	if storage.Args[1].Args[1].OpCode != micheline.T_LIST && len(storage.Args[1].Args[1].Args) < 1 { //2 {
 		return c, fmt.Errorf("Wrong keys list")
 	}
 

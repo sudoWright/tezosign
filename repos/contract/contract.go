@@ -17,9 +17,11 @@ type (
 	Repo interface {
 		GetOrCreateContract(address types.Address) (contract models.Contract, err error)
 		GetContractByID(id uint64) (contract models.Contract, err error)
+		GetMaxContractPendingNone(contractID uint64) (int64, error)
 		SavePayload(request models.Request) error
 		GetPayloadByHash(id string) (models.Request, bool, error)
-		GetSignaturesByPayloadID(id uint64) ([]models.Signature, error)
+		GetPayloadsReportByContractID(id uint64) ([]models.RequestReport, error)
+		GetSignaturesByPayloadID(id uint64, signatureType models.PayloadType) ([]models.Signature, error)
 		SavePayloadSignature(signature models.Signature) error
 		GetPayloadSignature(sig types.Signature) (signature models.Signature, isFound bool, err error)
 		GetSignaturesCount(id uint64) (count int64, err error)
@@ -67,34 +69,9 @@ func (r *Repository) GetSignaturesCount(id uint64) (count int64, err error) {
 	return count, nil
 }
 
-func (r *Repository) GetPayloadByHash(id string) (payload models.Request, isFound bool, err error) {
-	err = r.db.Model(models.Request{}).
-		Where("req_hash = ?", id).
-		First(&payload).Error
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return payload, false, nil
-		}
-		return payload, false, err
-	}
-
-	return payload, true, nil
-}
-
-func (r *Repository) SavePayload(request models.Request) (err error) {
-	err = r.db.
-		Model(models.Request{}).
-		Create(&request).Error
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (r *Repository) GetSignaturesByPayloadID(id uint64) (signatures []models.Signature, err error) {
+func (r *Repository) GetSignaturesByPayloadID(id uint64, signatureType models.PayloadType) (signatures []models.Signature, err error) {
 	err = r.db.Model(models.Signature{}).
-		Where("req_id = ?", id).
+		Where("req_id = ? and sig_type = ?", id, signatureType).
 		Find(&signatures).Error
 	if err != nil {
 		return signatures, err
@@ -117,9 +94,24 @@ func (r *Repository) GetOrCreateContract(address types.Address) (contract models
 func (r *Repository) GetContractByID(id uint64) (contract models.Contract, err error) {
 	err = r.db.Model(models.Contract{}).
 		Where("ctr_id = ?", id).
-		Find(&contract).Error
+		First(&contract).Error
 	if err != nil {
 		return contract, err
 	}
 	return contract, nil
+}
+
+func (r *Repository) GetMaxContractPendingNone(contractID uint64) (max int64, err error) {
+	m := struct {
+		M int64
+	}{}
+
+	err = r.db.Select("max(req_counter) as m").Table("requests").
+		Where("ctr_id = ?", contractID).
+		Take(&m).Error
+	if err != nil {
+		return 0, err
+	}
+
+	return m.M, nil
 }

@@ -99,11 +99,8 @@ func (api *API) initialize(handlerArr ...negroni.Handler) {
 		{Path: "/health", Method: http.MethodGet, Func: api.Health},
 
 		{Path: "/{network}/contract/storage/init", Method: http.MethodPost, Func: api.ContractStorageInit},
-		{Path: "/{network}/contract/storage/update", Method: http.MethodPost, Func: api.ContractStorageUpdate},
-		{Path: "/{network}/contract/operation", Method: http.MethodPost, Func: api.ContractOperation},
-		{Path: "/{network}/contract/operation/signature", Method: http.MethodPost, Func: api.ContractOperationSignature},
-		{Path: "/{network}/contract/operation/{tx_id}/build", Method: http.MethodGet, Func: api.ContractOperationBuild},
 
+		//Auth flow
 		{Path: "/{network}/auth/request", Method: http.MethodPost, Func: api.AuthRequest},
 		{Path: "/{network}/auth", Method: http.MethodPost, Func: api.Auth},
 		{Path: "/{network}/auth/refresh", Method: http.MethodPost, Func: api.RefreshAuth},
@@ -115,9 +112,22 @@ func (api *API) initialize(handlerArr ...negroni.Handler) {
 		api.RequireJWT,
 	}
 
-	//Todo remove after tests
 	HandleActions(api.router, wrapper, actionsAPIPrefix, []*Route{
-		{Path: "/{network}/underauth", Method: http.MethodGet, Func: api.UnderAuthRequest, Middleware: mw},
+
+		//Get contract info
+		{Path: "/{network}/contract/{contract_id}/info", Method: http.MethodGet, Func: api.ContractInfo, Middleware: mw},
+		//Create operation
+		{Path: "/{network}/contract/operation", Method: http.MethodPost, Func: api.ContractOperation, Middleware: mw},
+		//Create update storage operation
+		{Path: "/{network}/contract/{contract_id}/storage/update", Method: http.MethodPost, Func: api.ContractStorageUpdate, Middleware: mw},
+		//Build payload by operation
+		{Path: "/{network}/contract/operation/{operation_id}/payload", Method: http.MethodGet, Func: api.OperationSignPayload, Middleware: mw},
+		//Save payload signature
+		{Path: "/{network}/contract/operation/{operation_id}/signature", Method: http.MethodPost, Func: api.ContractOperationSignature, Middleware: mw},
+		//Build final tx
+		{Path: "/{network}/contract/operation/{operation_id}/build", Method: http.MethodGet, Func: api.ContractOperationBuild, Middleware: mw},
+		//Operation list
+		{Path: "/{network}/contract/{contract_id}/operations", Method: http.MethodGet, Func: api.ContractOperationsList, Middleware: mw},
 	})
 
 	api.server = &http.Server{Addr: fmt.Sprintf(":%d", api.cfg.API.ListenOnPort), Handler: api.router}

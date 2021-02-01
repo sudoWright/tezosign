@@ -12,6 +12,7 @@ import (
 const (
 	TextWatermark  = 0x05
 	MainEntrypoint = "main_parameter"
+	emptyOperation = `[{"prim":"DIP","args":[[{"prim":"NIL","args":[{"prim":"operation"}]}]]},{"prim":"CONS"}]`
 )
 
 func BuildContractSignPayload(networkID string, counter int64, operationParams models.ContractOperationRequest) (resp types.Payload, err error) {
@@ -40,6 +41,14 @@ func BuildContractSignPayload(networkID string, counter int64, operationParams m
 	bt = append([]byte{TextWatermark}, bt...)
 
 	return types.Payload(hex.EncodeToString(bt)), nil
+}
+
+func BuildRejectSignPayload(networkID string, counter int64, contractAddress types.Address) (resp types.Payload, err error) {
+	return BuildContractSignPayload(networkID, counter, models.ContractOperationRequest{
+		ContractID:    contractAddress,
+		Type:          models.CustomPayload,
+		CustomPayload: emptyOperation,
+	})
 }
 
 //Network and contract address params
