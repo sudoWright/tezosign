@@ -176,7 +176,7 @@ func (s *ServiceFacade) ContractOperation(req models.ContractOperationRequest) (
 		Info:       req,
 		NetworkID:  chainID,
 		Status:     models.StatusPending,
-		CreatedAt:  time.Now(),
+		CreatedAt:  types.JSONTimestamp(time.Now()),
 	}
 
 	//Create new

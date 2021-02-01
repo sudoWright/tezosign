@@ -2,7 +2,6 @@ package models
 
 import (
 	"msig/types"
-	"time"
 )
 
 type Contract struct {
@@ -24,7 +23,7 @@ type Request struct {
 	ContractID uint64                   `gorm:"column:ctr_id" json:"-"`
 	Counter    int64                    `gorm:"column:req_counter" json:"nonce"`
 	Status     RequestStatus            `gorm:"column:req_status;default:pending" json:"status"`
-	CreatedAt  time.Time                `gorm:"column:req_created_at" json:"created_at"`
+	CreatedAt  types.JSONTimestamp      `gorm:"column:req_created_at" json:"created_at"`
 	Info       ContractOperationRequest `gorm:"column:req_info" json:"operation_info"`
 	NetworkID  string                   `gorm:"column:req_network_id" json:"network_id"`
 
