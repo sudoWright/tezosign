@@ -15,22 +15,10 @@ import (
 )
 
 func (api *API) ContractStorageInit(w http.ResponseWriter, r *http.Request) {
-	//TODO move to middleware
-	net, err := ToNetwork(mux.Vars(r)["network"])
+	//Use GetUserNetworkContext to check user middleware
+	_, net, networkContext, err := GetUserNetworkContext(r)
 	if err != nil {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "network"))
-		return
-	}
-
-	db, err := api.provider.GetDb(net)
-	if err != nil {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam))
-		return
-	}
-
-	client, err := api.provider.GetRPCClient(net)
-	if err != nil {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam))
+		response.JsonError(w, err)
 		return
 	}
 
@@ -47,7 +35,7 @@ func (api *API) ContractStorageInit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	service := services.New(repos.New(db), client, nil, net)
+	service := services.New(repos.New(networkContext.Db), networkContext.Client, networkContext.Auth, net)
 
 	resp, err := service.BuildContractInitStorage(req)
 	if err != nil {
@@ -66,30 +54,15 @@ func (api *API) ContractStorageInit(w http.ResponseWriter, r *http.Request) {
 }
 
 func (api *API) ContractStorageUpdate(w http.ResponseWriter, r *http.Request) {
-	//todo add user
-
-	//TODO move to middleware
-	net, err := ToNetwork(mux.Vars(r)["network"])
+	user, net, networkContext, err := GetUserNetworkContext(r)
 	if err != nil {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "network"))
+		response.JsonError(w, err)
 		return
 	}
 
 	contractID := types.Address(mux.Vars(r)["contract_id"])
 	if contractID == "" || contractID.Validate() != nil {
 		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "contract_id"))
-		return
-	}
-
-	db, err := api.provider.GetDb(net)
-	if err != nil {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam))
-		return
-	}
-
-	client, err := api.provider.GetRPCClient(net)
-	if err != nil {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam))
 		return
 	}
 
@@ -106,9 +79,9 @@ func (api *API) ContractStorageUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	service := services.New(repos.New(db), client, nil, net)
+	service := services.New(repos.New(networkContext.Db), networkContext.Client, networkContext.Auth, net)
 
-	resp, err := service.BuildContractStorageUpdateOperation(contractID, req)
+	resp, err := service.BuildContractStorageUpdateOperation(user, contractID, req)
 	if err != nil {
 		//Unwrap apperror
 		err, IsAppErr := apperrors.Unwrap(err)
@@ -124,32 +97,20 @@ func (api *API) ContractStorageUpdate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (api *API) ContractInfo(w http.ResponseWriter, r *http.Request) {
-	//TODO move to middleware
-	net, err := ToNetwork(mux.Vars(r)["network"])
+	//Use GetUserNetworkContext to check user middleware
+	_, net, networkContext, err := GetUserNetworkContext(r)
 	if err != nil {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "network"))
-		return
-	}
-
-	db, err := api.provider.GetDb(net)
-	if err != nil {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam))
-		return
-	}
-
-	client, err := api.provider.GetRPCClient(net)
-	if err != nil {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam))
+		response.JsonError(w, err)
 		return
 	}
 
 	contractID := types.Address(mux.Vars(r)["contract_id"])
-	if err = contractID.Validate(); err != nil {
+	if err := contractID.Validate(); err != nil {
 		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "contract_id"))
 		return
 	}
 
-	service := services.New(repos.New(db), client, nil, net)
+	service := services.New(repos.New(networkContext.Db), networkContext.Client, networkContext.Auth, net)
 
 	resp, err := service.ContractInfo(contractID)
 	if err != nil {
@@ -167,22 +128,9 @@ func (api *API) ContractInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 func (api *API) ContractOperation(w http.ResponseWriter, r *http.Request) {
-	//TODO move to middleware
-	net, err := ToNetwork(mux.Vars(r)["network"])
+	user, net, networkContext, err := GetUserNetworkContext(r)
 	if err != nil {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "network"))
-		return
-	}
-
-	db, err := api.provider.GetDb(net)
-	if err != nil {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam))
-		return
-	}
-
-	client, err := api.provider.GetRPCClient(net)
-	if err != nil {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam))
+		response.JsonError(w, err)
 		return
 	}
 
@@ -199,9 +147,9 @@ func (api *API) ContractOperation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	service := services.New(repos.New(db), client, nil, net)
+	service := services.New(repos.New(networkContext.Db), networkContext.Client, networkContext.Auth, net)
 
-	resp, err := service.ContractOperation(req)
+	resp, err := service.ContractOperation(user, req)
 	if err != nil {
 		//Unwrap apperror
 		err, IsAppErr := apperrors.Unwrap(err)
@@ -217,15 +165,9 @@ func (api *API) ContractOperation(w http.ResponseWriter, r *http.Request) {
 }
 
 func (api *API) OperationSignPayload(w http.ResponseWriter, r *http.Request) {
-	user, isUser := r.Context().Value(ContextUserKey).(types.Address)
-	if !isUser || (user.Validate() != nil) {
-		response.JsonError(w, apperrors.New(apperrors.ErrService))
-		return
-	}
-
-	net, err := ToNetwork(mux.Vars(r)["network"])
+	user, net, networkContext, err := GetUserNetworkContext(r)
 	if err != nil {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "network"))
+		response.JsonError(w, err)
 		return
 	}
 
@@ -242,19 +184,7 @@ func (api *API) OperationSignPayload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db, err := api.provider.GetDb(net)
-	if err != nil {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam))
-		return
-	}
-
-	client, err := api.provider.GetRPCClient(net)
-	if err != nil {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam))
-		return
-	}
-
-	service := services.New(repos.New(db), client, nil, net)
+	service := services.New(repos.New(networkContext.Db), networkContext.Client, networkContext.Auth, net)
 
 	resp, err := service.BuildContractOperationToSign(user, operationID, payloadType)
 	if err != nil {
@@ -272,34 +202,15 @@ func (api *API) OperationSignPayload(w http.ResponseWriter, r *http.Request) {
 }
 
 func (api *API) ContractOperationSignature(w http.ResponseWriter, r *http.Request) {
-	user, isUser := r.Context().Value(ContextUserKey).(types.Address)
-	if !isUser || (user.Validate() != nil) {
-		response.JsonError(w, apperrors.New(apperrors.ErrService))
-		return
-	}
-
-	//TODO move to middleware
-	net, err := ToNetwork(mux.Vars(r)["network"])
+	user, net, networkContext, err := GetUserNetworkContext(r)
 	if err != nil {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "network"))
+		response.JsonError(w, err)
 		return
 	}
 
 	operationID := mux.Vars(r)["operation_id"]
 	if operationID == "" {
 		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "operation_id"))
-		return
-	}
-
-	db, err := api.provider.GetDb(net)
-	if err != nil {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam))
-		return
-	}
-
-	client, err := api.provider.GetRPCClient(net)
-	if err != nil {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam))
 		return
 	}
 
@@ -316,7 +227,7 @@ func (api *API) ContractOperationSignature(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	service := services.New(repos.New(db), client, nil, net)
+	service := services.New(repos.New(networkContext.Db), networkContext.Client, networkContext.Auth, net)
 
 	resp, err := service.SaveContractOperationSignature(user, operationID, req)
 	if err != nil {
@@ -334,28 +245,9 @@ func (api *API) ContractOperationSignature(w http.ResponseWriter, r *http.Reques
 }
 
 func (api *API) ContractOperationBuild(w http.ResponseWriter, r *http.Request) {
-	user, isUser := r.Context().Value(ContextUserKey).(types.Address)
-	if !isUser || (user.Validate() != nil) {
-		response.JsonError(w, apperrors.New(apperrors.ErrService))
-		return
-	}
-
-	//TODO move to middleware
-	net, err := ToNetwork(mux.Vars(r)["network"])
+	user, net, networkContext, err := GetUserNetworkContext(r)
 	if err != nil {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "network"))
-		return
-	}
-
-	db, err := api.provider.GetDb(net)
-	if err != nil {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam))
-		return
-	}
-
-	client, err := api.provider.GetRPCClient(net)
-	if err != nil {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam))
+		response.JsonError(w, err)
 		return
 	}
 
@@ -366,12 +258,12 @@ func (api *API) ContractOperationBuild(w http.ResponseWriter, r *http.Request) {
 	}
 
 	payloadType := models.PayloadType(r.URL.Query().Get("type"))
-	if err = payloadType.Validate(); err != nil {
+	if err := payloadType.Validate(); err != nil {
 		response.JsonError(w, apperrors.NewWithDesc(apperrors.ErrBadParam, "type"))
 		return
 	}
 
-	service := services.New(repos.New(db), client, nil, net)
+	service := services.New(repos.New(networkContext.Db), networkContext.Client, networkContext.Auth, net)
 
 	resp, err := service.BuildContractOperation(user, operationID, payloadType)
 	if err != nil {

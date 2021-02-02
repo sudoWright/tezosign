@@ -44,3 +44,21 @@ func (r AuthToken) Expired() bool {
 
 	return false
 }
+
+type AuthSignature struct {
+	Payload types.Payload `json:"payload"`
+	SignatureReq
+}
+
+func (s AuthSignature) Validate() (err error) {
+	err = s.Payload.Validate()
+	if err != nil {
+		return err
+	}
+
+	err = s.SignatureReq.Validate()
+	if err != nil {
+		return err
+	}
+	return nil
+}

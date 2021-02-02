@@ -11,6 +11,7 @@ import (
 	"gorm.io/gorm"
 	"msig/common/log"
 	"msig/conf"
+	"msig/infrustructure"
 	"msig/models"
 	"msig/services/auth"
 	"msig/services/rpc_client"
@@ -45,6 +46,7 @@ type NetworkContextProvider interface {
 	GetDb(models.Network) (*gorm.DB, error)
 	GetRPCClient(net models.Network) (*rpc_client.Tezos, error)
 	GetAuthProvider(net models.Network) (*auth.Auth, error)
+	GetNetworkContext(net models.Network) (infrustructure.NetworkContext, error)
 }
 
 func NewAPI(cfg conf.Config, provider NetworkContextProvider) *API {
@@ -97,23 +99,30 @@ func (api *API) initialize(handlerArr ...negroni.Handler) {
 	HandleActions(api.router, wrapper, actionsAPIPrefix, []*Route{
 		{Path: "/", Method: http.MethodGet, Func: api.Index},
 		{Path: "/health", Method: http.MethodGet, Func: api.Health},
-
-		{Path: "/{network}/contract/storage/init", Method: http.MethodPost, Func: api.ContractStorageInit},
-
-		//Auth flow
-		{Path: "/{network}/auth/request", Method: http.MethodPost, Func: api.AuthRequest},
-		{Path: "/{network}/auth", Method: http.MethodPost, Func: api.Auth},
-		{Path: "/{network}/auth/refresh", Method: http.MethodPost, Func: api.RefreshAuth},
-		{Path: "/{network}/auth/restore", Method: http.MethodGet, Func: api.RestoreAuth},
-		{Path: "/{network}/logout", Method: http.MethodGet, Func: api.Logout},
 	})
 
 	mw := []negroni.HandlerFunc{
+		api.CheckAndLoadNetwork,
+	}
+
+	//public routes
+	HandleActions(api.router, wrapper, actionsAPIPrefix, []*Route{
+		//Auth flow
+		{Path: "/{network}/auth/request", Method: http.MethodPost, Func: api.AuthRequest, Middleware: mw},
+		{Path: "/{network}/auth", Method: http.MethodPost, Func: api.Auth, Middleware: mw},
+		{Path: "/{network}/auth/refresh", Method: http.MethodPost, Func: api.RefreshAuth, Middleware: mw},
+		{Path: "/{network}/auth/restore", Method: http.MethodGet, Func: api.RestoreAuth, Middleware: mw},
+		{Path: "/{network}/logout", Method: http.MethodGet, Func: api.Logout, Middleware: mw},
+	})
+
+	mw = []negroni.HandlerFunc{
+		api.CheckAndLoadNetwork,
 		api.RequireJWT,
 	}
 
 	HandleActions(api.router, wrapper, actionsAPIPrefix, []*Route{
 
+		{Path: "/{network}/contract/storage/init", Method: http.MethodPost, Func: api.ContractStorageInit, Middleware: mw},
 		//Get contract info
 		{Path: "/{network}/contract/{contract_id}/info", Method: http.MethodGet, Func: api.ContractInfo, Middleware: mw},
 		//Create operation

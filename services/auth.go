@@ -54,7 +54,7 @@ type AuthResponce struct {
 	EncodedCookie string `json:"-"`
 }
 
-func (s *ServiceFacade) Auth(req models.SignatureReq) (resp AuthResponce, err error) {
+func (s *ServiceFacade) Auth(req models.AuthSignature) (resp AuthResponce, err error) {
 	authRepo := s.repoProvider.GetAuth()
 	//Get token
 	authToken, isFound, err := authRepo.GetAuthToken(req.Payload.String())

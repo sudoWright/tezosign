@@ -12,7 +12,7 @@ import (
 const (
 	TextWatermark  = 0x05
 	MainEntrypoint = "main_parameter"
-	emptyOperation = `[{"prim":"DIP","args":[[{"prim":"NIL","args":[{"prim":"operation"}]}]]},{"prim":"CONS"}]`
+	emptyOperation = `[{"prim":"DROP"},{"prim":"NIL","args":[{"prim":"operation"}]}]`
 )
 
 func BuildContractSignPayload(networkID string, counter int64, operationParams models.ContractOperationRequest) (resp types.Payload, err error) {

@@ -32,7 +32,7 @@ func Test_BuildContractStorage(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
 			got, gotErr := BuildContractStorage(test.args.threshold, test.args.pubKeys)
-			if test.wantErr && gotErr == nil {
+			if test.wantErr != (gotErr != nil) {
 				t.Errorf("wantErr: %t | results %s == %s | err: %v", test.wantErr, got, test.expResult, gotErr)
 			}
 

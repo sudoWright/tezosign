@@ -45,7 +45,7 @@ func (s *ServiceFacade) BuildContractInitStorage(req models.ContractStorageReque
 	return resp, nil
 }
 
-func (s *ServiceFacade) BuildContractStorageUpdateOperation(contractID types.Address, req models.ContractStorageRequest) (resp models.Request, err error) {
+func (s *ServiceFacade) BuildContractStorageUpdateOperation(user, contractID types.Address, req models.ContractStorageRequest) (resp models.Request, err error) {
 	if req.Threshold > uint(len(req.Addresses)) {
 		return resp, apperrors.New(apperrors.ErrBadParam, "threshold")
 	}
@@ -59,7 +59,16 @@ func (s *ServiceFacade) BuildContractStorageUpdateOperation(contractID types.Add
 		return resp, err
 	}
 
-	resp, err = s.ContractOperation(models.ContractOperationRequest{
+	isOwner, err := s.GetUserAllowance(user, contractID)
+	if err != nil {
+		return resp, err
+	}
+
+	if !isOwner {
+		return resp, apperrors.NewWithDesc(apperrors.ErrNotAllowed, "pubkey not contains in storage")
+	}
+
+	resp, err = s.ContractOperation(user, models.ContractOperationRequest{
 		ContractID: contractID,
 		Type:       models.StorageUpdate,
 		Threshold:  req.Threshold,
@@ -129,7 +138,15 @@ func (s *ServiceFacade) ContractInfo(contractID types.Address) (resp models.Cont
 	}, nil
 }
 
-func (s *ServiceFacade) ContractOperation(req models.ContractOperationRequest) (resp models.Request, err error) {
+func (s *ServiceFacade) ContractOperation(user types.Address, req models.ContractOperationRequest) (resp models.Request, err error) {
+	isOwner, err := s.GetUserAllowance(user, req.ContractID)
+	if err != nil {
+		return resp, err
+	}
+
+	if !isOwner {
+		return resp, apperrors.NewWithDesc(apperrors.ErrNotAllowed, "pubkey not contains in storage")
+	}
 
 	chainID, err := s.rpcClient.ChainID(context.Background())
 	if err != nil {
@@ -170,6 +187,8 @@ func (s *ServiceFacade) ContractOperation(req models.ContractOperationRequest) (
 		return resp, err
 	}
 
+	//Todo check Asset contract to FA transfer standart
+
 	request := models.Request{
 		ContractID: contr.ID,
 		Hash:       operationID,
@@ -191,6 +210,7 @@ func (s *ServiceFacade) ContractOperation(req models.ContractOperationRequest) (
 	return request, nil
 }
 
+//TODO move to middleware
 func (s *ServiceFacade) GetUserAllowance(userAddress, contractAddress types.Address) (isOwner bool, err error) {
 
 	storage, err := s.getContractStorage(contractAddress.String())
@@ -251,8 +271,6 @@ func (s *ServiceFacade) BuildContractOperationToSign(user types.Address, txID st
 }
 
 func (s *ServiceFacade) BuildContractOperation(userAddress types.Address, txID string, payloadType models.PayloadType) (resp models.OperationParameter, err error) {
-	//TODO check sender Err not allowed
-
 	//get payload by ID
 	repo := s.repoProvider.GetContract()
 
@@ -274,6 +292,17 @@ func (s *ServiceFacade) BuildContractOperation(userAddress types.Address, txID s
 	storage, err := s.getContractStorage(contr.Address.String())
 	if err != nil {
 		return resp, err
+	}
+
+	pubKey, err := s.rpcClient.ManagerKey(context.Background(), userAddress.String())
+	if err != nil {
+		return resp, err
+	}
+
+	//Check user allowance
+	_, isOwner := storage.Contains(types.PubKey(pubKey))
+	if !isOwner {
+		return resp, apperrors.NewWithDesc(apperrors.ErrNotAllowed, "pubkey not contains in storage")
 	}
 
 	//get signatures by payload ID
@@ -415,9 +444,10 @@ func verifySign(message []byte, signature string, publicKey crypto.PublicKey) er
 		ok = ed25519.Verify(key, payloadHash[:], sigBytes)
 	//P256 curve
 	case ecdsa.PublicKey:
-		if sigPrefix != tezosprotocol.PrefixSecp256k1PublicKey && sigPrefix != tezosprotocol.PrefixGenericSignature {
-			return errors.Errorf("signature type %s does not match public key type %T", sigPrefix, publicKey)
-		}
+		//if sigPrefix != tezosprotocol.PrefixP256Signature && sigPrefix != tezosprotocol.PrefixGenericSignature {
+		//	log.Print(sigPrefix.PrefixBytes())
+		//	return errors.Errorf("signature type %s does not match public key type %T", sigPrefix, publicKey)
+		//}
 
 		sig, err := deserializeSig(sigBytes)
 		if err != nil {

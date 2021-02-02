@@ -14,21 +14,9 @@ import (
 )
 
 func (api *API) AuthRequest(w http.ResponseWriter, r *http.Request) {
-	net, err := ToNetwork(mux.Vars(r)["network"])
+	net, networkContext, err := GetNetworkContext(r)
 	if err != nil {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "network"))
-		return
-	}
-
-	auth, err := api.provider.GetAuthProvider(net)
-	if err != nil {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam))
-		return
-	}
-
-	db, err := api.provider.GetDb(net)
-	if err != nil {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam))
+		response.JsonError(w, err)
 		return
 	}
 
@@ -45,7 +33,7 @@ func (api *API) AuthRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	service := services.New(repos.New(db), nil, auth, net)
+	service := services.New(repos.New(networkContext.Db), networkContext.Client, networkContext.Auth, net)
 
 	resp, err := service.AuthRequest(req)
 	if err != nil {
@@ -57,25 +45,13 @@ func (api *API) AuthRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func (api *API) Auth(w http.ResponseWriter, r *http.Request) {
-	net, err := ToNetwork(mux.Vars(r)["network"])
+	net, networkContext, err := GetNetworkContext(r)
 	if err != nil {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "network"))
+		response.JsonError(w, err)
 		return
 	}
 
-	auth, err := api.provider.GetAuthProvider(net)
-	if err != nil {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam))
-		return
-	}
-
-	db, err := api.provider.GetDb(net)
-	if err != nil {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam))
-		return
-	}
-
-	var req models.SignatureReq
+	var req models.AuthSignature
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		response.JsonError(w, apperrors.New(apperrors.ErrBadRequest))
@@ -88,7 +64,7 @@ func (api *API) Auth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	service := services.New(repos.New(db), nil, auth, net)
+	service := services.New(repos.New(networkContext.Db), networkContext.Client, networkContext.Auth, net)
 
 	resp, err := service.Auth(req)
 	if err != nil {
@@ -102,21 +78,9 @@ func (api *API) Auth(w http.ResponseWriter, r *http.Request) {
 }
 
 func (api *API) RefreshAuth(w http.ResponseWriter, r *http.Request) {
-	net, err := ToNetwork(mux.Vars(r)["network"])
+	net, networkContext, err := GetNetworkContext(r)
 	if err != nil {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "network"))
-		return
-	}
-
-	auth, err := api.provider.GetAuthProvider(net)
-	if err != nil {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam))
-		return
-	}
-
-	db, err := api.provider.GetDb(net)
-	if err != nil {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam))
+		response.JsonError(w, err)
 		return
 	}
 
@@ -135,7 +99,7 @@ func (api *API) RefreshAuth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	service := services.New(repos.New(db), nil, auth, net)
+	service := services.New(repos.New(networkContext.Db), networkContext.Client, networkContext.Auth, net)
 
 	resp, err := service.RefreshAuthSession(data.RefreshToken)
 	if err != nil {
@@ -180,9 +144,9 @@ func (api *API) RestoreAuth(w http.ResponseWriter, r *http.Request) {
 }
 
 func (api *API) Logout(w http.ResponseWriter, r *http.Request) {
-	net, err := ToNetwork(mux.Vars(r)["network"])
+	net, networkContext, err := GetNetworkContext(r)
 	if err != nil {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "network"))
+		response.JsonError(w, err)
 		return
 	}
 
@@ -192,21 +156,9 @@ func (api *API) Logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	auth, err := api.provider.GetAuthProvider(net)
-	if err != nil {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam))
-		return
-	}
-
-	db, err := api.provider.GetDb(net)
-	if err != nil {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam))
-		return
-	}
-
 	defer api.clearCookie(net, w)
 
-	service := services.New(repos.New(db), nil, auth, net)
+	service := services.New(repos.New(networkContext.Db), networkContext.Client, networkContext.Auth, net)
 
 	err = service.Logout(cookie.Value)
 	if err != nil {

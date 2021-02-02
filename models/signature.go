@@ -9,20 +9,10 @@ import (
 
 type SignatureReq struct {
 	PubKey    types.PubKey    `json:"pub_key"`
-	Payload   types.Payload   `json:"payload"`
 	Signature types.Signature `json:"signature"`
 }
 
 func (r SignatureReq) Validate() (err error) {
-
-	//TODO refactor
-	if r.Payload != "" {
-		err = r.Payload.Validate()
-		if err != nil {
-			return err
-		}
-	}
-
 	err = r.PubKey.Validate()
 	if err != nil {
 		return err

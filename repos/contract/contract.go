@@ -82,7 +82,6 @@ func (r *Repository) GetSignaturesByPayloadID(id uint64, signatureType models.Pa
 
 func (r *Repository) GetOrCreateContract(address types.Address) (contract models.Contract, err error) {
 	err = r.db.Model(models.Contract{}).
-		Where("ctr_address = ?", address).
 		FirstOrCreate(&contract, models.Contract{Address: address}).
 		Error
 	if err != nil {

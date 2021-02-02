@@ -84,3 +84,10 @@ func (p *Provider) GetAuthProvider(net models.Network) (*auth.Auth, error) {
 	}
 	return nil, fmt.Errorf("not enabled network")
 }
+
+func (p *Provider) GetNetworkContext(net models.Network) (context NetworkContext, err error) {
+	if netcont, ok := p.networks[net]; ok {
+		return netcont, nil
+	}
+	return context, fmt.Errorf("not enabled network")
+}

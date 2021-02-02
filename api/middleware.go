@@ -9,7 +9,11 @@ import (
 	"net/http"
 )
 
-const ContextUserKey = "user_address"
+const (
+	ContextUserKey           = "user_address"
+	ContextNetworkKey        = "network"
+	ContextNetworkContextKey = "network_context"
+)
 
 func (api *API) RequireJWT(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	net, err := ToNetwork(mux.Vars(r)["network"])
@@ -48,4 +52,29 @@ func (api *API) RequireJWT(w http.ResponseWriter, r *http.Request, next http.Han
 	r = r.WithContext(ctx)
 
 	next(w, r)
+}
+
+func (api *API) CheckAndLoadNetwork(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	net, err := ToNetwork(mux.Vars(r)["network"])
+	if err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "network"))
+		return
+	}
+
+	networkContext, err := api.provider.GetNetworkContext(net)
+	if err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, err.Error()))
+		return
+	}
+
+	ctx := r.Context()
+	ctx = context.WithValue(ctx, ContextNetworkKey, net)
+	ctx = context.WithValue(ctx, ContextNetworkContextKey, networkContext)
+	r = r.WithContext(ctx)
+
+	next(w, r)
+}
+
+func (api *API) OwnerAllowance(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	//TODO add user contract allowance
 }

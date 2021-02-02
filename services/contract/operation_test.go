@@ -18,7 +18,7 @@ func Test_BuildContractSignPayload(t *testing.T) {
 	testCases := []struct {
 		name      string
 		args      args
-		expResult string
+		expResult types.Payload
 		wantErr   bool
 	}{
 		{
@@ -33,6 +33,7 @@ func Test_BuildContractSignPayload(t *testing.T) {
 				},
 			},
 
+			//Left Left Left Left
 			expResult: "05070707070a000000049caecab90a00000016017f1df41f643db8039663fd5eb3b025e07efbaf3d0007070000050505050505050507070a000000160000c06b6aa5308a9a89a628ebb8234d5055bf9ba1d000b20f",
 			wantErr:   false,
 		},
@@ -46,7 +47,7 @@ func Test_BuildContractSignPayload(t *testing.T) {
 					To:         "tz3Mo3gHekQhCmykfnC58ecqJLXrjMKzkF2Q",
 				},
 			},
-			//Left Left
+			//Left Left Left Right
 			expResult: "05070707070a000000049caecab90a00000016017f1df41f643db8039663fd5eb3b025e07efbaf3d0007070000050505050505050805090a0000001502101368afffeb1dc3c089facbbe23f5c30b787ce9",
 			wantErr:   false,
 		},
@@ -161,7 +162,7 @@ func Test_BuildContractSignPayload(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
 			got, gotErr := BuildContractSignPayload(test.args.networkID, test.args.counter, test.args.operationParams)
-			if test.wantErr && gotErr == nil {
+			if test.wantErr != (gotErr != nil) {
 				t.Errorf("wantErr: %t | results %s == %s | err: %v", test.wantErr, got, test.expResult, gotErr)
 			}
 			if !test.wantErr && !reflect.DeepEqual(got, test.expResult) {
