@@ -1,0 +1,181 @@
+swagger: "2.0"
+info:
+  title: TezosSign API
+  version: 0.0.1
+
+
+securityDefinitions:
+  Bearer:
+    type: apiKey
+    name: Authorization
+    in: header
+  # security:
+  #   - Bearer: []
+paths:
+  '/{network}/auth/request':
+    post:
+      operationId: createAuthRequest
+      summary: Create auth request
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: network
+          required: true
+          type : string
+        - in: body
+          name: user
+          description: The user to create.
+          schema:
+            $ref: '#/definitions/AuthRequestBody'
+      responses:
+        '200':
+          description: Auth request created
+          schema:
+            $ref: '#/definitions/AuthRequestResp'
+        '400':
+          description: Bad request
+        '500':
+          description: Not Found
+      tags:
+        - Auth
+  '/{network}/auth':
+    post:
+      operationId: authBySignedRequest
+      summary: Auth by signed request
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: network
+          required: true
+          type : string
+        - in: body
+          name: user
+          description: Signed request
+          schema:
+            $ref: '#/definitions/AuthBody'
+      responses:
+        '200':
+          description: Auth tokens
+          schema:
+            $ref: '#/definitions/AuthResp'
+        '400':
+          description: Bad request
+        '500':
+          description: Not Found
+      tags:
+        - Auth
+  '/{network}/auth/refresh':
+    post:
+      operationId: refreshAuthTokens
+      summary: Refresh auth tokens
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: network
+          required: true
+          type : string
+        - in: body
+          name: user
+          description: Refresh token
+          schema:
+            $ref: '#/definitions/RefreshBody'
+      responses:
+        '200':
+          description: Auth tokens
+          schema:
+            $ref: '#/definitions/RefreshResp'
+        '400':
+          description: Bad request
+        '500':
+          description: Not Found
+      tags:
+        - Auth
+  '/{network}/auth/restore':
+    get:
+      operationId: restoreAuthTokens
+      summary: Restore auth request
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: network
+          required: true
+          type : string
+      responses:
+        '200':
+          description: Auth request created
+          schema:
+            $ref: '#/definitions/RestoreResp'
+        '400':
+          description: Bad request
+        '500':
+          description: Not Found
+      tags:
+        - Auth
+  '/{network}/logout':
+    get:
+      operationId: logout
+      summary: Logout request
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: network
+          required: true
+          type : string
+      responses:
+        '200':
+          description: Logout
+          schema:
+            type: object
+            required:
+              - message
+            properties:
+              message:
+                type: string
+        '400':
+          description: Bad request
+        '500':
+          description: Not Found
+      tags:
+        - Auth
+definitions:
+  AuthRequestBody:
+    properties:
+      address:
+        description: tz address
+        type: string
+    required:
+      - address
+  AuthRequestResp:
+    properties:
+      token:
+        description: auth token for sign
+        type: string
+    required:
+      - address
+  AuthBody:
+    properties:
+      payload:
+        type: string
+      pub_key:
+        type: string
+      signature:
+        type: string
+  AuthResp:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+  RefreshBody:
+    properties:
+      refresh_token:
+        type: string
+  RefreshResp:
+    $ref: '#/definitions/AuthResp'
+  RestoreResp:
+    $ref: '#/definitions/AuthResp'
