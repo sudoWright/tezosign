@@ -19,8 +19,6 @@ func (s Signature) Validate() (err error) {
 	default:
 		return fmt.Errorf("wrong signature prefix")
 	}
-
-	return nil
 }
 
 func (s Signature) String() string {

@@ -117,7 +117,7 @@ func (api *API) ContractInfo(w http.ResponseWriter, r *http.Request) {
 		//Unwrap apperror
 		err, IsAppErr := apperrors.Unwrap(err)
 		if !IsAppErr {
-			log.Error("BuildContractOperationToSign error: ", zap.Error(err))
+			log.Error("ContractInfo error: ", zap.Error(err))
 		}
 
 		response.JsonError(w, err)

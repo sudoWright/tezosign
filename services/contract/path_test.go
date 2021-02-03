@@ -33,7 +33,7 @@ func Test_BuildMichelsonPath(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
 			param := &micheline.Prim{}
-			param.UnmarshalJSON([]byte(test.args.actionParams))
+			_ = param.UnmarshalJSON([]byte(test.args.actionParams))
 			got, gotErr := buildMichelsonPath(test.args.actionType, param)
 			if test.wantErr != (gotErr != nil) {
 				t.Errorf("wantErr: %t | err: %v", test.wantErr, gotErr)

@@ -38,11 +38,7 @@ type AuthTokenResp struct {
 }
 
 func (r AuthToken) Expired() bool {
-	if r.ExpiresAt.Before(time.Now()) {
-		return true
-	}
-
-	return false
+	return r.ExpiresAt.Before(time.Now())
 }
 
 type AuthSignature struct {

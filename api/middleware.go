@@ -9,10 +9,12 @@ import (
 	"net/http"
 )
 
+type ContextKey string
+
 const (
-	ContextUserKey           = "user_address"
-	ContextNetworkKey        = "network"
-	ContextNetworkContextKey = "network_context"
+	ContextUserKey           ContextKey = "user_address"
+	ContextNetworkKey        ContextKey = "network"
+	ContextNetworkContextKey ContextKey = "network_context"
 )
 
 func (api *API) RequireJWT(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {

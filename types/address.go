@@ -19,7 +19,7 @@ func (a Address) Validate() (err error) {
 	}
 
 	//Check that address
-	if a[:2] != accountPrefix && contractPrefix != contractPrefix {
+	if a[:2] != accountPrefix && a[:2] != contractPrefix {
 		return fmt.Errorf("address format")
 	}
 

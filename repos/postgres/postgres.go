@@ -14,10 +14,6 @@ import (
 
 const migrationsDir = "./repos/migrations"
 
-type DAO struct {
-	db *gorm.DB
-}
-
 func New(params types.DBParams) (*gorm.DB, error) {
 	d, err := newConn(params)
 	if err != nil {

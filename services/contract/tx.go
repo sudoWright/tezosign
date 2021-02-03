@@ -28,7 +28,6 @@ func BuildFullTxPayload(payload types.Payload, signatures []types.Signature) (re
 	}
 
 	signaturesParam := make([]*micheline.Prim, len(signatures))
-	marshaledSig := make([]byte, 0, 33)
 	for i := range signatures {
 		if signatures[i].IsEmpty() {
 			signaturesParam[i] = &micheline.Prim{
@@ -38,7 +37,7 @@ func BuildFullTxPayload(payload types.Payload, signatures []types.Signature) (re
 			continue
 		}
 
-		marshaledSig, err = signatures[i].MarshalBinary()
+		marshaledSig, err := signatures[i].MarshalBinary()
 		if err != nil {
 			return resp, entrypoint, err
 		}

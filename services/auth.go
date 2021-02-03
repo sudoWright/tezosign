@@ -30,6 +30,9 @@ func (s *ServiceFacade) AuthRequest(req models.AuthTokenReq) (resp models.AuthTo
 	reqUUID := uuid.NewV4()
 
 	binaryAddress, err := req.Address.MarshalBinary()
+	if err != nil {
+		return resp, apperrors.NewWithDesc(apperrors.ErrBadParam, "address")
+	}
 
 	hash := blake2b.Sum256(append(binaryAddress, reqUUID.Bytes()...))
 	token := hex.EncodeToString(hash[:])

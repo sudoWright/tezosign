@@ -36,7 +36,7 @@ paths:
         '400':
           description: Bad request
         '500':
-          description: Not Found
+          description: Internal server error
       tags:
         - Auth
   '/{network}/auth':
@@ -63,7 +63,7 @@ paths:
         '400':
           description: Bad request
         '500':
-          description: Not Found
+          description: Internal server error
       tags:
         - Auth
   '/{network}/auth/refresh':
@@ -90,7 +90,7 @@ paths:
         '400':
           description: Bad request
         '500':
-          description: Not Found
+          description: Internal server error
       tags:
         - Auth
   '/{network}/auth/restore':
@@ -112,7 +112,7 @@ paths:
         '400':
           description: Bad request
         '500':
-          description: Not Found
+          description: Internal server error
       tags:
         - Auth
   '/{network}/logout':
@@ -139,9 +139,243 @@ paths:
         '400':
           description: Bad request
         '500':
-          description: Not Found
+          description: Internal server error
       tags:
         - Auth
+  '/{network}/contract/storage/init':
+    post:
+      operationId: contractStorageInit
+      summary: Contract init storage
+      produces:
+        - application/json
+      security:
+        - Bearer: []
+      parameters:
+        - in: path
+          name: network
+          required: true
+          type : string
+        - in: body
+          name: user
+          schema:
+            $ref: '#/definitions/StorageInitBody'
+      responses:
+        '200':
+          description: Contract storage json
+          schema:
+            type: string
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+      tags:
+        - Contract
+  '/{network}/contract/{contract_id}/info':
+    get:
+      operationId: contractInfo
+      summary: Contract init storage
+      produces:
+        - application/json
+      security:
+        - Bearer: []
+      parameters:
+        - in: path
+          name: network
+          required: true
+          type : string
+        - in: path
+          name: contract_id
+          required: true
+          type : string
+      responses:
+        '200':
+          description: Contract info
+          schema:
+            $ref: '#/definitions/ContractInfoResp'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+      tags:
+        - Contract
+  '/{network}/contract/operation':
+    post:
+      operationId: contractOperation
+      summary: Create contract operation
+      produces:
+        - application/json
+      security:
+        - Bearer: []
+      parameters:
+        - in: path
+          name: network
+          required: true
+          type : string
+        - in: body
+          name: user
+          schema:
+            $ref: '#/definitions/ContractOperationBody'
+      responses:
+        '200':
+          description: Contract operation
+          schema:
+            $ref: '#/definitions/ContractOperationResp'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+      tags:
+        - Contract
+  '/{network}/contract/{contract_id}/storage/update':
+    post:
+      operationId: contractStorageUpdate
+      summary: Contract storage update operation
+      produces:
+        - application/json
+      security:
+        - Bearer: []
+      parameters:
+        - in: path
+          name: network
+          required: true
+          type : string
+        - in: path
+          name: contract_id
+          required: true
+          type : string
+        - in: body
+          name: user
+          schema:
+            $ref: '#/definitions/StorageInitBody'
+      responses:
+        '200':
+          description: Contract update operation
+          schema:
+            $ref: '#/definitions/ContractOperationResp'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+      tags:
+        - Contract
+  '/{network}/contract/operation/{operation_id}/payload':
+    get:
+      operationId: buildSignPayload
+      summary: Operation payload for sign
+      produces:
+        - application/json
+      security:
+        - Bearer: []
+      parameters:
+        - in: path
+          name: network
+          required: true
+          type : string
+        - in: path
+          name: operation_id
+          required: true
+          type : string
+      responses:
+        '200':
+          description: Hexed payload
+          schema:
+            $ref: '#/definitions/OperationPayloadResp'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+      tags:
+        - Contract
+  '/{network}/contract/operation/{operation_id}/signature':
+    post:
+      operationId: saveSignedPayload
+      summary: Save payload signature
+      produces:
+        - application/json
+      security:
+        - Bearer: []
+      parameters:
+        - in: path
+          name: network
+          required: true
+          type : string
+        - in: path
+          name: operation_id
+          required: true
+          type : string
+        - in: body
+          name: user
+          schema:
+            $ref: '#/definitions/OperationSignatute'
+      responses:
+        '200':
+          description: Hexed payload
+          schema:
+            $ref: '#/definitions/OperationSignatureResp'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+      tags:
+        - Contract
+  '/{network}/contract/operation/{operation_id}/build':
+    get:
+      operationId: buildOperationWithSignatures
+      summary: Build operation with signatures
+      produces:
+        - application/json
+      security:
+        - Bearer: []
+      parameters:
+        - in: path
+          name: network
+          required: true
+          type : string
+        - in: path
+          name: operation_id
+          required: true
+          type : string
+      responses:
+        '200':
+          description: Hexed payload
+          schema:
+            $ref: '#/definitions/BuildOperationResp'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+      tags:
+        - Contract
+  '/{network}/contract/{contract_id}/operations':
+    get:
+      operationId: contractOperations
+      summary: Contract operations
+      produces:
+        - application/json
+      security:
+        - Bearer: []
+      parameters:
+        - in: path
+          name: network
+          required: true
+          type : string
+        - in: path
+          name: contract_id
+          required: true
+          type : string
+      responses:
+        '200':
+          description: Hexed payload
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/ContractOperationResp'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+      tags:
+        - Contract
 definitions:
   AuthRequestBody:
     properties:
@@ -156,7 +390,7 @@ definitions:
         description: auth token for sign
         type: string
     required:
-      - address
+      - token
   AuthBody:
     properties:
       payload:
@@ -165,17 +399,118 @@ definitions:
         type: string
       signature:
         type: string
+    required:
+      - payload
+      - pub_key
+      - signature
   AuthResp:
     properties:
       access_token:
         type: string
       refresh_token:
         type: string
+    required:
+      - access_token
+      - refresh_token
   RefreshBody:
     properties:
       refresh_token:
         type: string
+    required:
+      - refresh_token
   RefreshResp:
     $ref: '#/definitions/AuthResp'
   RestoreResp:
     $ref: '#/definitions/AuthResp'
+  StorageInitBody:
+    properties:
+      threshold:
+        type: integer
+      addresses:
+        type: array
+        items:
+          type: string
+    required:
+      - threshold
+      - addresses
+  Owner:
+    properties:
+      pub_key:
+        type: string
+      address:
+        type: string
+  ContractInfoResp:
+    properties:
+      address:
+        type: string
+      balance:
+        type: integer
+      threshold:
+        type: integer
+      counter:
+        type: integer
+      owners:
+        type: array
+        items:
+          $ref: '#/definitions/Owner'
+  ContractOperationBody:
+    properties:
+      contract_id:
+        type: string
+      type:
+        type: string
+      amount:
+        type: integer
+      to:
+        type: string
+      from:
+        type: string
+      asset_id:
+        type: string
+      # Custom michelson bytes or JSON payload
+      custom_payload:
+        type: string
+    required:
+      - contract_id
+  ContractOperationResp:
+    properties:
+      operation_id:
+        type: string
+      nonce:
+        type: integer
+      status:
+        type: string
+      created_at:
+        type: integer
+      operation_info:
+        $ref: '#/definitions/ContractOperationBody'
+      network_id:
+        type: string
+  OperationPayloadResp:
+    properties:
+      operation_id:
+        type: string
+      payload:
+        type: string
+  OperationSignatute:
+    properties:
+      contract_id:
+        type: string
+      type:
+        type: string
+      pub_key:
+        type: string
+      signature:
+        type: string
+  OperationSignatureResp:
+    properties:
+      sig_count:
+        type: integer
+      threshold:
+        type: integer
+  BuildOperationResp:
+    properties:
+      entrypoint:
+        type: string
+      value:
+        type: string

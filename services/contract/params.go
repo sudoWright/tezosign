@@ -158,7 +158,9 @@ func buildActionParams(operationParams models.ContractOperationRequest) (actionP
 		} else {
 			err = actionParams.UnmarshalJSON([]byte(operationParams.CustomPayload.String()))
 		}
-
+		if err != nil {
+			return actionParams, err
+		}
 	default:
 		return actionParams, fmt.Errorf("unknown action")
 	}

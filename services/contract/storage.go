@@ -91,6 +91,8 @@ func NewContractStorageContainer(rawStorage string) (c ContractStorageContainer,
 		return c, err
 	}
 
+	c.storage = storage
+
 	//Validate storage params
 	//TODO make errors wrap
 	if storage.OpCode != micheline.D_PAIR && len(storage.Args) != 2 {

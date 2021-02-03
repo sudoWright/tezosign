@@ -29,10 +29,10 @@ func (p Payload) String() string {
 }
 
 func (p Payload) HasPrefix() bool {
-	if p[0:2] == hexPrefix {
-		return true
+	if len(p) < 2 {
+		return false
 	}
-	return false
+	return p[0:2] == hexPrefix
 }
 
 func (p Payload) WithoutPrefix() string {

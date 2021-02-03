@@ -27,8 +27,6 @@ func (a PubKey) Validate() (err error) {
 	default:
 		return fmt.Errorf("wrong pubKey prefix")
 	}
-
-	return nil
 }
 
 func (a PubKey) MarshalBinary() ([]byte, error) {
@@ -65,7 +63,7 @@ const PubKeyHashLen = 20
 func (a PubKey) Address() (Address, error) {
 	pubKeyPrefix, pubKeyBytes, err := tezosprotocol.Base58CheckDecode(string(a))
 	if err != nil {
-
+		return "", err
 	}
 
 	var addressPrefix tezosprotocol.Base58CheckPrefix
