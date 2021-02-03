@@ -4,7 +4,7 @@ import (
 	"blockwatch.cc/tzindex/micheline"
 	"fmt"
 	"math/big"
-	"msig/models"
+	"tezosign/models"
 )
 
 func buildActionParams(operationParams models.ContractOperationRequest) (actionParams *micheline.Prim, err error) {

@@ -4,7 +4,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
-	"msig/types"
+	"tezosign/types"
 )
 
 type SignatureReq struct {

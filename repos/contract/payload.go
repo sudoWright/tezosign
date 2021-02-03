@@ -3,7 +3,7 @@ package contract
 import (
 	"errors"
 	"gorm.io/gorm"
-	"msig/models"
+	"tezosign/models"
 )
 
 const PayloadsTable = "requests"

@@ -4,10 +4,10 @@ import (
 	"encoding/hex"
 	uuid "github.com/satori/go.uuid"
 	"golang.org/x/crypto/blake2b"
-	"msig/common/apperrors"
-	"msig/conf"
-	"msig/models"
-	"msig/types"
+	"tezosign/common/apperrors"
+	"tezosign/conf"
+	"tezosign/models"
+	"tezosign/types"
 	"time"
 )
 

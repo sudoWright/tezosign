@@ -2,7 +2,7 @@ package services
 
 import (
 	"context"
-	"msig/types"
+	"tezosign/types"
 )
 
 func (s *ServiceFacade) GetOperationsList(userAddress types.Address, contractID types.Address, params interface{}) (resp interface{}, err error) {

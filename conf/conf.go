@@ -2,10 +2,10 @@ package conf
 
 import (
 	log "github.com/sirupsen/logrus"
-	"msig/common/baseconf"
-	"msig/common/baseconf/types"
-	"msig/models"
-	"msig/services/rpc_client/client"
+	"tezosign/common/baseconf"
+	"tezosign/common/baseconf/types"
+	"tezosign/models"
+	"tezosign/services/rpc_client/client"
 )
 
 type (
@@ -36,7 +36,7 @@ type (
 )
 
 const (
-	Service         = "msig"
+	Service         = "tezosign"
 	TtlRefreshToken = 3 * 60 * 60 // 3 hours in seconds
 	//TtlJWT          = 1 * 60 * 60 // 1 hour in seconds
 	TtlJWT    = 30          // 1 hour in seconds

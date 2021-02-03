@@ -11,8 +11,8 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	"msig/services/rpc_client/client/chains"
-	"msig/services/rpc_client/client/contracts"
+	"tezosign/services/rpc_client/client/chains"
+	"tezosign/services/rpc_client/client/contracts"
 )
 
 // Default tezosrpc HTTP client.

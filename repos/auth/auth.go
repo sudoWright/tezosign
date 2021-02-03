@@ -3,8 +3,8 @@ package auth
 import (
 	"errors"
 	"gorm.io/gorm"
-	"msig/models"
-	"msig/types"
+	"tezosign/models"
+	"tezosign/types"
 )
 
 //go:generate mockgen -source ./auth.go -destination ./mock_auth/main.go Repo

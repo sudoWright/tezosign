@@ -5,8 +5,8 @@ import (
 	"encoding/hex"
 	"github.com/anchorageoss/tezosprotocol/v2"
 	"math/big"
-	"msig/models"
-	"msig/types"
+	"tezosign/models"
+	"tezosign/types"
 )
 
 const (

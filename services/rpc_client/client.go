@@ -3,11 +3,11 @@ package rpc_client
 import (
 	"context"
 	"encoding/json"
-	"msig/models"
-	"msig/services/rpc_client/client"
-	"msig/services/rpc_client/client/chains"
-	"msig/services/rpc_client/client/contracts"
 	"strconv"
+	"tezosign/models"
+	"tezosign/services/rpc_client/client"
+	"tezosign/services/rpc_client/client/chains"
+	"tezosign/services/rpc_client/client/contracts"
 )
 
 const headBlock = "head"

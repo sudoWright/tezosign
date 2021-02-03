@@ -1,4 +1,4 @@
-module msig
+module tezosign
 
 go 1.15
 

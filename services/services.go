@@ -2,10 +2,10 @@ package services
 
 import (
 	"context"
-	"msig/models"
-	"msig/repos/auth"
-	"msig/repos/contract"
-	"msig/types"
+	"tezosign/models"
+	"tezosign/repos/auth"
+	"tezosign/repos/contract"
+	"tezosign/types"
 )
 
 type (

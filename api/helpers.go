@@ -2,8 +2,8 @@ package api
 
 import (
 	"fmt"
-	"msig/models"
 	"strings"
+	"tezosign/models"
 )
 
 func ToNetwork(net string) (models.Network, error) {

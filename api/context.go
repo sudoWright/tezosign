@@ -1,11 +1,11 @@
 package api
 
 import (
-	"msig/common/apperrors"
-	"msig/infrustructure"
-	"msig/models"
-	"msig/types"
 	"net/http"
+	"tezosign/common/apperrors"
+	"tezosign/infrustructure"
+	"tezosign/models"
+	"tezosign/types"
 )
 
 //Get context values after middleware

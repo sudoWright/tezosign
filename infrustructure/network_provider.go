@@ -2,13 +2,13 @@ package infrustructure
 
 import (
 	"fmt"
-	"msig/repos/postgres"
-	"msig/services/auth"
-	"msig/services/rpc_client"
+	"tezosign/repos/postgres"
+	"tezosign/services/auth"
+	"tezosign/services/rpc_client"
 
 	"gorm.io/gorm"
-	"msig/conf"
-	"msig/models"
+	"tezosign/conf"
+	"tezosign/models"
 )
 
 type NetworkContext struct {

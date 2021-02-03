@@ -4,14 +4,14 @@ import (
 	"encoding/json"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
-	"msig/api/response"
-	"msig/common/apperrors"
-	"msig/common/log"
-	"msig/models"
-	"msig/repos"
-	"msig/services"
-	"msig/types"
 	"net/http"
+	"tezosign/api/response"
+	"tezosign/common/apperrors"
+	"tezosign/common/log"
+	"tezosign/models"
+	"tezosign/repos"
+	"tezosign/services"
+	"tezosign/types"
 )
 
 func (api *API) ContractStorageInit(w http.ResponseWriter, r *http.Request) {

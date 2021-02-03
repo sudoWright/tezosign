@@ -8,12 +8,12 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/securecookie"
 	uuid "github.com/satori/go.uuid"
-	"msig/common/apperrors"
-	"msig/conf"
-	"msig/models"
-	"msig/types"
 	"net/http"
 	"strings"
+	"tezosign/common/apperrors"
+	"tezosign/conf"
+	"tezosign/models"
+	"tezosign/types"
 	"time"
 )
 

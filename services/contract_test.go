@@ -2,8 +2,8 @@ package services
 
 import (
 	"encoding/hex"
-	"msig/types"
 	"testing"
+	"tezosign/types"
 )
 
 func Test_verifysign(t *testing.T) {

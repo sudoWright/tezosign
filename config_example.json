@@ -1,7 +1,7 @@
 {
   "LogLevel":"debug",
   "API":{
-    "ListenOnPort":8080,
+    "ListenOnPort":9090,
     "CORSAllowedOrigins":[
       "*"
     ]
@@ -15,7 +15,7 @@
         "Port": 5432,
         "User": "user",
         "Password": "password",
-        "Database": "msig_db",
+        "Database": "tezosign_db",
         "Schema": "msig",
         "DebugMode": false
       },

@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"errors"
 	"gorm.io/gorm"
-	"msig/models"
-	"msig/types"
+	"tezosign/models"
+	"tezosign/types"
 )
 
 //go:generate mockgen -source ./contract.go -destination ./mock_contract/main.go Repo

@@ -3,9 +3,9 @@ package modules
 import (
 	"fmt"
 	"go.uber.org/zap"
-	"msig/common/log"
 	"os"
 	"sync"
+	"tezosign/common/log"
 	"time"
 )
 

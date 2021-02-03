@@ -1,9 +1,9 @@
 package contract
 
 import (
-	"msig/types"
 	"reflect"
 	"testing"
+	"tezosign/types"
 )
 
 func Test_BuildContractStorage(t *testing.T) {

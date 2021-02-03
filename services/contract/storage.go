@@ -4,7 +4,7 @@ import (
 	"blockwatch.cc/tzindex/micheline"
 	"fmt"
 	"math/big"
-	"msig/types"
+	"tezosign/types"
 )
 
 //Initial contract storage zero counter

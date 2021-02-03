@@ -1,7 +1,7 @@
 package models
 
 import (
-	"msig/types"
+	"tezosign/types"
 	"time"
 )
 

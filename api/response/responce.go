@@ -2,8 +2,8 @@ package response
 
 import (
 	"encoding/json"
-	"msig/common/apperrors"
 	"net/http"
+	"tezosign/common/apperrors"
 )
 
 // Json writes to ResponseWriter a single JSON-object

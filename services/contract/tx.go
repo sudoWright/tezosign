@@ -3,7 +3,7 @@ package contract
 import (
 	"blockwatch.cc/tzindex/micheline"
 	"fmt"
-	"msig/types"
+	"tezosign/types"
 )
 
 func BuildFullTxPayload(payload types.Payload, signatures []types.Signature) (resp []byte, entrypoint string, err error) {

@@ -13,10 +13,10 @@ import (
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"golang.org/x/crypto/blake2b"
 	"math/big"
-	"msig/common/apperrors"
-	"msig/models"
-	"msig/services/contract"
-	"msig/types"
+	"tezosign/common/apperrors"
+	"tezosign/models"
+	"tezosign/services/contract"
+	"tezosign/types"
 	"time"
 )
 

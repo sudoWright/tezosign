@@ -1,9 +1,9 @@
 package api
 
 import (
-	"msig/api/response"
-	"msig/conf"
 	"net/http"
+	"tezosign/api/response"
+	"tezosign/conf"
 )
 
 func (api *API) Index(w http.ResponseWriter, r *http.Request) {

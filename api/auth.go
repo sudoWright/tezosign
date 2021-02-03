@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
-	"msig/api/response"
-	"msig/common/apperrors"
-	"msig/conf"
-	"msig/models"
-	"msig/repos"
-	"msig/services"
 	"net/http"
+	"tezosign/api/response"
+	"tezosign/common/apperrors"
+	"tezosign/conf"
+	"tezosign/models"
+	"tezosign/repos"
+	"tezosign/services"
 )
 
 func (api *API) AuthRequest(w http.ResponseWriter, r *http.Request) {

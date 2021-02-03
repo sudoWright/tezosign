@@ -3,10 +3,10 @@ package api
 import (
 	"context"
 	"github.com/gorilla/mux"
-	"msig/api/response"
-	"msig/common/apperrors"
-	"msig/types"
 	"net/http"
+	"tezosign/api/response"
+	"tezosign/common/apperrors"
+	"tezosign/types"
 )
 
 type ContextKey string

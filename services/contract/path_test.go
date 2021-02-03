@@ -2,9 +2,9 @@ package contract
 
 import (
 	"blockwatch.cc/tzindex/micheline"
-	"msig/models"
 	"reflect"
 	"testing"
+	"tezosign/models"
 )
 
 func Test_BuildMichelsonPath(t *testing.T) {

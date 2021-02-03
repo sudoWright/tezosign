@@ -9,7 +9,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"msig/common/baseconf/types"
+	"tezosign/common/baseconf/types"
 )
 
 const migrationsDir = "./repos/migrations"

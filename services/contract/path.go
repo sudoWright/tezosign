@@ -3,7 +3,7 @@ package contract
 import (
 	"blockwatch.cc/tzindex/micheline"
 	"fmt"
-	"msig/models"
+	"tezosign/models"
 )
 
 var (

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
-	"msig/repos/auth"
-	"msig/repos/contract"
+	"tezosign/repos/auth"
+	"tezosign/repos/contract"
 )
 
 // Provider is the repository provider.

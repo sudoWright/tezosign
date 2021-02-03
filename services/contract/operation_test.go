@@ -1,10 +1,10 @@
 package contract
 
 import (
-	"msig/models"
-	"msig/types"
 	"reflect"
 	"testing"
+	"tezosign/models"
+	"tezosign/types"
 )
 
 //TODO Add negative cases
