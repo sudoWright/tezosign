@@ -5,9 +5,6 @@ import (
 	"crypto/x509"
 	"encoding/hex"
 	"fmt"
-	"github.com/dgrijalva/jwt-go"
-	"github.com/gorilla/securecookie"
-	uuid "github.com/satori/go.uuid"
 	"net/http"
 	"strings"
 	"tezosign/common/apperrors"
@@ -15,6 +12,10 @@ import (
 	"tezosign/models"
 	"tezosign/types"
 	"time"
+
+	"github.com/dgrijalva/jwt-go"
+	"github.com/gorilla/securecookie"
+	uuid "github.com/satori/go.uuid"
 )
 
 type Auth struct {
@@ -86,7 +87,6 @@ func (a *Auth) generateAccessToken(address types.Address) (accessToken string, e
 		"exp":             time.Now().Add(time.Second * conf.TtlJWT).Unix(),
 	})
 
-	//json.Number(strconv.FormatInt(, 10))
 	accessToken, err = token.SignedString(a.privateKey)
 	if err != nil {
 		return "", err

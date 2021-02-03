@@ -3,14 +3,12 @@ info:
   title: TezosSign API
   version: 0.0.1
 
-
 securityDefinitions:
   Bearer:
     type: apiKey
     name: Authorization
     in: header
-  # security:
-  #   - Bearer: []
+
 paths:
   '/{network}/auth/request':
     post:
