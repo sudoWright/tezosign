@@ -1,11 +1,12 @@
 package conf
 
 import (
-	log "github.com/sirupsen/logrus"
 	"tezosign/common/baseconf"
 	"tezosign/common/baseconf/types"
 	"tezosign/models"
 	"tezosign/services/rpc_client/client"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type (
@@ -38,9 +39,8 @@ type (
 const (
 	Service         = "tezosign"
 	TtlRefreshToken = 3 * 60 * 60 // 3 hours in seconds
-	//TtlJWT          = 1 * 60 * 60 // 1 hour in seconds
-	TtlJWT    = 30          // 1 hour in seconds
-	TtlCookie = 3 * 60 * 60 // in seconds
+	TtlJWT          = 1 * 60 * 60 // 1 hour in seconds
+	TtlCookie       = 3 * 60 * 60 // in seconds
 )
 
 func NewFromFile(cfgFile *string) (cfg Config, err error) {

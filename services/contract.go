@@ -7,17 +7,18 @@ import (
 	"crypto/ed25519"
 	"crypto/md5"
 	"fmt"
-	"github.com/anchorageoss/tezosprotocol/v2"
-	"github.com/btcsuite/btcd/btcec"
-	"github.com/pkg/errors"
-	"github.com/tendermint/tendermint/crypto/secp256k1"
-	"golang.org/x/crypto/blake2b"
 	"math/big"
 	"tezosign/common/apperrors"
 	"tezosign/models"
 	"tezosign/services/contract"
 	"tezosign/types"
 	"time"
+
+	"github.com/anchorageoss/tezosprotocol/v2"
+	"github.com/btcsuite/btcd/btcec"
+	"github.com/pkg/errors"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
+	"golang.org/x/crypto/blake2b"
 )
 
 const maxAddressesNum = 20
@@ -32,6 +33,7 @@ func (s *ServiceFacade) BuildContractInitStorage(req models.ContractStorageReque
 		return nil, apperrors.New(apperrors.ErrBadParam, "addresses num")
 	}
 
+	//Add native support of pubkeys
 	pubKeys, err := s.getPubKeysByAddresses(req.Threshold, req.Addresses)
 	if err != nil {
 		return nil, err
@@ -87,7 +89,7 @@ func (s *ServiceFacade) getPubKeysByAddresses(threshold uint, addresses []types.
 
 	for i := range addresses {
 		//TODO probably use indexed db
-		pubKey, err = s.rpcClient.ManagerKey(context.Background(), string(addresses[i]))
+		pubKey, err = s.rpcClient.ManagerKey(context.Background(), addresses[i].String())
 		if err != nil {
 			return
 		}
