@@ -6,15 +6,17 @@ import (
 	"tezosign/services/auth"
 	"tezosign/services/rpc_client"
 
-	"gorm.io/gorm"
 	"tezosign/conf"
 	"tezosign/models"
+
+	"gorm.io/gorm"
 )
 
 type NetworkContext struct {
-	Db     *gorm.DB
-	Auth   *auth.Auth
-	Client *rpc_client.Tezos
+	Db        *gorm.DB
+	IndexerDB *gorm.DB
+	Auth      *auth.Auth
+	Client    *rpc_client.Tezos
 }
 
 type Provider struct {
@@ -32,6 +34,11 @@ func New(configs []conf.Network) (*Provider, error) {
 			return nil, err
 		}
 
+		indexerDb, err := postgres.New(configs[i].IndexerParams)
+		if err != nil {
+			return nil, err
+		}
+
 		rpcClient := rpc_client.New(configs[i].NodeRpc, configs[i].Name, configs[i].Name != models.NetworkMain)
 
 		authProvider, err := auth.NewAuthProvider(configs[i].Auth, configs[i].Name)
@@ -40,9 +47,10 @@ func New(configs []conf.Network) (*Provider, error) {
 		}
 
 		provider.networks[configs[i].Name] = NetworkContext{
-			Db:     db,
-			Auth:   authProvider,
-			Client: rpcClient,
+			Db:        db,
+			IndexerDB: indexerDb,
+			Auth:      authProvider,
+			Client:    rpcClient,
 		}
 	}
 	return provider, nil
@@ -51,6 +59,12 @@ func New(configs []conf.Network) (*Provider, error) {
 func (p *Provider) Close() {
 	for _, v := range p.networks {
 		sqlDB, err := v.Db.DB()
+		if err != nil {
+			return
+		}
+		sqlDB.Close()
+
+		sqlDB, err = v.IndexerDB.DB()
 		if err != nil {
 			return
 		}
@@ -67,6 +81,13 @@ func (p *Provider) EnableTraceLevel() {
 func (p *Provider) GetDb(net models.Network) (*gorm.DB, error) {
 	if netcont, ok := p.networks[net]; ok {
 		return netcont.Db, nil
+	}
+	return nil, fmt.Errorf("not enabled network")
+}
+
+func (p *Provider) GetIndexerDb(net models.Network) (*gorm.DB, error) {
+	if netcont, ok := p.networks[net]; ok {
+		return netcont.IndexerDB, nil
 	}
 	return nil, fmt.Errorf("not enabled network")
 }

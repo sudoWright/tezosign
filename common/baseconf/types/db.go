@@ -11,6 +11,7 @@ type DBParams struct {
 	Database          string
 	Schema            string
 	DebugMode         bool
+	MakeMigrations    bool
 	MaxOpenConns      int
 	MaxIdleConns      int
 	ConnMaxLifetimeMS uint64

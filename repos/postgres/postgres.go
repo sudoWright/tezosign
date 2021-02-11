@@ -3,13 +3,14 @@ package postgres
 import (
 	"database/sql"
 	"fmt"
+	"tezosign/common/baseconf/types"
+
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database"
 	postgresMigrate "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"tezosign/common/baseconf/types"
 )
 
 const migrationsDir = "./repos/migrations"
@@ -25,16 +26,17 @@ func New(params types.DBParams) (*gorm.DB, error) {
 		return nil, err
 	}
 
-	err = makeMigration(sqlDB, migrationsDir, params.Database, params.Schema)
-	if err != nil {
-		return nil, err
+	if params.MakeMigrations {
+		err = makeMigration(sqlDB, migrationsDir, params.Database, params.Schema)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return d, nil
 }
 
 func newConn(params types.DBParams) (*gorm.DB, error) {
-
 	sqlDB, err := sql.Open("postgres", fmt.Sprintf("postgresql://%s:%s@%s:%d/%s?sslmode=disable&search_path=%s", params.User, params.Password, params.Host, params.Port, params.Database, params.Schema))
 	if err != nil {
 		return nil, err

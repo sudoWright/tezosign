@@ -13,6 +13,7 @@ type (
 	Config struct {
 		API      API
 		LogLevel string
+		Cron     Cron
 		Networks []Network
 	}
 
@@ -22,6 +23,10 @@ type (
 		IsProtocolHttps    bool
 	}
 
+	Cron struct {
+		Operations int64
+	}
+
 	Auth struct {
 		AuthKey         string
 		SessionHashKey  string
@@ -29,10 +34,11 @@ type (
 	}
 
 	Network struct {
-		Name    models.Network
-		Params  types.DBParams
-		Auth    Auth
-		NodeRpc client.TransportConfig
+		Name          models.Network
+		Params        types.DBParams
+		IndexerParams types.DBParams
+		Auth          Auth
+		NodeRpc       client.TransportConfig
 	}
 )
 

@@ -3,12 +3,6 @@ package api
 import (
 	"context"
 	"fmt"
-	"github.com/gorilla/mux"
-	"github.com/gorilla/schema"
-	"github.com/rs/cors"
-	"github.com/urfave/negroni"
-	"go.uber.org/zap"
-	"gorm.io/gorm"
 	"net/http"
 	"tezosign/common/log"
 	"tezosign/conf"
@@ -17,6 +11,13 @@ import (
 	"tezosign/services/auth"
 	"tezosign/services/rpc_client"
 	"time"
+
+	"github.com/gorilla/mux"
+	"github.com/gorilla/schema"
+	"github.com/rs/cors"
+	"github.com/urfave/negroni"
+	"go.uber.org/zap"
+	"gorm.io/gorm"
 )
 
 const (
@@ -44,6 +45,7 @@ type (
 
 type NetworkContextProvider interface {
 	GetDb(models.Network) (*gorm.DB, error)
+	GetIndexerDb(net models.Network) (*gorm.DB, error)
 	GetRPCClient(net models.Network) (*rpc_client.Tezos, error)
 	GetAuthProvider(net models.Network) (*auth.Auth, error)
 	GetNetworkContext(net models.Network) (infrustructure.NetworkContext, error)

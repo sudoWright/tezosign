@@ -1,19 +1,25 @@
 package contract
 
 import (
-	"blockwatch.cc/tzindex/micheline"
 	"encoding/hex"
-	"github.com/anchorageoss/tezosprotocol/v2"
 	"math/big"
 	"tezosign/models"
 	"tezosign/types"
+
+	"blockwatch.cc/tzindex/micheline"
+	"github.com/anchorageoss/tezosprotocol/v2"
 )
 
 const (
 	TextWatermark  = 0x05
 	MainEntrypoint = "main_parameter"
-	emptyOperation = `[{"prim":"DROP"},{"prim":"NIL","args":[{"prim":"operation"}]}]`
+	emptyOperation = `[{"prim":"DROP"},{"args":[{"prim":"operation"}],"prim":"NIL"}]`
 )
+
+type Operation struct {
+	Entrypoint string          `json:"entrypoint"`
+	Value      *micheline.Prim `json:"value"`
+}
 
 func BuildContractSignPayload(networkID string, counter int64, operationParams models.ContractOperationRequest) (resp types.Payload, err error) {
 

@@ -5,6 +5,7 @@ import (
 	"tezosign/models"
 	"tezosign/repos/auth"
 	"tezosign/repos/contract"
+	"tezosign/repos/indexer"
 	"tezosign/types"
 )
 
@@ -12,11 +13,24 @@ type (
 	Service interface {
 	}
 
+	//Db transaction
+	DBTx interface {
+		Start(ctx context.Context)
+		RollbackUnlessCommitted()
+		Commit() error
+	}
+
 	// Provider is the abstract interface to get any repository.
 	Provider interface {
 		Health() error
 		GetContract() contract.Repo
 		GetAuth() auth.Repo
+
+		DBTx
+	}
+
+	IndexerProvider interface {
+		GetIndexer() indexer.Repo
 	}
 
 	RPCProvider interface {
@@ -35,19 +49,21 @@ type (
 	}
 
 	ServiceFacade struct {
-		repoProvider Provider
-		rpcClient    RPCProvider
-		auth         AuthProvider
-		net          models.Network
+		repoProvider        Provider
+		indexerRepoProvider IndexerProvider
+		rpcClient           RPCProvider
+		auth                AuthProvider
+		net                 models.Network
 	}
 )
 
-func New(rp Provider, rpcClient RPCProvider, auth AuthProvider, net models.Network) *ServiceFacade {
+func New(rp Provider, iRp IndexerProvider, rpcClient RPCProvider, auth AuthProvider, net models.Network) *ServiceFacade {
 
 	return &ServiceFacade{
-		repoProvider: rp,
-		auth:         auth,
-		rpcClient:    rpcClient,
-		net:          net,
+		repoProvider:        rp,
+		indexerRepoProvider: iRp,
+		auth:                auth,
+		rpcClient:           rpcClient,
+		net:                 net,
 	}
 }

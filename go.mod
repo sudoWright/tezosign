@@ -7,6 +7,7 @@ require (
 	github.com/anchorageoss/tezosprotocol/v2 v2.2.0
 	github.com/btcsuite/btcd v0.21.0-beta
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/echa/config v1.0.0
 	github.com/go-openapi/errors v0.19.2
 	github.com/go-openapi/runtime v0.19.3
 	github.com/go-openapi/strfmt v0.19.2
@@ -15,6 +16,7 @@ require (
 	github.com/gorilla/schema v1.2.0
 	github.com/gorilla/securecookie v1.1.1
 	github.com/pkg/errors v0.9.1
+	github.com/roylee0704/gron v0.0.0-20160621042432-e78485adab46
 	github.com/rs/cors v1.7.0
 	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.7.0

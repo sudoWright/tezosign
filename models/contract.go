@@ -51,7 +51,7 @@ type ContractOperationRequest struct {
 	Amount uint64 `json:"amount,omitempty"`
 
 	//Transfer Delegation
-	To types.Address `json:"to"`
+	To types.Address `json:"to,omitempty"`
 
 	From types.Address `json:"from,omitempty"`
 

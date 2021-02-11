@@ -3,7 +3,8 @@ create table msig.contracts
 	ctr_id serial not null
 		constraint contracts_pk
 			primary key,
-	ctr_address varchar(36) not null
+	ctr_address varchar(36) not null,
+	ctr_last_block_level int
 );
 
 create unique index contracts_address_uindex
@@ -19,14 +20,16 @@ create table msig.requests
 			references msig.contracts,
     req_hash varchar(32) not null,
 	req_status varchar default 'wait' not null,
-	req_counter int not null,
+	req_counter int,
 	req_created_at timestamp without time zone default now() not null,
     req_info text not null,
     req_network_id varchar not null,
 	req_type text not null,
--- 	New
--- 	req_operation_id varchar(51) not null,
+ 	req_operation_id varchar(51)
 );
+
+create unique index requests_req_operation_id_uindex
+	on msig.requests (req_operation_id);
 
 create table msig.signatures
 (

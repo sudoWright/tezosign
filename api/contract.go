@@ -2,8 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"github.com/gorilla/mux"
-	"go.uber.org/zap"
 	"net/http"
 	"tezosign/api/response"
 	"tezosign/common/apperrors"
@@ -12,6 +10,9 @@ import (
 	"tezosign/repos"
 	"tezosign/services"
 	"tezosign/types"
+
+	"github.com/gorilla/mux"
+	"go.uber.org/zap"
 )
 
 func (api *API) ContractStorageInit(w http.ResponseWriter, r *http.Request) {
@@ -35,7 +36,7 @@ func (api *API) ContractStorageInit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	service := services.New(repos.New(networkContext.Db), networkContext.Client, networkContext.Auth, net)
+	service := services.New(repos.New(networkContext.Db), repos.New(networkContext.IndexerDB), networkContext.Client, networkContext.Auth, net)
 
 	resp, err := service.BuildContractInitStorage(req)
 	if err != nil {
@@ -79,7 +80,7 @@ func (api *API) ContractStorageUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	service := services.New(repos.New(networkContext.Db), networkContext.Client, networkContext.Auth, net)
+	service := services.New(repos.New(networkContext.Db), repos.New(networkContext.IndexerDB), networkContext.Client, networkContext.Auth, net)
 
 	resp, err := service.BuildContractStorageUpdateOperation(user, contractID, req)
 	if err != nil {
@@ -110,7 +111,7 @@ func (api *API) ContractInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	service := services.New(repos.New(networkContext.Db), networkContext.Client, networkContext.Auth, net)
+	service := services.New(repos.New(networkContext.Db), repos.New(networkContext.IndexerDB), networkContext.Client, networkContext.Auth, net)
 
 	resp, err := service.ContractInfo(contractID)
 	if err != nil {
@@ -147,7 +148,7 @@ func (api *API) ContractOperation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	service := services.New(repos.New(networkContext.Db), networkContext.Client, networkContext.Auth, net)
+	service := services.New(repos.New(networkContext.Db),repos.New(networkContext.IndexerDB), networkContext.Client, networkContext.Auth, net)
 
 	resp, err := service.ContractOperation(user, req)
 	if err != nil {
@@ -184,7 +185,7 @@ func (api *API) OperationSignPayload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	service := services.New(repos.New(networkContext.Db), networkContext.Client, networkContext.Auth, net)
+	service := services.New(repos.New(networkContext.Db), repos.New(networkContext.IndexerDB), networkContext.Client, networkContext.Auth, net)
 
 	resp, err := service.BuildContractOperationToSign(user, operationID, payloadType)
 	if err != nil {
@@ -227,7 +228,7 @@ func (api *API) ContractOperationSignature(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	service := services.New(repos.New(networkContext.Db), networkContext.Client, networkContext.Auth, net)
+	service := services.New(repos.New(networkContext.Db), repos.New(networkContext.IndexerDB), networkContext.Client, networkContext.Auth, net)
 
 	resp, err := service.SaveContractOperationSignature(user, operationID, req)
 	if err != nil {
@@ -263,7 +264,7 @@ func (api *API) ContractOperationBuild(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	service := services.New(repos.New(networkContext.Db), networkContext.Client, networkContext.Auth, net)
+	service := services.New(repos.New(networkContext.Db), repos.New(networkContext.IndexerDB), networkContext.Client, networkContext.Auth, net)
 
 	resp, err := service.BuildContractOperation(user, operationID, payloadType)
 	if err != nil {

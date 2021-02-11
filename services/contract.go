@@ -194,7 +194,7 @@ func (s *ServiceFacade) ContractOperation(user types.Address, req models.Contrac
 	request := models.Request{
 		ContractID: contr.ID,
 		Hash:       operationID,
-		Counter:    counter,
+		Counter:    &counter,
 		Info:       req,
 		NetworkID:  chainID,
 		Status:     models.StatusPending,
@@ -256,11 +256,16 @@ func (s *ServiceFacade) BuildContractOperationToSign(user types.Address, txID st
 		return resp, apperrors.NewWithDesc(apperrors.ErrNotAllowed, "pubkey not contains in storage")
 	}
 
+	if operationReq.Counter == nil {
+		return resp, errors.New("Empty operation counter")
+	}
+
+	counter := *operationReq.Counter
 	var signPayload types.Payload
 	if payloadType == models.TypeReject {
-		signPayload, err = contract.BuildRejectSignPayload(operationReq.NetworkID, operationReq.Counter, contractModel.Address)
+		signPayload, err = contract.BuildRejectSignPayload(operationReq.NetworkID, counter, contractModel.Address)
 	} else {
-		signPayload, err = contract.BuildContractSignPayload(operationReq.NetworkID, operationReq.Counter, operationReq.Info)
+		signPayload, err = contract.BuildContractSignPayload(operationReq.NetworkID, counter, operationReq.Info)
 	}
 	if err != nil {
 		return resp, err

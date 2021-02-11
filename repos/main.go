@@ -3,10 +3,12 @@ package repos
 import (
 	"context"
 	"fmt"
-	"github.com/sirupsen/logrus"
-	"gorm.io/gorm"
 	"tezosign/repos/auth"
 	"tezosign/repos/contract"
+	"tezosign/repos/indexer"
+
+	"github.com/sirupsen/logrus"
+	"gorm.io/gorm"
 )
 
 // Provider is the repository provider.
@@ -49,6 +51,11 @@ func (u *Provider) GetContract() contract.Repo {
 
 func (u *Provider) GetAuth() auth.Repo {
 	return auth.New(u.getDB())
+}
+
+//Indexer repo should use indexer connection
+func (u *Provider) GetIndexer() indexer.Repo {
+	return indexer.New(u.getDB())
 }
 
 func (u *Provider) Start(ctx context.Context) {

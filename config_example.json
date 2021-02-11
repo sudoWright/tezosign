@@ -2,9 +2,13 @@
   "LogLevel":"debug",
   "API":{
     "ListenOnPort":9090,
+    "IsProtocolHttps": true,
     "CORSAllowedOrigins":[
       "*"
     ]
+  },
+  "Cron": {
+    "Operations": 30
   },
   "Networks":[
     {
@@ -18,6 +22,20 @@
         "Database": "tezosign_db",
         "Schema": "msig",
         "DebugMode": false
+      },
+      "IndexerParams": {
+        "Host": "127.0.0.1",
+        "Port": 5432,
+        "User": "user",
+        "Password": "password",
+        "Database": "delphi_tzkt_db",
+        "Schema": "public",
+        "DebugMode": false
+      },
+      "Auth": {
+        "AuthKey" : "HexedEcdsaPrivateKey",
+        "SessionHashKey": "Hexed128BitSecretKey",
+        "SessionBlockKey": "Hexed128BitSecretKey"
       },
       "NodeRpc": {
         "Host": "mainnet-tezos.giganode.io:443",

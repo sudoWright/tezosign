@@ -3,7 +3,6 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/mux"
 	"net/http"
 	"tezosign/api/response"
 	"tezosign/common/apperrors"
@@ -11,6 +10,8 @@ import (
 	"tezosign/models"
 	"tezosign/repos"
 	"tezosign/services"
+
+	"github.com/gorilla/mux"
 )
 
 func (api *API) AuthRequest(w http.ResponseWriter, r *http.Request) {
@@ -33,7 +34,7 @@ func (api *API) AuthRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	service := services.New(repos.New(networkContext.Db), networkContext.Client, networkContext.Auth, net)
+	service := services.New(repos.New(networkContext.Db), repos.New(networkContext.IndexerDB), networkContext.Client, networkContext.Auth, net)
 
 	resp, err := service.AuthRequest(req)
 	if err != nil {
@@ -64,7 +65,7 @@ func (api *API) Auth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	service := services.New(repos.New(networkContext.Db), networkContext.Client, networkContext.Auth, net)
+	service := services.New(repos.New(networkContext.Db), repos.New(networkContext.IndexerDB), networkContext.Client, networkContext.Auth, net)
 
 	resp, err := service.Auth(req)
 	if err != nil {
@@ -99,7 +100,7 @@ func (api *API) RefreshAuth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	service := services.New(repos.New(networkContext.Db), networkContext.Client, networkContext.Auth, net)
+	service := services.New(repos.New(networkContext.Db), repos.New(networkContext.IndexerDB), networkContext.Client, networkContext.Auth, net)
 
 	resp, err := service.RefreshAuthSession(data.RefreshToken)
 	if err != nil {
@@ -158,7 +159,7 @@ func (api *API) Logout(w http.ResponseWriter, r *http.Request) {
 
 	defer api.clearCookie(net, w)
 
-	service := services.New(repos.New(networkContext.Db), networkContext.Client, networkContext.Auth, net)
+	service := services.New(repos.New(networkContext.Db), repos.New(networkContext.IndexerDB), networkContext.Client, networkContext.Auth, net)
 
 	err = service.Logout(cookie.Value)
 	if err != nil {

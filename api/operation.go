@@ -1,8 +1,6 @@
 package api
 
 import (
-	"github.com/gorilla/mux"
-	"go.uber.org/zap"
 	"net/http"
 	"tezosign/api/response"
 	"tezosign/common/apperrors"
@@ -10,6 +8,9 @@ import (
 	"tezosign/repos"
 	"tezosign/services"
 	"tezosign/types"
+
+	"github.com/gorilla/mux"
+	"go.uber.org/zap"
 )
 
 func (api *API) ContractOperationsList(w http.ResponseWriter, r *http.Request) {
@@ -54,7 +55,8 @@ func (api *API) ContractOperationsList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	service := services.New(repos.New(db), client, nil, net)
+	//TODO add indexer db
+	service := services.New(repos.New(db), nil, client, nil, net)
 
 	list, err := service.GetOperationsList(user, contractAddress, nil)
 	if err != nil {

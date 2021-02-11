@@ -8,4 +8,7 @@ const (
 	FATransfer    ActionType = "fa_transfer"
 	StorageUpdate ActionType = "storage_update"
 	CustomPayload ActionType = "custom"
+
+	//Income transfer
+	IncomeTransfer ActionType = "income_transfer"
 )

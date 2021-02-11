@@ -3,9 +3,10 @@ package contract
 import (
 	"database/sql"
 	"errors"
-	"gorm.io/gorm"
 	"tezosign/models"
 	"tezosign/types"
+
+	"gorm.io/gorm"
 )
 
 //go:generate mockgen -source ./contract.go -destination ./mock_contract/main.go Repo
@@ -17,9 +18,13 @@ type (
 
 	Repo interface {
 		GetOrCreateContract(address types.Address) (contract models.Contract, err error)
+		UpdateContractLastOperationBlock(contractID, blockLevel uint64) (err error)
 		GetContractByID(id uint64) (contract models.Contract, err error)
+		GetContractsList(limit, offset int) (contracts []models.Contract, err error)
 		GetMaxContractPendingNone(contractID uint64) (sql.NullInt64, error)
 		SavePayload(request models.Request) error
+		UpdatePayload(request models.Request) error
+		GetPayloadByContractAndCounter(contractID uint64, counter int64) (models.Request, bool, error)
 		GetPayloadByHash(id string) (models.Request, bool, error)
 		GetPayloadsReportByContractID(id uint64) ([]models.RequestReport, error)
 		GetSignaturesByPayloadID(id uint64, signatureType models.PayloadType) ([]models.Signature, error)
@@ -91,6 +96,18 @@ func (r *Repository) GetOrCreateContract(address types.Address) (contract models
 	return contract, nil
 }
 
+func (r *Repository) UpdateContractLastOperationBlock(contractID, blockLevel uint64) (err error) {
+	err = r.db.Model(&models.Contract{ID: contractID}).
+		Updates(models.Contract{
+			LastOperationBlockLevel: blockLevel,
+		}).
+		Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (r *Repository) GetContractByID(id uint64) (contract models.Contract, err error) {
 	err = r.db.Model(models.Contract{}).
 		Where("ctr_id = ?", id).
@@ -99,6 +116,17 @@ func (r *Repository) GetContractByID(id uint64) (contract models.Contract, err e
 		return contract, err
 	}
 	return contract, nil
+}
+
+func (r *Repository) GetContractsList(limit, offset int) (contracts []models.Contract, err error) {
+	err = r.db.Model(models.Contract{}).
+		Limit(limit).
+		Offset(offset).
+		Find(&contracts).Error
+	if err != nil {
+		return contracts, err
+	}
+	return contracts, nil
 }
 
 func (r *Repository) GetMaxContractPendingNone(contractID uint64) (max sql.NullInt64, err error) {

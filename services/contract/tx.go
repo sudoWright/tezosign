@@ -1,9 +1,12 @@
 package contract
 
 import (
-	"blockwatch.cc/tzindex/micheline"
+	"errors"
 	"fmt"
+	"tezosign/models"
 	"tezosign/types"
+
+	"blockwatch.cc/tzindex/micheline"
 )
 
 func BuildFullTxPayload(payload types.Payload, signatures []types.Signature) (resp []byte, entrypoint string, err error) {
@@ -75,4 +78,29 @@ func BuildFullTxPayload(payload types.Payload, signatures []types.Signature) (re
 	}
 
 	return resp, MainEntrypoint, nil
+}
+
+func GetOperationCounter(operation Operation) (counter int64, isReject bool, err error) {
+
+	if operation.Value.OpCode != micheline.D_PAIR {
+		return counter, isReject, errors.New("Wrong input param")
+	}
+
+	if operation.Value.Args[0].OpCode != micheline.D_PAIR {
+		return counter, isReject, errors.New("Wrong operation param")
+	}
+
+	counter = operation.Value.Args[0].Args[0].Int.Int64()
+
+	customPayload, err := getMichelsonParamsByActionType(models.CustomPayload, operation.Value.Args[0].Args[1])
+	if err == nil {
+		rejectOperation, err := customPayload.MarshalJSON()
+		if err != nil {
+			return counter, isReject, err
+		}
+
+		isReject = string(rejectOperation) == emptyOperation
+	}
+
+	return counter, isReject, nil
 }

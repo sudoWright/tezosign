@@ -2,8 +2,9 @@ package contract
 
 import (
 	"errors"
-	"gorm.io/gorm"
 	"tezosign/models"
+
+	"gorm.io/gorm"
 )
 
 const PayloadsTable = "requests"
@@ -49,4 +50,33 @@ func (r *Repository) GetPayloadsReportByContractID(id uint64) (requests []models
 	}
 
 	return requests, nil
+}
+
+func (r *Repository) UpdatePayload(request models.Request) (err error) {
+	err = r.db.Model(&models.Request{ID: request.ID}).
+		Updates(models.Request{
+			Status:      request.Status,
+			OperationID: request.OperationID,
+		}).
+		Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *Repository) GetPayloadByContractAndCounter(contractID uint64, counter int64) (request models.Request, isFound bool, err error) {
+	err = r.db.
+		Table(PayloadsTable).
+		Model(models.Request{}).
+		Where("ctr_id = ? and req_counter = ?", contractID, counter).
+		First(&request).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return request, false, nil
+		}
+		return request, false, err
+	}
+
+	return request, true, nil
 }

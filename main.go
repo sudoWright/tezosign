@@ -2,13 +2,16 @@ package main
 
 import (
 	"flag"
-	"go.uber.org/zap"
 	"strings"
 	"tezosign/api"
 	"tezosign/common/log"
 	"tezosign/common/modules"
 	"tezosign/conf"
 	"tezosign/infrustructure"
+	"tezosign/services"
+
+	"github.com/roylee0704/gron"
+	"go.uber.org/zap"
 
 	"os"
 	"os/signal"
@@ -33,6 +36,20 @@ func main() {
 	if strings.EqualFold(cfg.LogLevel, log.LevelDebug) {
 		provider.EnableTraceLevel()
 	}
+
+	cron := gron.New()
+
+	for k := range cfg.Networks {
+		networkContext, err := provider.GetNetworkContext(cfg.Networks[k].Name)
+		if err != nil {
+			log.Fatal("Cron init: ", zap.Error(err))
+		}
+
+		services.AddToCron(cron, cfg, networkContext, cfg.Networks[k].Name)
+	}
+
+	cron.Start()
+	defer cron.Stop()
 
 	a := api.NewAPI(cfg, provider)
 	mds := []modules.Module{a}
