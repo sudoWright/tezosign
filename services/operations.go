@@ -10,16 +10,16 @@ import (
 	"tezosign/types"
 )
 
-func (s *ServiceFacade) GetOperationsList(userAddress types.Address, contractID types.Address, params interface{}) (resp interface{}, err error) {
+func (s *ServiceFacade) GetOperationsList(userAddress types.Address, contractID types.Address, params interface{}) (resp []models.RequestReport, err error) {
 
 	storage, err := s.getContractStorage(contractID.String())
 	if err != nil {
-		return
+		return resp, err
 	}
 
 	pubKey, err := s.rpcClient.ManagerKey(context.Background(), userAddress.String())
 	if err != nil {
-		return
+		return resp, err
 	}
 
 	_, isOwner := storage.Contains(types.PubKey(pubKey))
@@ -28,7 +28,7 @@ func (s *ServiceFacade) GetOperationsList(userAddress types.Address, contractID 
 
 	contract, err := repo.GetOrCreateContract(contractID)
 	if err != nil {
-		return
+		return resp, err
 	}
 
 	//Get pending operations

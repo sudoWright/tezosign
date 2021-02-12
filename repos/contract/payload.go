@@ -43,6 +43,7 @@ func (r *Repository) GetPayloadsReportByContractID(id uint64) (requests []models
 		Table(PayloadsTable).
 		Joins("LEFT JOIN request_json_signatures as rjs on rjs.req_id = requests.req_id").
 		Where("ctr_id = ?", id).
+		//TODO order by time
 		Order("req_id desc").
 		Find(&requests).Error
 	if err != nil {
