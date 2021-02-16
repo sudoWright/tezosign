@@ -127,7 +127,7 @@ func (s *ServiceFacade) processOperations(repo contractRepo.Repo, c models.Contr
 					//TODO probably add From To
 				},
 				NetworkID:   networkID,
-				OperationID: operations[j].OpHash,
+				OperationID: &operations[j].OpHash,
 			})
 			if err != nil {
 				return counter, err
@@ -164,7 +164,7 @@ func (s *ServiceFacade) processOperations(repo contractRepo.Repo, c models.Contr
 			payload.Status = models.StatusRejected
 		}
 
-		payload.OperationID = operations[j].OpHash
+		payload.OperationID = &operations[j].OpHash
 
 		err = repo.UpdatePayload(payload)
 		if err != nil {

@@ -30,7 +30,7 @@ type Request struct {
 	Info       ContractOperationRequest `gorm:"column:req_info" json:"operation_info"`
 	NetworkID  string                   `gorm:"column:req_network_id" json:"network_id"`
 
-	OperationID string `gorm:"column:req_operation_id" json:"tx_id,omitempty"`
+	OperationID *string `gorm:"column:req_operation_id" json:"tx_id,omitempty"`
 }
 
 type RequestReport struct {
