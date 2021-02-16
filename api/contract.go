@@ -148,7 +148,7 @@ func (api *API) ContractOperation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	service := services.New(repos.New(networkContext.Db),repos.New(networkContext.IndexerDB), networkContext.Client, networkContext.Auth, net)
+	service := services.New(repos.New(networkContext.Db), repos.New(networkContext.IndexerDB), networkContext.Client, networkContext.Auth, net)
 
 	resp, err := service.ContractOperation(user, req)
 	if err != nil {

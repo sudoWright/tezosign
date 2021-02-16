@@ -32,7 +32,7 @@ func (r *Repository) GetContractOperations(contract types.Address, blockLevel ui
 		Joins(`LEFT JOIN "Accounts" a on "TargetId" = a."Id"`).
 		Where(`"Address" = ?`, contract.String()).
 		Where(`"Level" > ?`, blockLevel).
-		Order(`"Id" asc`).
+		Order(`"TransactionOps"."Id" asc`).
 		Find(&operations).Error
 	if err != nil {
 		return operations, err
