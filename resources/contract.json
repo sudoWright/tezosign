@@ -126,7 +126,7 @@
             }
           ]
         },
-        { "prim": "DUP" },{ "prim": "CAR" },{ "prim": "SWAP"},{ "prim": "CDR" },
+        { "prim": "DUP" },{ "prim": "CAR" }, { "prim": "DIP", "args": [ [ { "prim": "CDR" } ] ] },
         {
           "prim": "IF_LEFT",
           "args": [
@@ -153,7 +153,7 @@
                 "args": [
                   [
                     { "prim": "SWAP" },
-                    { "prim": "DUP" },{ "prim": "CAR" },{ "prim": "SWAP"},{ "prim": "CDR" },
+                    { "prim": "DUP" },{ "prim": "CAR" }, { "prim": "DIP", "args": [ [ { "prim": "CDR" } ] ] },
                     { "prim": "DUP" },
                     { "prim": "SELF" },
                     { "prim": "ADDRESS" },
@@ -235,7 +235,7 @@
               { "prim": "LE" },
               { "prim": "IF", "args": [ [], [ { "prim": "PUSH", "args": [ { "prim": "string" }, { "string": "Quorum not present" } ] }, { "prim": "FAILWITH" } ] ] },
               { "prim": "IF_CONS", "args": [ [ { "prim": "FAILWITH" } ], [ { "prim": "DROP" } ] ] },
-              { "prim": "DIP", "args": [ [ { "prim": "DUP" },{ "prim": "CAR" },{ "prim": "SWAP"},{ "prim": "CDR" }, { "prim": "PUSH", "args": [ { "prim": "nat" }, { "int": "1" } ] }, { "prim": "ADD" }, { "prim": "PAIR" } ] ] },
+              { "prim": "DIP", "args": [ [ { "prim": "DUP" },{ "prim": "CAR" }, { "prim": "DIP", "args": [ [ { "prim": "CDR" } ] ] }, { "prim": "PUSH", "args": [ { "prim": "nat" }, { "int": "1" } ] }, { "prim": "ADD" }, { "prim": "PAIR" } ] ] },
               {
                 "prim": "IF_LEFT",
                 "args": [
