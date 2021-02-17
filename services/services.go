@@ -7,6 +7,8 @@ import (
 	"tezosign/repos/contract"
 	"tezosign/repos/indexer"
 	"tezosign/types"
+
+	"blockwatch.cc/tzindex/micheline"
 )
 
 type (
@@ -36,7 +38,7 @@ type (
 	RPCProvider interface {
 		ChainID(ctx context.Context) (chainID string, err error)
 		Storage(ctx context.Context, contractAddress string) (storage string, err error)
-		Script(context.Context, string) (models.BigMap, error)
+		Script(context.Context, string) (micheline.Script, error)
 		ManagerKey(ctx context.Context, address string) (pubKey string, err error)
 		Balance(ctx context.Context, address string) (balance int64, err error)
 	}

@@ -49,10 +49,21 @@ func buildMichelsonPath(actionType models.ActionType, actionParams *micheline.Pr
 func getMichelsonParamsByActionType(actionType models.ActionType, actionParams *micheline.Prim) (pathParam *micheline.Prim, err error) {
 	path, err := getPathByType(actionType)
 	if err != nil {
-		return pathParam, nil
+		return pathParam, err
 	}
 
-	pathParam = actionParams
+	pathParam, err = getParamsByPath(actionParams, path)
+	if err != nil {
+		return pathParam, err
+	}
+
+	return pathParam, nil
+}
+
+func getParamsByPath(params *micheline.Prim, path []micheline.OpCode) (pathParam *micheline.Prim, err error) {
+
+	pathParam = params
+
 	for i := range path {
 		switch path[i] {
 		case micheline.D_LEFT:

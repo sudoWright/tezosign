@@ -8,6 +8,8 @@ import (
 	"tezosign/services/rpc_client/client"
 	"tezosign/services/rpc_client/client/chains"
 	"tezosign/services/rpc_client/client/contracts"
+
+	"blockwatch.cc/tzindex/micheline"
 )
 
 const headBlock = "head"
@@ -29,7 +31,7 @@ func New(cfg client.TransportConfig, network models.Network, isTestNetwork bool)
 	}
 }
 
-func (t *Tezos) Script(ctx context.Context, contractHash string) (bm models.BigMap, err error) {
+func (t *Tezos) Script(ctx context.Context, contractHash string) (bm micheline.Script, err error) {
 	params := contracts.NewGetContractScriptParamsWithContext(ctx).WithContract(contractHash)
 	resp, err := t.client.Contracts.GetContractScript(params)
 	if err != nil {
