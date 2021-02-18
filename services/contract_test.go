@@ -29,6 +29,16 @@ func Test_verifysign(t *testing.T) {
 			expResult: "",
 			wantErr:   false,
 		},
+		{
+			name: "Ledger signature",
+			args: args{
+				payload:   "05070707070a00000004a83650210a00000016019ce13845659ff2582555ec08dc322007f6493e800007070000050505050505050507070a00000016000032bb7d0084f79711f757d66b791d5290f88eb28000a80f",
+				pubKey:    "edpkuEZ8FpnCWY2mNUpNYaF4GH3zZuCYKoNjZJPvtoKEki2ZfbFPbS",
+				signature: "edsigtYjH3GbyEQodeauFpWYq8Dfmpk5iyL4J2EFFFiZ3GMU5RY5R1Hj2hSZ1ZUqGQvueHqB98hk4dyhARWTLLFree4opMoU3Hb",
+			},
+			expResult: "",
+			wantErr:   false,
+		},
 		//TODO fix tests
 		//{
 		//	name: "Secp256k1 signature",
@@ -46,16 +56,6 @@ func Test_verifysign(t *testing.T) {
 		//		payload:   "05070707070a00000004a83650210a00000016019ce13845659ff2582555ec08dc322007f6493e800007070000050505050505050507070a00000016000032bb7d0084f79711f757d66b791d5290f88eb28000a80f",
 		//		pubKey:    "p2pk67k5frPpxhB417bhm1n3wqH3sYKerBASTYyKXTRwkeCXBUvaaSf",
 		//		signature: "p2sigk6NNw846iQ85yPuQxG9n1P2Hyumvka7zPLMxpGR6g8kT7qAWo2WrKby6uTXiRCqQbGoYnkMQAPonLeZ1CGvwWzYKUxmX7",
-		//	},
-		//	expResult: "",
-		//	wantErr:   false,
-		//},
-		//{
-		//	name: "Ledger signature",
-		//	args: args{
-		//		payload:   "05070707070a00000004a83650210a00000016019ce13845659ff2582555ec08dc322007f6493e800007070000050505050505050507070a00000016000032bb7d0084f79711f757d66b791d5290f88eb28000a80f",
-		//		pubKey:    "p2pk656iwbDQFtqG6aAPuqvVwffSYa8FvdQ2ibjyLJmZjFpUBfhdpvC",
-		//		signature: "edsigtfnqxtJiN1RyyrJNyaFeScwHwxEWg8tMfs8moAgc5MhbjETPyA4oscpLrdLc6UuA8JWAQwyzQR5ss8aw7sfL2gXqAm9UAH",
 		//	},
 		//	expResult: "",
 		//	wantErr:   false,

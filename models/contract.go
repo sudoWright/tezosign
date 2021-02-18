@@ -9,7 +9,35 @@ import (
 
 type ContractStorageRequest struct {
 	Threshold uint            `json:"threshold"`
-	Addresses []types.Address `json:"addresses"`
+	Entities  []StorageEntity `json:"entities"`
+}
+
+//Can be Address or PubKey
+type StorageEntity string
+
+func (e StorageEntity) Validate() (err error) {
+
+	if types.Address(e).Validate() != nil && types.PubKey(e).Validate() != nil {
+		return fmt.Errorf("wrong base58 format")
+	}
+
+	return nil
+}
+
+func (e StorageEntity) IsPubKey() bool {
+	return types.PubKey(e).Validate() == nil
+}
+
+func (e StorageEntity) PubKey() types.PubKey {
+	return types.PubKey(e)
+}
+
+func (e StorageEntity) Address() types.Address {
+	return types.Address(e)
+}
+
+func (e StorageEntity) IsAddress() bool {
+	return types.Address(e).Validate() == nil
 }
 
 func (r ContractStorageRequest) Validate() (err error) {
@@ -17,12 +45,12 @@ func (r ContractStorageRequest) Validate() (err error) {
 		return fmt.Errorf("zero threshold")
 	}
 
-	if len(r.Addresses) == 0 {
+	if len(r.Entities) == 0 {
 		return fmt.Errorf("empty addresses")
 	}
 
-	for i := range r.Addresses {
-		err = r.Addresses[i].Validate()
+	for i := range r.Entities {
+		err = r.Entities[i].Validate()
 		if err != nil {
 			return err
 		}

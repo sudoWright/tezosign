@@ -21,20 +21,20 @@ import (
 	"golang.org/x/crypto/blake2b"
 )
 
-const maxAddressesNum = 20
+const maxEntitiesNum = 20
 
 func (s *ServiceFacade) BuildContractInitStorage(req models.ContractStorageRequest) (resp []byte, err error) {
 
-	if req.Threshold > uint(len(req.Addresses)) {
+	if req.Threshold > uint(len(req.Entities)) {
 		return nil, apperrors.New(apperrors.ErrBadParam, "threshold")
 	}
 
-	if len(req.Addresses) > maxAddressesNum {
+	if len(req.Entities) > maxEntitiesNum {
 		return nil, apperrors.New(apperrors.ErrBadParam, "addresses num")
 	}
 
 	//Add native support of pubkeys
-	pubKeys, err := s.getPubKeysByAddresses(req.Threshold, req.Addresses)
+	pubKeys, err := s.getPubKeys(req.Threshold, req.Entities)
 	if err != nil {
 		return nil, err
 	}
@@ -48,15 +48,15 @@ func (s *ServiceFacade) BuildContractInitStorage(req models.ContractStorageReque
 }
 
 func (s *ServiceFacade) BuildContractStorageUpdateOperation(user, contractID types.Address, req models.ContractStorageRequest) (resp models.Request, err error) {
-	if req.Threshold > uint(len(req.Addresses)) {
+	if req.Threshold > uint(len(req.Entities)) {
 		return resp, apperrors.New(apperrors.ErrBadParam, "threshold")
 	}
 
-	if len(req.Addresses) > maxAddressesNum {
+	if len(req.Entities) > maxEntitiesNum {
 		return resp, apperrors.New(apperrors.ErrBadParam, "addresses num")
 	}
 
-	pubKeys, err := s.getPubKeysByAddresses(req.Threshold, req.Addresses)
+	pubKeys, err := s.getPubKeys(req.Threshold, req.Entities)
 	if err != nil {
 		return resp, err
 	}
@@ -83,13 +83,18 @@ func (s *ServiceFacade) BuildContractStorageUpdateOperation(user, contractID typ
 	return resp, nil
 }
 
-func (s *ServiceFacade) getPubKeysByAddresses(threshold uint, addresses []types.Address) (pubKeys []types.PubKey, err error) {
+func (s *ServiceFacade) getPubKeys(threshold uint, entities []models.StorageEntity) (pubKeys []types.PubKey, err error) {
 	var pubKey string
-	pubKeys = make([]types.PubKey, len(addresses))
+	pubKeys = make([]types.PubKey, len(entities))
 
-	for i := range addresses {
+	for i := range entities {
+		if entities[i].IsPubKey() {
+			pubKeys[i] = entities[i].PubKey()
+			continue
+		}
+
 		//TODO probably use indexed db
-		pubKey, err = s.rpcClient.ManagerKey(context.Background(), addresses[i].String())
+		pubKey, err = s.rpcClient.ManagerKey(context.Background(), entities[i].Address().String())
 		if err != nil {
 			return
 		}
@@ -189,7 +194,16 @@ func (s *ServiceFacade) ContractOperation(user types.Address, req models.Contrac
 		return resp, err
 	}
 
-	//Todo check Asset contract to FA transfer standart
+	if req.Type == models.FATransfer {
+		isFAContract, err := s.checkFAStandart(req.AssetID.String())
+		if err != nil {
+			return resp, err
+		}
+
+		if !isFAContract {
+			return resp, apperrors.New(apperrors.ErrBadParam, "not FA asset contract")
+		}
+	}
 
 	request := models.Request{
 		ContractID: contr.ID,
@@ -425,6 +439,15 @@ func (s *ServiceFacade) getContractStorage(contractID string) (storage contract.
 	}
 
 	return storage, err
+}
+
+func (s *ServiceFacade) checkFAStandart(contractID string) (isFAContract bool, err error) {
+	script, err := s.rpcClient.Script(context.Background(), contractID)
+	if err != nil {
+		return false, err
+	}
+
+	return contract.CheckTransferMethod(&script), nil
 }
 
 func operationID(payload string) string {
