@@ -424,13 +424,13 @@ definitions:
     properties:
       threshold:
         type: integer
-      addresses:
+      entities:
         type: array
         items:
           type: string
     required:
       - threshold
-      - addresses
+      - entities
   Owner:
     properties:
       pub_key:
