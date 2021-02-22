@@ -102,7 +102,7 @@ func (s *ServiceFacade) CheckOperations() (counter int64, err error) {
 	return counter, nil
 }
 
-func (s *ServiceFacade) processOperations(repo contractRepo.Repo, c models.Contract, networkID string, operations []models.TezosOperation) (counter int64, err error) {
+func (s *ServiceFacade) processOperations(repo contractRepo.Repo, c models.Contract, networkID string, operations []models.TransactionOperation) (counter int64, err error) {
 	var parameter contract.Operation
 
 	for j := range operations {
@@ -163,6 +163,8 @@ func (s *ServiceFacade) processOperations(repo contractRepo.Repo, c models.Contr
 		if isReject {
 			payload.Status = models.StatusRejected
 		}
+
+		//TODO process update signers request
 
 		payload.OperationID = &operations[j].OpHash
 

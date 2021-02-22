@@ -374,6 +374,113 @@ paths:
           description: Internal server error
       tags:
         - Contract
+  '/{network}/assets':
+    get:
+      operationId: assetsList
+      summary: Assets list
+      produces:
+        - application/json
+      security:
+        - Bearer: []
+      parameters:
+        - in: path
+          name: network
+          required: true
+          type : string
+      responses:
+        '200':
+          description: Token asset
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/AssetsResp'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+      tags:
+        - Assets
+  '/{network}/assets_rates':
+    get:
+      operationId: assetsRates
+      summary: Assets list
+      produces:
+        - application/json
+      security:
+        - Bearer: []
+      parameters:
+        - in: path
+          name: network
+          required: true
+          type : string
+      responses:
+        '200':
+          description: Assets rates
+          schema:
+            type: object
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+      tags:
+        - Assets
+  '/{network}/{address}/revealed':
+    get:
+      operationId: addressRevealed
+      summary: Check that address is revealed
+      produces:
+        - application/json
+      security:
+        - Bearer: []
+      parameters:
+        - in: path
+          name: network
+          required: true
+          type : string
+        - in: path
+          name: address
+          required: true
+          type : string
+      responses:
+        '200':
+          description: Is revealed
+          schema:
+            type: object
+            properties:
+              revealed:
+                type: boolean
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+      tags:
+        - Helpers
+  '/{network}/exchange_rates':
+    get:
+      operationId: exchangeRates
+      summary: Tezos exchange rates
+      produces:
+        - application/json
+      security:
+        - Bearer: []
+      parameters:
+        - in: path
+          name: network
+          required: true
+          type : string
+      responses:
+        '200':
+          description: Exchange rates
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/ExchangeRatesResp'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+      tags:
+        - Helpers
 definitions:
   AuthRequestBody:
     properties:
@@ -511,4 +618,32 @@ definitions:
       entrypoint:
         type: string
       value:
+        type: string
+  AssetsResp:
+    properties:
+      name:
+        type: string
+      contract_type:
+        type: string
+      address:
+        type: string
+      dexter_address:
+        type: string
+      scale:
+        type: integer
+      ticker:
+        type: string
+  ExchangeRatesResp:
+    properties:
+      btc:
+        type: string
+      eur:
+        type: string
+      usd:
+        type: string
+      cny:
+        type: string
+      jpy:
+        type: string
+      krw:
         type: string

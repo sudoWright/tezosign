@@ -4,7 +4,7 @@ import (
 	"blockwatch.cc/tzindex/micheline"
 )
 
-func CheckTransferMethod(script *micheline.Script) (ok bool) {
+func CheckFATransferMethod(script *micheline.Script) (ok bool) {
 
 	entrypoints, err := script.Entrypoints(true)
 	if err != nil {

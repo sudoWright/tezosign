@@ -3,6 +3,7 @@ package repos
 import (
 	"context"
 	"fmt"
+	"tezosign/repos/asset"
 	"tezosign/repos/auth"
 	"tezosign/repos/contract"
 	"tezosign/repos/indexer"
@@ -51,6 +52,10 @@ func (u *Provider) GetContract() contract.Repo {
 
 func (u *Provider) GetAuth() auth.Repo {
 	return auth.New(u.getDB())
+}
+
+func (u *Provider) GetAsset() asset.Repo {
+	return asset.New(u.getDB())
 }
 
 //Indexer repo should use indexer connection

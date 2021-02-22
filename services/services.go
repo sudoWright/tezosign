@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"tezosign/models"
+	"tezosign/repos/asset"
 	"tezosign/repos/auth"
 	"tezosign/repos/contract"
 	"tezosign/repos/indexer"
@@ -27,6 +28,7 @@ type (
 		Health() error
 		GetContract() contract.Repo
 		GetAuth() auth.Repo
+		GetAsset() asset.Repo
 
 		DBTx
 	}

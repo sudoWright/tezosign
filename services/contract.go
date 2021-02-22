@@ -447,7 +447,7 @@ func (s *ServiceFacade) checkFAStandart(contractID string) (isFAContract bool, e
 		return false, err
 	}
 
-	return contract.CheckTransferMethod(&script), nil
+	return contract.CheckFATransferMethod(&script), nil
 }
 
 func operationID(payload string) string {
