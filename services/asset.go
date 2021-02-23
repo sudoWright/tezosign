@@ -94,7 +94,7 @@ func (s *ServiceFacade) AssetsExchangeRates(user, contractAddress types.Address)
 	return
 }
 
-func (s *ServiceFacade) ContractAsset(user, contractAddress types.Address, asset models.Asset) (models.Asset, error) {
+func (s *ServiceFacade) ContractAsset(user, contractAddress types.Address, reqAsset models.Asset) (asset models.Asset, err error) {
 
 	contract, isFound, err := s.repoProvider.GetContract().GetContract(contractAddress)
 	if err != nil {
@@ -114,24 +114,8 @@ func (s *ServiceFacade) ContractAsset(user, contractAddress types.Address, asset
 		return asset, apperrors.New(apperrors.ErrNotAllowed)
 	}
 
-	asset.ContractID = sql.NullInt64{
-		Int64: int64(contract.ID),
-		Valid: true,
-	}
-
-	//Сheck asset already not added
-	assetRepo := s.repoProvider.GetAsset()
-	_, isFound, err = assetRepo.GetAsset(contract.ID, types.Address(asset.Address))
-	if err != nil {
-		return asset, err
-	}
-
-	if isFound {
-		return asset, apperrors.New(apperrors.ErrAlreadyExists, "asset")
-	}
-
 	//Сheck contract for FA
-	isFAAsset, err := s.checkFAStandart(asset.Address)
+	isFAAsset, err := s.checkFAStandart(reqAsset.Address.String())
 	if err != nil {
 		return asset, err
 	}
@@ -140,13 +124,76 @@ func (s *ServiceFacade) ContractAsset(user, contractAddress types.Address, asset
 		return asset, apperrors.New(apperrors.ErrBadParam, "not FA asset")
 	}
 
-	//Skip dexter address from user req
-	asset.DexterAddress = nil
-
-	err = assetRepo.CreateAsset(asset)
+	assetRepo := s.repoProvider.GetAsset()
+	asset, isFound, err = assetRepo.GetAsset(contract.ID, reqAsset.Address)
 	if err != nil {
 		return asset, err
 	}
 
-	return asset, nil
+	reqAsset.ContractID = sql.NullInt64{
+		Int64: int64(contract.ID),
+		Valid: true,
+	}
+
+	//Update Asset
+	if isFound {
+		reqAsset.ID = asset.ID
+
+		err = assetRepo.UpdateAsset(reqAsset)
+		if err != nil {
+			return asset, err
+		}
+
+		return reqAsset, nil
+	}
+
+	err = assetRepo.CreateAsset(reqAsset)
+	if err != nil {
+		return asset, err
+	}
+
+	return reqAsset, nil
+}
+
+func (s *ServiceFacade) RemoveContractAsset(user, contractAddress types.Address, asset models.Asset) (err error) {
+
+	contract, isFound, err := s.repoProvider.GetContract().GetContract(contractAddress)
+	if err != nil {
+		return err
+	}
+
+	if !isFound {
+		return apperrors.New(apperrors.ErrNotFound, "contract")
+	}
+
+	isOwner, err := s.GetUserAllowance(user, contractAddress)
+	if err != nil {
+		return err
+	}
+
+	if !isOwner {
+		return apperrors.New(apperrors.ErrNotAllowed)
+	}
+
+	assetRepo := s.repoProvider.GetAsset()
+	asset, isFound, err = assetRepo.GetAsset(contract.ID, asset.Address)
+	if err != nil {
+		return err
+	}
+
+	if !isFound {
+		return apperrors.New(apperrors.ErrNotFound, "address")
+	}
+
+	//Global asset cannot be removed
+	if !asset.ContractID.Valid {
+		return apperrors.New(apperrors.ErrNotAllowed)
+	}
+
+	err = assetRepo.DeleteContractAsset(asset.ID)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

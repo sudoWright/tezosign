@@ -19,6 +19,8 @@ type (
 		GetAssetsList(contract uint64, limit, offset int) (assets []models.Asset, err error)
 		GetAsset(contract uint64, assetAddress types.Address) (assets models.Asset, isFound bool, err error)
 		CreateAsset(asset models.Asset) (err error)
+		UpdateAsset(asset models.Asset) (err error)
+		DeleteContractAsset(assetID uint64) (err error)
 	}
 )
 
@@ -40,6 +42,20 @@ func (r *Repository) CreateAsset(asset models.Asset) (err error) {
 	return nil
 }
 
+func (r *Repository) UpdateAsset(asset models.Asset) (err error) {
+	err = r.db.Model(&models.Asset{ID: asset.ID}).
+		Updates(models.Asset{
+			Name:   asset.Name,
+			Scale:  asset.Scale,
+			Ticker: asset.Ticker,
+		}).
+		Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (r *Repository) GetAssetsList(contractID uint64, limit, offset int) (assets []models.Asset, err error) {
 
 	db := r.db.Model(models.Asset{}).
@@ -56,6 +72,17 @@ func (r *Repository) GetAssetsList(contractID uint64, limit, offset int) (assets
 		return assets, err
 	}
 	return assets, nil
+}
+
+func (r *Repository) DeleteContractAsset(assetID uint64) (err error) {
+	err = r.db.
+		Model(models.Asset{}).
+		Delete(&models.Asset{ID: assetID}).Error
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (r *Repository) GetAsset(contract uint64, assetAddress types.Address) (asset models.Asset, isFound bool, err error) {
