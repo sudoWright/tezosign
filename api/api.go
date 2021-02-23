@@ -116,8 +116,6 @@ func (api *API) initialize(handlerArr ...negroni.Handler) {
 		{Path: "/{network}/auth/restore", Method: http.MethodGet, Func: api.RestoreAuth, Middleware: mw},
 		{Path: "/{network}/logout", Method: http.MethodGet, Func: api.Logout, Middleware: mw},
 		{Path: "/{network}/exchange_rates", Method: http.MethodGet, Func: api.TezosExchangeRates, Middleware: mw},
-		{Path: "/{network}/assets", Method: http.MethodGet, Func: api.AssetsList, Middleware: mw},
-		{Path: "/{network}/assets_rates", Method: http.MethodGet, Func: api.AssetsExchangeRates, Middleware: mw},
 
 		{Path: "/{network}/{address}/revealed", Method: http.MethodGet, Func: api.AddressIsRevealed, Middleware: mw},
 	})
@@ -144,6 +142,12 @@ func (api *API) initialize(handlerArr ...negroni.Handler) {
 		{Path: "/{network}/contract/operation/{operation_id}/build", Method: http.MethodGet, Func: api.ContractOperationBuild, Middleware: mw},
 		//Operation list
 		{Path: "/{network}/contract/{contract_id}/operations", Method: http.MethodGet, Func: api.ContractOperationsList, Middleware: mw},
+		//Create contract asset
+		{Path: "/{network}/contract/{contract_id}/asset", Method: http.MethodPost, Func: api.ContractAsset, Middleware: mw},
+		//Get contract assets list
+		{Path: "/{network}/contract/{contract_id}/assets", Method: http.MethodGet, Func: api.AssetsList, Middleware: mw},
+		//Get contract assets list
+		{Path: "/{network}/contract/{contract_id}/assets_rates", Method: http.MethodGet, Func: api.AssetsExchangeRates, Middleware: mw},
 	})
 
 	api.server = &http.Server{Addr: fmt.Sprintf(":%d", api.cfg.API.ListenOnPort), Handler: api.router}

@@ -20,6 +20,7 @@ type (
 		GetOrCreateContract(address types.Address) (contract models.Contract, err error)
 		UpdateContractLastOperationBlock(contractID, blockLevel uint64) (err error)
 		GetContractByID(id uint64) (contract models.Contract, err error)
+		GetContract(address types.Address) (contract models.Contract, isFound bool, err error)
 		GetContractsList(limit, offset int) (contracts []models.Contract, err error)
 		GetMaxContractPendingNone(contractID uint64) (sql.NullInt64, error)
 		SavePayload(request models.Request) error
@@ -116,6 +117,19 @@ func (r *Repository) GetContractByID(id uint64) (contract models.Contract, err e
 		return contract, err
 	}
 	return contract, nil
+}
+
+func (r *Repository) GetContract(address types.Address) (contract models.Contract, isFound bool, err error) {
+	err = r.db.Model(models.Contract{}).
+		Where("ctr_address = ?", address).
+		First(&contract).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return contract, false, nil
+		}
+		return contract, false, err
+	}
+	return contract, true, nil
 }
 
 func (r *Repository) GetContractsList(limit, offset int) (contracts []models.Contract, err error) {
