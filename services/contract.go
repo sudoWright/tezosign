@@ -84,7 +84,8 @@ func (s *ServiceFacade) BuildContractStorageUpdateOperation(user, contractID typ
 }
 
 func (s *ServiceFacade) getPubKeys(threshold uint, entities []models.StorageEntity) (pubKeys []types.PubKey, err error) {
-	var pubKey string
+	var revealOp models.RevealOperation
+	var isFound bool
 	pubKeys = make([]types.PubKey, len(entities))
 
 	for i := range entities {
@@ -93,17 +94,16 @@ func (s *ServiceFacade) getPubKeys(threshold uint, entities []models.StorageEnti
 			continue
 		}
 
-		//TODO probably use indexed db
-		pubKey, err = s.rpcClient.ManagerKey(context.Background(), entities[i].Address().String())
+		revealOp, isFound, err = s.indexerRepoProvider.GetIndexer().GetContractRevealOperation(entities[i].Address())
 		if err != nil {
-			return
+			return pubKeys, err
 		}
 
-		if len(pubKey) == 0 {
-			return nil, apperrors.New(apperrors.ErrBadParam, "address")
+		if !isFound {
+			return pubKeys, apperrors.New(apperrors.ErrBadParam, fmt.Sprintf("address %s is not revealed", entities[i].Address().String()))
 		}
 
-		pubKeys[i] = types.PubKey(pubKey)
+		pubKeys[i] = revealOp.PublicKey
 	}
 
 	return pubKeys, err

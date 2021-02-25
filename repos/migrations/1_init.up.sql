@@ -52,4 +52,10 @@ CREATE VIEW request_json_signatures AS
 select req_id,
        json_agg(json_build_object('index', sig_index, 'type', sig_type, 'signature', sig_data)) as signatures
 from (select * from signatures order by sig_index, sig_type) AS s
-GROUP BY req_id;;
+GROUP BY req_id;
+
+CREATE OR REPLACE VIEW request_json_signatures_typed AS
+select req_id, sig_type,
+       json_agg(json_build_object('index', sig_index, 'type', sig_type, 'signature', sig_data)) as signatures
+from (select * from signatures order by sig_index, sig_type) AS s
+GROUP BY req_id, sig_type;

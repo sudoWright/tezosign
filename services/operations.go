@@ -31,16 +31,10 @@ func (s *ServiceFacade) GetOperationsList(userAddress types.Address, contractID 
 		return resp, err
 	}
 
-	//Get pending operations
-	if isOwner {
-		//Extend to Report
-		resp, err = repo.GetPayloadsReportByContractID(contract.ID)
-		if err != nil {
-			return
-		}
+	resp, err = repo.GetPayloadsReportByContractID(contract.ID, isOwner)
+	if err != nil {
+		return
 	}
-
-	//TODO Add income txs
 
 	return resp, nil
 }
