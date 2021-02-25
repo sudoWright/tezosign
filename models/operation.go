@@ -75,5 +75,5 @@ type TransactionOperation struct {
 
 type RevealOperation struct {
 	TezosOperation
-	PublicKey types.PubKey `json:"PublicKey"`
+	PublicKey types.PubKey `gorm:"column:PublicKey"`
 }

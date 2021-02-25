@@ -45,7 +45,8 @@ func (r *Repository) GetContractOperations(contract types.Address, blockLevel ui
 }
 
 func (r *Repository) GetContractRevealOperation(address types.Address) (tx models.RevealOperation, isFound bool, err error) {
-	err = r.db.
+	//TODO use single Account table
+	err = r.db.Select("*").
 		Table("RevealOps").
 		Joins(`LEFT JOIN "Accounts" a on "SenderId" = a."Id"`).
 		Where(`"Address" = ?`, address.String()).
