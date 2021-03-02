@@ -144,6 +144,8 @@ func (api *API) initialize(handlerArr ...negroni.Handler) {
 		{Path: "/{network}/contract/{contract_id}/operations", Method: http.MethodGet, Func: api.ContractOperationsList, Middleware: mw},
 		//Create contract asset
 		{Path: "/{network}/contract/{contract_id}/asset", Method: http.MethodPost, Func: api.ContractAsset, Middleware: mw},
+		//Edit contract asset
+		{Path: "/{network}/contract/{contract_id}/asset/edit", Method: http.MethodPost, Func: api.ContractAssetEdit, Middleware: mw},
 		//Remove contract asset
 		{Path: "/{network}/contract/{contract_id}/asset/delete", Method: http.MethodPost, Func: api.RemoveContractAsset, Middleware: mw},
 		//Get contract assets list

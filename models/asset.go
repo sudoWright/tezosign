@@ -16,6 +16,8 @@ type Asset struct {
 	Ticker        string        `gorm:"column:ast_ticker" json:"ticker"`
 
 	ContractID sql.NullInt64 `gorm:"column:ctr_id" json:"-"`
+
+	IsGlobal bool `gorm:"-" json:"is_global"`
 }
 
 func (a Asset) Validate() (err error) {

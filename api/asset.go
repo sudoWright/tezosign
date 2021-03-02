@@ -116,6 +116,49 @@ func (api *API) ContractAsset(w http.ResponseWriter, r *http.Request) {
 	response.Json(w, reps)
 }
 
+func (api *API) ContractAssetEdit(w http.ResponseWriter, r *http.Request) {
+	user, net, networkContext, err := GetUserNetworkContext(r)
+	if err != nil {
+		response.JsonError(w, err)
+		return
+	}
+
+	contractAddress := types.Address(mux.Vars(r)["contract_id"])
+	err = contractAddress.Validate()
+	if err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "contract_id"))
+		return
+	}
+
+	var data models.Asset
+	err = json.NewDecoder(r.Body).Decode(&data)
+	if err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadRequest))
+		return
+	}
+
+	if err = data.Validate(); err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadRequest, err.Error()))
+		return
+	}
+
+	service := services.New(repos.New(networkContext.Db), repos.New(networkContext.IndexerDB), networkContext.Client, networkContext.Auth, net)
+
+	reps, err := service.ContractAssetEdit(user, contractAddress, data)
+	if err != nil {
+		//Unwrap apperror
+		err, IsAppErr := apperrors.Unwrap(err)
+		if !IsAppErr {
+			log.Error("ContractAssetEdit error: ", zap.Error(err))
+		}
+
+		response.JsonError(w, err)
+		return
+	}
+
+	response.Json(w, reps)
+}
+
 func (api *API) RemoveContractAsset(w http.ResponseWriter, r *http.Request) {
 	user, net, networkContext, err := GetUserNetworkContext(r)
 	if err != nil {

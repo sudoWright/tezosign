@@ -424,6 +424,111 @@ paths:
           description: Internal server error
       tags:
         - Assets
+  '/{network}/contract/{contract_id}/asset':
+    post:
+      operationId: saveContractAsset
+      summary: Save contract asset
+      produces:
+        - application/json
+      security:
+        - Bearer: []
+      parameters:
+        - in: path
+          name: network
+          required: true
+          type : string
+        - in: path
+          name: contract_id
+          required: true
+          type : string
+        - in: body
+          name: asset
+          schema:
+            $ref: '#/definitions/AssetsResp'
+      responses:
+        '200':
+           description: Contract asset
+           schema:
+            type: array
+            items:
+              $ref: '#/definitions/AssetsResp'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+      tags:
+        - Assets
+  '/{network}/contract/{contract_id}/asset/edit':
+    post:
+      operationId: editContractAsset
+      summary: Edit contract asset
+      produces:
+        - application/json
+      security:
+        - Bearer: []
+      parameters:
+        - in: path
+          name: network
+          required: true
+          type : string
+        - in: path
+          name: contract_id
+          required: true
+          type : string
+        - in: body
+          name: asset
+          schema:
+            $ref: '#/definitions/AssetsResp'
+      responses:
+        '200':
+          description: Contract asset
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/AssetsResp'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+      tags:
+        - Assets
+  '/{network}/contract/{contract_id}/asset/delete':
+    post:
+      operationId: deleteContractAsset
+      summary: Delete contract asset
+      produces:
+        - application/json
+      security:
+        - Bearer: []
+      parameters:
+        - in: path
+          name: network
+          required: true
+          type : string
+        - in: path
+          name: contract_id
+          required: true
+          type : string
+        - in: body
+          name: asset
+          schema:
+              $ref: '#/definitions/AssetsResp'
+      responses:
+        '200':
+          description: Hexed payload
+          schema:
+            type: object
+            required:
+              - message
+            properties:
+              message:
+                type: string
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+      tags:
+        - Assets
   '/{network}/{address}/revealed':
     get:
       operationId: addressRevealed
@@ -633,6 +738,8 @@ definitions:
         type: integer
       ticker:
         type: string
+      is_global:
+        type: boolean
   ExchangeRatesResp:
     properties:
       btc:

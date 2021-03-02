@@ -43,6 +43,14 @@ func (s *ServiceFacade) AssetsList(user, contractAddress types.Address) (assets 
 		return assets, err
 	}
 
+	for i := range assets {
+		if assets[i].ContractID.Valid {
+			continue
+		}
+
+		assets[i].IsGlobal = true
+	}
+
 	return assets, nil
 }
 
@@ -130,24 +138,68 @@ func (s *ServiceFacade) ContractAsset(user, contractAddress types.Address, reqAs
 		return asset, err
 	}
 
+	//Already created
+	if isFound {
+		return asset, apperrors.New(apperrors.ErrAlreadyExists, "asset")
+	}
+
 	reqAsset.ContractID = sql.NullInt64{
 		Int64: int64(contract.ID),
 		Valid: true,
 	}
 
-	//Update Asset
-	if isFound {
-		reqAsset.ID = asset.ID
-
-		err = assetRepo.UpdateAsset(reqAsset)
-		if err != nil {
-			return asset, err
-		}
-
-		return reqAsset, nil
+	err = assetRepo.CreateAsset(reqAsset)
+	if err != nil {
+		return asset, err
 	}
 
-	err = assetRepo.CreateAsset(reqAsset)
+	return reqAsset, nil
+}
+
+func (s *ServiceFacade) ContractAssetEdit(user, contractAddress types.Address, reqAsset models.Asset) (asset models.Asset, err error) {
+
+	contract, isFound, err := s.repoProvider.GetContract().GetContract(contractAddress)
+	if err != nil {
+		return asset, err
+	}
+
+	if !isFound {
+		return asset, apperrors.New(apperrors.ErrNotFound, "contract")
+	}
+
+	isOwner, err := s.GetUserAllowance(user, contractAddress)
+	if err != nil {
+		return asset, err
+	}
+
+	if !isOwner {
+		return asset, apperrors.New(apperrors.ErrNotAllowed)
+	}
+
+	assetRepo := s.repoProvider.GetAsset()
+	asset, isFound, err = assetRepo.GetAsset(contract.ID, reqAsset.Address)
+	if err != nil {
+		return asset, err
+	}
+
+	//Not created
+	if !isFound {
+		return asset, apperrors.New(apperrors.ErrNotFound, "asset")
+	}
+
+	//Global asset cannot be edited
+	if !asset.ContractID.Valid {
+		return asset, apperrors.New(apperrors.ErrNotAllowed, "global asset")
+	}
+
+	reqAsset.ContractID = sql.NullInt64{
+		Int64: int64(contract.ID),
+		Valid: true,
+	}
+
+	reqAsset.ID = asset.ID
+
+	err = assetRepo.UpdateAsset(reqAsset)
 	if err != nil {
 		return asset, err
 	}
@@ -182,12 +234,12 @@ func (s *ServiceFacade) RemoveContractAsset(user, contractAddress types.Address,
 	}
 
 	if !isFound {
-		return apperrors.New(apperrors.ErrNotFound, "address")
+		return apperrors.New(apperrors.ErrNotFound, "asset")
 	}
 
 	//Global asset cannot be removed
 	if !asset.ContractID.Valid {
-		return apperrors.New(apperrors.ErrNotAllowed)
+		return apperrors.New(apperrors.ErrNotAllowed, "global asset")
 	}
 
 	err = assetRepo.DeleteContractAsset(asset.ID)
