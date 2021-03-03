@@ -12,17 +12,10 @@ import (
 
 func (s *ServiceFacade) GetOperationsList(userAddress types.Address, contractID types.Address, params interface{}) (resp []models.RequestReport, err error) {
 
-	storage, err := s.getContractStorage(contractID.String())
+	isOwner, err := s.GetUserAllowance(userAddress, contractID)
 	if err != nil {
 		return resp, err
 	}
-
-	pubKey, err := s.rpcClient.ManagerKey(context.Background(), userAddress.String())
-	if err != nil {
-		return resp, err
-	}
-
-	_, isOwner := storage.Contains(types.PubKey(pubKey))
 
 	repo := s.repoProvider.GetContract()
 

@@ -234,12 +234,18 @@ func (s *ServiceFacade) GetUserAllowance(userAddress, contractAddress types.Addr
 		return false, err
 	}
 
-	pubKey, err := s.rpcClient.ManagerKey(context.Background(), userAddress.String())
+	//TODO check pubkey
+
+	reveal, isRevealed, err := s.indexerRepoProvider.GetIndexer().GetContractRevealOperation(userAddress)
 	if err != nil {
 		return false, err
 	}
 
-	_, isOwner = storage.Contains(types.PubKey(pubKey))
+	if !isRevealed {
+		return false, apperrors.New(apperrors.ErrBadParam, "address not revealed")
+	}
+
+	_, isOwner = storage.Contains(reveal.PublicKey)
 
 	return isOwner, nil
 }
@@ -315,13 +321,17 @@ func (s *ServiceFacade) BuildContractOperation(userAddress types.Address, txID s
 		return resp, err
 	}
 
-	pubKey, err := s.rpcClient.ManagerKey(context.Background(), userAddress.String())
+	reveal, isRevealed, err := s.indexerRepoProvider.GetIndexer().GetContractRevealOperation(userAddress)
 	if err != nil {
 		return resp, err
 	}
 
+	if !isRevealed {
+		return resp, apperrors.New(apperrors.ErrBadParam, "address not revealed")
+	}
+
 	//Check user allowance
-	_, isOwner := storage.Contains(types.PubKey(pubKey))
+	_, isOwner := storage.Contains(reveal.PublicKey)
 	if !isOwner {
 		return resp, apperrors.NewWithDesc(apperrors.ErrNotAllowed, "pubkey not contains in storage")
 	}
