@@ -20,13 +20,14 @@ type (
 		GetOrCreateContract(address types.Address) (contract models.Contract, err error)
 		UpdateContractLastOperationBlock(contractID, blockLevel uint64) (err error)
 		GetContractByID(id uint64) (contract models.Contract, err error)
+		GetContract(address types.Address) (contract models.Contract, isFound bool, err error)
 		GetContractsList(limit, offset int) (contracts []models.Contract, err error)
 		GetMaxContractPendingNone(contractID uint64) (sql.NullInt64, error)
 		SavePayload(request models.Request) error
 		UpdatePayload(request models.Request) error
 		GetPayloadByContractAndCounter(contractID uint64, counter int64) (models.Request, bool, error)
 		GetPayloadByHash(id string) (models.Request, bool, error)
-		GetPayloadsReportByContractID(id uint64) ([]models.RequestReport, error)
+		GetPayloadsReportByContractID(id uint64, isOwner bool) ([]models.RequestReport, error)
 		GetSignaturesByPayloadID(id uint64, signatureType models.PayloadType) ([]models.Signature, error)
 		SavePayloadSignature(signature models.Signature) error
 		GetPayloadSignature(sig types.Signature) (signature models.Signature, isFound bool, err error)
@@ -116,6 +117,19 @@ func (r *Repository) GetContractByID(id uint64) (contract models.Contract, err e
 		return contract, err
 	}
 	return contract, nil
+}
+
+func (r *Repository) GetContract(address types.Address) (contract models.Contract, isFound bool, err error) {
+	err = r.db.Model(models.Contract{}).
+		Where("ctr_address = ?", address).
+		First(&contract).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return contract, false, nil
+		}
+		return contract, false, err
+	}
+	return contract, true, nil
 }
 
 func (r *Repository) GetContractsList(limit, offset int) (contracts []models.Contract, err error) {

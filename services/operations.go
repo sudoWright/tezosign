@@ -12,17 +12,10 @@ import (
 
 func (s *ServiceFacade) GetOperationsList(userAddress types.Address, contractID types.Address, params interface{}) (resp []models.RequestReport, err error) {
 
-	storage, err := s.getContractStorage(contractID.String())
+	isOwner, err := s.GetUserAllowance(userAddress, contractID)
 	if err != nil {
 		return resp, err
 	}
-
-	pubKey, err := s.rpcClient.ManagerKey(context.Background(), userAddress.String())
-	if err != nil {
-		return resp, err
-	}
-
-	_, isOwner := storage.Contains(types.PubKey(pubKey))
 
 	repo := s.repoProvider.GetContract()
 
@@ -31,16 +24,10 @@ func (s *ServiceFacade) GetOperationsList(userAddress types.Address, contractID 
 		return resp, err
 	}
 
-	//Get pending operations
-	if isOwner {
-		//Extend to Report
-		resp, err = repo.GetPayloadsReportByContractID(contract.ID)
-		if err != nil {
-			return
-		}
+	resp, err = repo.GetPayloadsReportByContractID(contract.ID, isOwner)
+	if err != nil {
+		return
 	}
-
-	//TODO Add income txs
 
 	return resp, nil
 }
@@ -102,7 +89,7 @@ func (s *ServiceFacade) CheckOperations() (counter int64, err error) {
 	return counter, nil
 }
 
-func (s *ServiceFacade) processOperations(repo contractRepo.Repo, c models.Contract, networkID string, operations []models.TezosOperation) (counter int64, err error) {
+func (s *ServiceFacade) processOperations(repo contractRepo.Repo, c models.Contract, networkID string, operations []models.TransactionOperation) (counter int64, err error) {
 	var parameter contract.Operation
 
 	for j := range operations {
@@ -163,6 +150,8 @@ func (s *ServiceFacade) processOperations(repo contractRepo.Repo, c models.Contr
 		if isReject {
 			payload.Status = models.StatusRejected
 		}
+
+		//TODO process update signers request
 
 		payload.OperationID = &operations[j].OpHash
 

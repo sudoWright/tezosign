@@ -84,7 +84,8 @@ func (s *ServiceFacade) BuildContractStorageUpdateOperation(user, contractID typ
 }
 
 func (s *ServiceFacade) getPubKeys(threshold uint, entities []models.StorageEntity) (pubKeys []types.PubKey, err error) {
-	var pubKey string
+	var revealOp models.RevealOperation
+	var isFound bool
 	pubKeys = make([]types.PubKey, len(entities))
 
 	for i := range entities {
@@ -93,17 +94,16 @@ func (s *ServiceFacade) getPubKeys(threshold uint, entities []models.StorageEnti
 			continue
 		}
 
-		//TODO probably use indexed db
-		pubKey, err = s.rpcClient.ManagerKey(context.Background(), entities[i].Address().String())
+		revealOp, isFound, err = s.indexerRepoProvider.GetIndexer().GetContractRevealOperation(entities[i].Address())
 		if err != nil {
-			return
+			return pubKeys, err
 		}
 
-		if len(pubKey) == 0 {
-			return nil, apperrors.New(apperrors.ErrBadParam, "address")
+		if !isFound {
+			return pubKeys, apperrors.New(apperrors.ErrBadParam, fmt.Sprintf("address %s is not revealed", entities[i].Address().String()))
 		}
 
-		pubKeys[i] = types.PubKey(pubKey)
+		pubKeys[i] = revealOp.PublicKey
 	}
 
 	return pubKeys, err
@@ -234,12 +234,18 @@ func (s *ServiceFacade) GetUserAllowance(userAddress, contractAddress types.Addr
 		return false, err
 	}
 
-	pubKey, err := s.rpcClient.ManagerKey(context.Background(), userAddress.String())
+	//TODO check pubkey
+
+	reveal, isRevealed, err := s.indexerRepoProvider.GetIndexer().GetContractRevealOperation(userAddress)
 	if err != nil {
 		return false, err
 	}
 
-	_, isOwner = storage.Contains(types.PubKey(pubKey))
+	if !isRevealed {
+		return false, apperrors.New(apperrors.ErrBadParam, "address not revealed")
+	}
+
+	_, isOwner = storage.Contains(reveal.PublicKey)
 
 	return isOwner, nil
 }
@@ -315,13 +321,17 @@ func (s *ServiceFacade) BuildContractOperation(userAddress types.Address, txID s
 		return resp, err
 	}
 
-	pubKey, err := s.rpcClient.ManagerKey(context.Background(), userAddress.String())
+	reveal, isRevealed, err := s.indexerRepoProvider.GetIndexer().GetContractRevealOperation(userAddress)
 	if err != nil {
 		return resp, err
 	}
 
+	if !isRevealed {
+		return resp, apperrors.New(apperrors.ErrBadParam, "address not revealed")
+	}
+
 	//Check user allowance
-	_, isOwner := storage.Contains(types.PubKey(pubKey))
+	_, isOwner := storage.Contains(reveal.PublicKey)
 	if !isOwner {
 		return resp, apperrors.NewWithDesc(apperrors.ErrNotAllowed, "pubkey not contains in storage")
 	}
@@ -447,7 +457,7 @@ func (s *ServiceFacade) checkFAStandart(contractID string) (isFAContract bool, e
 		return false, err
 	}
 
-	return contract.CheckTransferMethod(&script), nil
+	return contract.CheckFATransferMethod(&script), nil
 }
 
 func operationID(payload string) string {

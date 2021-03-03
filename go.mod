@@ -22,6 +22,7 @@ require (
 	github.com/sirupsen/logrus v1.7.0
 	github.com/tendermint/tendermint v0.34.2
 	github.com/urfave/negroni v1.0.0
+	github.com/wedancedalot/decimal v0.0.0-20180831135040-d09bcccc62ea
 	go.uber.org/zap v1.16.0
 	golang.org/x/crypto v0.0.0-20201016220609-9e8e0b390897
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1

@@ -37,15 +37,23 @@ func (r *Repository) SavePayload(request models.Request) (err error) {
 	return nil
 }
 
-func (r *Repository) GetPayloadsReportByContractID(id uint64) (requests []models.RequestReport, err error) {
-	err = r.db.Select("requests.*, signatures").
+func (r *Repository) GetPayloadsReportByContractID(contractID uint64, isOwner bool) (requests []models.RequestReport, err error) {
+	db := r.db.Select("requests.*, signatures").
 		Model(models.Request{}).
 		Table(PayloadsTable).
-		Joins("LEFT JOIN request_json_signatures as rjs on rjs.req_id = requests.req_id").
-		Where("ctr_id = ?", id).
-		//TODO order by time
-		Order("req_id desc").
-		Find(&requests).Error
+		Where("ctr_id = ?", contractID)
+
+	//If viewer try to get contract operations return only finalized operations with signatures
+	if !isOwner {
+		db = db.Joins("LEFT JOIN request_json_signatures_typed as rjs on (rjs.req_id = requests.req_id AND substr(req_status, 0, char_length(req_status) -1)  = sig_type)").
+			Where("req_operation_id IS NOT NULL")
+	} else {
+		db = db.Joins("LEFT JOIN request_json_signatures as rjs on rjs.req_id = requests.req_id")
+	}
+
+	err = db. //TODO order by time
+			Order("req_id desc").
+			Find(&requests).Error
 	if err != nil {
 		return requests, err
 	}

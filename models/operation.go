@@ -55,15 +55,25 @@ type OperationParameter struct {
 
 //Indexer Tezos operation
 type TezosOperation struct {
-	Level              uint64              `gorm:"column:Level"`
-	OpHash             string              `gorm:"column:OpHash"`
-	Status             int                 `gorm:"column:Status"`
-	Errors             string              `gorm:"column:Errors"`
-	BakerFee           uint64              `gorm:"column:BakerFee"`
-	StorageFee         uint64              `gorm:"column:StorageFee"`
-	AllocationFee      uint64              `gorm:"column:AllocationFee"`
-	Amount             uint64              `gorm:"column:Amount"`
-	Parameters         string              `gorm:"column:Parameters"`
-	InternalOperations uint64              `gorm:"column:InternalOperations"`
-	Timestamp          types.JSONTimestamp `gorm:"column:Timestamp"`
+	Level         uint64              `gorm:"column:Level"`
+	Timestamp     types.JSONTimestamp `gorm:"column:Timestamp"`
+	OpHash        string              `gorm:"column:OpHash"`
+	BakerFee      uint64              `gorm:"column:BakerFee"`
+	StorageFee    uint64              `gorm:"column:StorageFee"`
+	AllocationFee uint64              `gorm:"column:AllocationFee"`
+	Status        int                 `gorm:"column:Status"`
+	Errors        string              `gorm:"column:Errors"`
+}
+
+type TransactionOperation struct {
+	TezosOperation
+
+	Amount             uint64 `gorm:"column:Amount"`
+	Parameters         string `gorm:"column:Parameters"`
+	InternalOperations uint64 `gorm:"column:InternalOperations"`
+}
+
+type RevealOperation struct {
+	TezosOperation
+	PublicKey types.PubKey `gorm:"column:PublicKey"`
 }

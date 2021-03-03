@@ -64,24 +64,61 @@ func getParamsByPath(params *micheline.Prim, path []micheline.OpCode) (pathParam
 
 	pathParam = params
 
+	var index int64
 	for i := range path {
-		switch path[i] {
-		case micheline.D_LEFT:
-			if pathParam.OpCode != micheline.D_LEFT {
-				return nil, errors.New("wrong path opcode D_LEFT")
+
+		//D_LEFT or D_RIGHT prim
+		if pathParam.Type == micheline.PrimUnary || pathParam.Type == micheline.PrimUnaryAnno {
+			pathParam = pathParam.Args[0]
+			continue
+		}
+
+		//D_PAIR prim
+		//EDO format of pair --> compress to normal format
+		if pathParam.OpCode == micheline.D_PAIR && len(pathParam.Args) > 2 {
+
+			pairsCount := (len(pathParam.Args) / 2) + 1
+
+			for i := 0; i < pairsCount; i++ {
+
+				pair, err := compressPair(pathParam.Args[len(pathParam.Args)-2:])
+				if err != nil {
+					return pathParam, err
+				}
+
+				//Remove last elem
+				pathParam.Args = pathParam.Args[:len(pathParam.Args)-1]
+
+				//Replace last element
+				pathParam.Args[len(pathParam.Args)-1] = pair
 			}
 
-		case micheline.D_RIGHT:
-			if pathParam.OpCode != micheline.D_RIGHT {
-				return nil, errors.New("wrong path opcode ")
-			}
-		default:
-			return nil, fmt.Errorf("unknown OpCode")
 		}
-		pathParam = pathParam.Args[0]
+
+		index = 0
+		if path[i] == micheline.D_RIGHT {
+			index = 1
+		}
+
+		pathParam = pathParam.Args[index]
 	}
 
 	return pathParam, nil
+}
+
+func compressPair(param []*micheline.Prim) (pair *micheline.Prim, err error) {
+	if len(param) != 2 {
+		return pair, errors.New("wrong args num")
+	}
+
+	args := make([]*micheline.Prim, len(param))
+	copy(args, param)
+
+	return &micheline.Prim{
+		Type:   micheline.PrimBinary,
+		OpCode: micheline.D_PAIR,
+		Args:   args,
+	}, nil
 }
 
 func getPathByType(actionType models.ActionType) (path []micheline.OpCode, err error) {

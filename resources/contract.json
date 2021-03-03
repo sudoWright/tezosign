@@ -1,7 +1,7 @@
 [
   {
     "prim": "storage",
-    "args": [ { "prim": "pair", "args": [ { "prim": "nat" }, { "prim": "pair", "args": [ { "prim": "nat" }, { "prim": "list", "args": [ { "prim": "key" } ] } ] } ] } ]
+    "args": [ { "prim": "pair", "args": [ { "prim": "nat", "annots": [ "%counter" ] }, { "prim": "pair", "args": [ { "prim": "nat", "annots": [ "%threshold" ] }, { "prim": "list", "annots": [ "%keys" ], "args": [ { "prim": "key" } ] } ] } ] } ]
   },
   {
     "prim": "parameter",

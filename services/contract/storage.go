@@ -1,10 +1,12 @@
 package contract
 
 import (
-	"blockwatch.cc/tzindex/micheline"
+	"errors"
 	"fmt"
 	"math/big"
 	"tezosign/types"
+
+	"blockwatch.cc/tzindex/micheline"
 )
 
 //Initial contract storage zero counter
@@ -153,4 +155,19 @@ func (c ContractStorageContainer) Contains(pubKey types.PubKey) (index int64, is
 		}
 	}
 	return 0, false
+}
+
+func InitStorageAnnotsEntrypoints(codeStorage *micheline.Prim) (e Entrypoints, err error) {
+	if len(codeStorage.Args) == 0 {
+		return e, errors.New("wrong code storage")
+	}
+
+	e = make(Entrypoints)
+	dfs(e, newVertex(codeStorage.Args[0]), []micheline.OpCode{})
+
+	return
+}
+
+func GetStorageValue(e Entrypoint, storage *micheline.Prim) (*micheline.Prim, error) {
+	return getParamsByPath(storage, e.Branch)
 }
