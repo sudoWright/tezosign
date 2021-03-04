@@ -28,7 +28,7 @@
         "Port": 5432,
         "User": "user",
         "Password": "password",
-        "Database": "delphi_tzkt_db",
+        "Database": "mainnet_tzkt_db",
         "Schema": "public",
         "DebugMode": false
       },
