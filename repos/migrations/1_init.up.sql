@@ -24,7 +24,6 @@ create table requests
 	req_created_at timestamp without time zone default now() not null,
     req_info text not null,
     req_network_id varchar not null,
-	req_type text not null,
  	req_operation_id varchar(51)
 );
 

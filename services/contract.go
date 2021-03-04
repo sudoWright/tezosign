@@ -116,6 +116,12 @@ func (s *ServiceFacade) ContractInfo(contractID types.Address) (resp models.Cont
 		return resp, err
 	}
 
+	//Init contract if not created before
+	_, err = s.repoProvider.GetContract().GetOrCreateContract(contractID)
+	if err != nil {
+		return resp, err
+	}
+
 	var address types.Address
 	owners := make([]models.Owner, len(storage.PubKeys()))
 	for i := range storage.PubKeys() {
@@ -418,12 +424,12 @@ func (s *ServiceFacade) SaveContractOperationSignature(userPubKey types.PubKey, 
 }
 
 func (s *ServiceFacade) getContractStorage(contractID string) (storage contract.ContractStorageContainer, err error) {
-	rawStorage, err := s.rpcClient.Storage(context.Background(), contractID)
+	script, err := s.rpcClient.Script(context.Background(), contractID)
 	if err != nil {
 		return storage, err
 	}
 
-	storage, err = contract.NewContractStorageContainer(rawStorage)
+	storage, err = contract.NewContractStorageContainer(script)
 	if err != nil {
 		return storage, fmt.Errorf("%v; %w", err, apperrors.NewWithDesc(apperrors.ErrBadParam, "wrong contract type"))
 	}

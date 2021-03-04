@@ -2,7 +2,6 @@ package contract
 
 import (
 	"errors"
-	"fmt"
 	"math/big"
 	"tezosign/types"
 
@@ -84,56 +83,68 @@ type ContractStorageContainer struct {
 	storage   *micheline.Prim
 }
 
-func NewContractStorageContainer(rawStorage string) (c ContractStorageContainer, err error) {
+var contractStorageEntrypoints = map[string]micheline.OpCode{"counter": micheline.T_NAT, "keys": micheline.T_LIST, "threshold": micheline.T_NAT}
 
-	storage := &micheline.Prim{}
+func NewContractStorageContainer(script micheline.Script) (c ContractStorageContainer, err error) {
 
-	err = storage.UnmarshalJSON([]byte(rawStorage))
+	e, err := InitStorageAnnotsEntrypoints(script.Code.Storage)
 	if err != nil {
 		return c, err
 	}
 
-	c.storage = storage
-
-	//Validate storage params
-	//TODO make errors wrap
-	if storage.OpCode != micheline.D_PAIR && len(storage.Args) != 2 {
-		return c, fmt.Errorf("wrong storage struct")
+	err = checkStorage(e, contractStorageEntrypoints)
+	if err != nil {
+		return c, err
 	}
 
-	//Counter
-	if storage.Args[0].OpCode != micheline.K_PARAMETER {
-		return c, fmt.Errorf("wrong counter type")
+	c.storage = script.Storage
+
+	counter, err := GetStorageValue(e["counter"], script.Storage)
+	if err != nil {
+		return c, err
 	}
 
-	c.counter = storage.Args[0].Int.Int64()
+	c.counter = counter.Int.Int64()
 
-	//pair(int * list(key)
-	if storage.Args[1].OpCode != micheline.D_PAIR && len(storage.Args[1].Args) != 2 {
-		return c, fmt.Errorf("wrong storage pair struct")
+	threshold, err := GetStorageValue(e["threshold"], script.Storage)
+	if err != nil {
+		return c, err
 	}
 
-	//Threshold
-	if storage.Args[1].Args[0].OpCode != micheline.K_PARAMETER {
-		return c, fmt.Errorf("Wrong threshold type")
+	c.threshold = threshold.Int.Int64()
+
+	keys, err := GetStorageValue(e["keys"], script.Storage)
+	if err != nil {
+		return c, err
 	}
 
-	c.threshold = storage.Args[1].Args[0].Int.Int64()
+	c.keys = make([]types.PubKey, len(keys.Args))
 
-	//Keys
-	//TODO remove after tests
-	if storage.Args[1].Args[1].OpCode != micheline.T_LIST && len(storage.Args[1].Args[1].Args) < 1 { //2 {
-		return c, fmt.Errorf("Wrong keys list")
+	for i := range keys.Args {
+		err = c.keys[i].UnmarshalBinary(keys.Args[i].Bytes)
+		if err != nil {
+			return c, err
+		}
 	}
 
-	c.keys = make([]types.PubKey, len(storage.Args[1].Args[1].Args))
+	return
+}
 
-	for i := range storage.Args[1].Args[1].Args {
-		c.keys[i] = types.PubKey(storage.Args[1].Args[1].Args[i].String)
+func checkStorage(e Entrypoints, contractStorageEntrypoints map[string]micheline.OpCode) error {
+
+	var entrypoint Entrypoint
+	var ok bool
+	for eName, opCode := range contractStorageEntrypoints {
+		if entrypoint, ok = e[eName]; !ok {
+			return errors.New("entrypoint not found")
+		}
+
+		if entrypoint.OpCode != opCode {
+			return errors.New("wrong entrypoint opcode")
+		}
 	}
 
-	//Check storage input storage
-	return c, nil
+	return nil
 }
 
 func (c ContractStorageContainer) Counter() int64 {

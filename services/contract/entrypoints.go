@@ -9,10 +9,10 @@ import (
 type Entrypoints map[string]Entrypoint
 
 type Entrypoint struct {
-	Id     int                  `json:"id"`
-	Branch []micheline.OpCode   `json:"branch"`
-	Type   micheline.BigMapType `json:"type"`
-	Prim   *micheline.Prim      `json:"prim,omitempty"`
+	Id     int                `json:"id"`
+	Branch []micheline.OpCode `json:"branch"`
+	OpCode micheline.OpCode   `json:"type"`
+	Prim   *micheline.Prim    `json:"prim,omitempty"`
 }
 
 type vertex struct {
@@ -77,7 +77,7 @@ func pathInit(e Entrypoints, prim *micheline.Prim, path []micheline.OpCode) {
 	e[anno] = Entrypoint{
 		Id:     len(e),
 		Branch: p,
-		Type:   micheline.BigMapType(*prim),
+		OpCode: prim.OpCode,
 		Prim:   prim,
 	}
 }

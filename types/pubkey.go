@@ -38,6 +38,18 @@ func (a PubKey) MarshalBinary() ([]byte, error) {
 	return tezosprotocol.PublicKey(a).MarshalBinary()
 }
 
+func (a *PubKey) UnmarshalBinary(data []byte) (err error) {
+	var pubKey tezosprotocol.PublicKey
+	err = pubKey.UnmarshalBinary(data)
+	if err != nil {
+		return err
+	}
+
+	*a = PubKey(pubKey)
+
+	return nil
+}
+
 func (a PubKey) CryptoPublicKey() (crypto.PublicKey, error) {
 	b58prefix, b58decoded, err := tezosprotocol.Base58CheckDecode(string(a))
 	if err != nil {
