@@ -13,20 +13,21 @@ const (
 )
 
 type AuthToken struct {
-	ID        uint64        `gorm:"column:atn_id;primaryKey"`
-	Address   types.Address `gorm:"column:atn_address"`
-	Type      TokenType     `gorm:"column:atn_type"`
-	Data      string        `gorm:"column:atn_data"`
-	IsUsed    bool          `gorm:"column:atn_is_used"`
-	ExpiresAt time.Time     `gorm:"column:atn_expires_at"`
+	ID        uint64       `gorm:"column:atn_id;primaryKey"`
+	PubKey    types.PubKey `gorm:"column:atn_pubkey"`
+	Type      TokenType    `gorm:"column:atn_type"`
+	Data      string       `gorm:"column:atn_data"`
+	IsUsed    bool         `gorm:"column:atn_is_used"`
+	ExpiresAt time.Time    `gorm:"column:atn_expires_at"`
 }
 
 type AuthTokenReq struct {
-	Address types.Address `json:"address"`
+	PubKey types.PubKey `json:"pub_key"`
 }
 
 func (r AuthTokenReq) Validate() (err error) {
-	err = r.Address.Validate()
+
+	err = r.PubKey.Validate()
 	if err != nil {
 		return err
 	}

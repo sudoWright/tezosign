@@ -1,1 +1,1 @@
-DROP TABLE msig.contracts;
+DROP TABLE contracts;

@@ -16,7 +16,7 @@ const (
 	TruncatePrecision = 8
 )
 
-func (s *ServiceFacade) AssetsList(user, contractAddress types.Address) (assets []models.Asset, err error) {
+func (s *ServiceFacade) AssetsList(userPubKey types.PubKey, contractAddress types.Address) (assets []models.Asset, err error) {
 
 	//TODO init limit from request
 	limit := 100
@@ -29,7 +29,7 @@ func (s *ServiceFacade) AssetsList(user, contractAddress types.Address) (assets 
 		return assets, apperrors.New(apperrors.ErrNotFound, "contract")
 	}
 
-	isOwner, err := s.GetUserAllowance(user, contractAddress)
+	isOwner, err := s.GetUserAllowance(userPubKey, contractAddress)
 	if err != nil {
 		return assets, err
 	}
@@ -54,8 +54,8 @@ func (s *ServiceFacade) AssetsList(user, contractAddress types.Address) (assets 
 	return assets, nil
 }
 
-func (s *ServiceFacade) AssetsExchangeRates(user, contractAddress types.Address) (assetsRates map[string]interface{}, err error) {
-	assets, err := s.AssetsList(user, contractAddress)
+func (s *ServiceFacade) AssetsExchangeRates(userPubKey types.PubKey, contractAddress types.Address) (assetsRates map[string]interface{}, err error) {
+	assets, err := s.AssetsList(userPubKey, contractAddress)
 	if err != nil {
 		return assetsRates, err
 	}
@@ -102,7 +102,7 @@ func (s *ServiceFacade) AssetsExchangeRates(user, contractAddress types.Address)
 	return
 }
 
-func (s *ServiceFacade) ContractAsset(user, contractAddress types.Address, reqAsset models.Asset) (asset models.Asset, err error) {
+func (s *ServiceFacade) ContractAsset(userPubKey types.PubKey, contractAddress types.Address, reqAsset models.Asset) (asset models.Asset, err error) {
 
 	contract, isFound, err := s.repoProvider.GetContract().GetContract(contractAddress)
 	if err != nil {
@@ -113,7 +113,7 @@ func (s *ServiceFacade) ContractAsset(user, contractAddress types.Address, reqAs
 		return asset, apperrors.New(apperrors.ErrNotFound, "contract")
 	}
 
-	isOwner, err := s.GetUserAllowance(user, contractAddress)
+	isOwner, err := s.GetUserAllowance(userPubKey, contractAddress)
 	if err != nil {
 		return asset, err
 	}
@@ -156,7 +156,7 @@ func (s *ServiceFacade) ContractAsset(user, contractAddress types.Address, reqAs
 	return reqAsset, nil
 }
 
-func (s *ServiceFacade) ContractAssetEdit(user, contractAddress types.Address, reqAsset models.Asset) (asset models.Asset, err error) {
+func (s *ServiceFacade) ContractAssetEdit(userPubKey types.PubKey, contractAddress types.Address, reqAsset models.Asset) (asset models.Asset, err error) {
 
 	contract, isFound, err := s.repoProvider.GetContract().GetContract(contractAddress)
 	if err != nil {
@@ -167,7 +167,7 @@ func (s *ServiceFacade) ContractAssetEdit(user, contractAddress types.Address, r
 		return asset, apperrors.New(apperrors.ErrNotFound, "contract")
 	}
 
-	isOwner, err := s.GetUserAllowance(user, contractAddress)
+	isOwner, err := s.GetUserAllowance(userPubKey, contractAddress)
 	if err != nil {
 		return asset, err
 	}
@@ -207,7 +207,7 @@ func (s *ServiceFacade) ContractAssetEdit(user, contractAddress types.Address, r
 	return reqAsset, nil
 }
 
-func (s *ServiceFacade) RemoveContractAsset(user, contractAddress types.Address, asset models.Asset) (err error) {
+func (s *ServiceFacade) RemoveContractAsset(userPubKey types.PubKey, contractAddress types.Address, asset models.Asset) (err error) {
 
 	contract, isFound, err := s.repoProvider.GetContract().GetContract(contractAddress)
 	if err != nil {
@@ -218,7 +218,7 @@ func (s *ServiceFacade) RemoveContractAsset(user, contractAddress types.Address,
 		return apperrors.New(apperrors.ErrNotFound, "contract")
 	}
 
-	isOwner, err := s.GetUserAllowance(user, contractAddress)
+	isOwner, err := s.GetUserAllowance(userPubKey, contractAddress)
 	if err != nil {
 		return err
 	}

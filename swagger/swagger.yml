@@ -589,11 +589,11 @@ paths:
 definitions:
   AuthRequestBody:
     properties:
-      address:
-        description: tz address
+      pubkey:
+        description: base58 pubkey
         type: string
     required:
-      - address
+      - pubkey
   AuthRequestResp:
     properties:
       token:

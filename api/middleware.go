@@ -2,17 +2,18 @@ package api
 
 import (
 	"context"
-	"github.com/gorilla/mux"
 	"net/http"
 	"tezosign/api/response"
 	"tezosign/common/apperrors"
 	"tezosign/types"
+
+	"github.com/gorilla/mux"
 )
 
 type ContextKey string
 
 const (
-	ContextUserKey           ContextKey = "user_address"
+	ContextUserPubKey        ContextKey = "user_pubkey"
 	ContextNetworkKey        ContextKey = "network"
 	ContextNetworkContextKey ContextKey = "network_context"
 )
@@ -30,27 +31,27 @@ func (api *API) RequireJWT(w http.ResponseWriter, r *http.Request, next http.Han
 		return
 	}
 
-	userAddress, err := auth.CheckSignatureAndGetUserAddress(r)
+	userPubKey, err := auth.CheckSignatureAndGetUserPubKey(r)
 	if err != nil {
 		response.JsonError(w, err)
 		return
 	}
 
-	if userAddress == "" {
+	if userPubKey == "" {
 		response.JsonError(w, apperrors.New(apperrors.ErrService))
 		return
 	}
 
-	typedAddress := types.Address(userAddress)
+	typedPubKey := types.PubKey(userPubKey)
 
-	err = typedAddress.Validate()
+	err = typedPubKey.Validate()
 	if err != nil {
 		response.JsonError(w, apperrors.New(apperrors.ErrBadParam))
 		return
 	}
 
 	ctx := r.Context()
-	ctx = context.WithValue(ctx, ContextUserKey, typedAddress)
+	ctx = context.WithValue(ctx, ContextUserPubKey, typedPubKey)
 	r = r.WithContext(ctx)
 
 	next(w, r)

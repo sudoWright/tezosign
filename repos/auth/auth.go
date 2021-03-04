@@ -2,9 +2,10 @@ package auth
 
 import (
 	"errors"
-	"gorm.io/gorm"
 	"tezosign/models"
 	"tezosign/types"
+
+	"gorm.io/gorm"
 )
 
 //go:generate mockgen -source ./auth.go -destination ./mock_auth/main.go Repo
@@ -17,7 +18,7 @@ type (
 	Repo interface {
 		CreateAuthToken(authToken models.AuthToken) (err error)
 		GetAuthToken(data string) (authToken models.AuthToken, isFound bool, err error)
-		GetActiveTokenByAddressAndType(address types.Address, tokenType models.TokenType) (authToken models.AuthToken, isFound bool, err error)
+		GetActiveTokenByPubKeyAndType(address types.PubKey, tokenType models.TokenType) (authToken models.AuthToken, isFound bool, err error)
 		MarkAsUsedAuthToken(id uint64) (err error)
 	}
 )
@@ -43,9 +44,9 @@ func (r *Repository) GetAuthToken(data string) (authToken models.AuthToken, isFo
 	return authToken, true, nil
 }
 
-func (r *Repository) GetActiveTokenByAddressAndType(address types.Address, tokenType models.TokenType) (authToken models.AuthToken, isFound bool, err error) {
+func (r *Repository) GetActiveTokenByPubKeyAndType(address types.PubKey, tokenType models.TokenType) (authToken models.AuthToken, isFound bool, err error) {
 	err = r.db.Model(models.AuthToken{}).
-		Where("atn_address = ? and atn_type = ? and atn_is_used = false and atn_expires_at < now()", address, tokenType).
+		Where("atn_pubkey = ? and atn_type = ? and atn_is_used = false and atn_expires_at < now()", address, tokenType).
 		First(&authToken).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

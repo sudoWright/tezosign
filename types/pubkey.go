@@ -6,6 +6,7 @@ import (
 	"crypto/ed25519"
 	"crypto/elliptic"
 	"fmt"
+
 	"github.com/anchorageoss/tezosprotocol/v2"
 	"github.com/pkg/errors"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
@@ -14,6 +15,10 @@ import (
 )
 
 type PubKey tezosprotocol.PublicKey
+
+func (a PubKey) String() string {
+	return string(a)
+}
 
 func (a PubKey) Validate() (err error) {
 	b58prefix, _, err := tezosprotocol.Base58CheckDecode(string(a))
