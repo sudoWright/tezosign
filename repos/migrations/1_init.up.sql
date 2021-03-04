@@ -1,4 +1,4 @@
-create table msig.contracts
+create table contracts
 (
 	ctr_id serial not null
 		constraint contracts_pk
@@ -8,16 +8,16 @@ create table msig.contracts
 );
 
 create unique index contracts_address_uindex
-	on msig.contracts (ctr_address);
+	on contracts (ctr_address);
 
-create table msig.requests
+create table requests
 (
 	req_id serial not null
 		constraint requests_pk
 			primary key,
 	ctr_id int not null
 		constraint requests_contracts_id_fk
-			references msig.contracts,
+			references contracts,
     req_hash varchar(32) not null,
 	req_status varchar default 'wait' not null,
 	req_counter int,
@@ -29,23 +29,23 @@ create table msig.requests
 );
 
 create unique index requests_req_operation_id_uindex
-	on msig.requests (req_operation_id);
+	on requests (req_operation_id);
 
-create table msig.signatures
+create table signatures
 (
 	sig_id serial not null
 		constraint signatures_pk
 			primary key,
 	req_id int not null
 		constraint signatures_requests_id_fk
-			references msig.requests,
+			references requests,
 	sig_index int not null,
 	sig_data varchar not null,
 	sig_type varchar not null
 );
 
 create unique index signatures_sign_uindex
-	on msig.signatures (sig_data);
+	on signatures (sig_data);
 
 
 CREATE VIEW request_json_signatures AS

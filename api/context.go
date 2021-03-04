@@ -9,20 +9,20 @@ import (
 )
 
 //Get context values after middleware
-func GetUserNetworkContext(r *http.Request) (user types.Address, net models.Network, networkContext infrustructure.NetworkContext, err error) {
+func GetUserNetworkContext(r *http.Request) (userPubKey types.PubKey, net models.Network, networkContext infrustructure.NetworkContext, err error) {
 	var ok bool
 	ctx := r.Context()
-	user, ok = ctx.Value(ContextUserKey).(types.Address)
-	if !ok || (user.Validate() != nil) {
-		return user, net, networkContext, apperrors.New(apperrors.ErrService)
+	userPubKey, ok = ctx.Value(ContextUserPubKey).(types.PubKey)
+	if !ok || (userPubKey.Validate() != nil) {
+		return userPubKey, net, networkContext, apperrors.New(apperrors.ErrService)
 	}
 
 	net, networkContext, err = GetNetworkContext(r)
 	if err != nil {
-		return user, net, networkContext, err
+		return userPubKey, net, networkContext, err
 	}
 
-	return user, net, networkContext, nil
+	return userPubKey, net, networkContext, nil
 }
 
 func GetNetworkContext(r *http.Request) (net models.Network, networkContext infrustructure.NetworkContext, err error) {

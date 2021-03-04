@@ -2,13 +2,14 @@ package services
 
 import (
 	"encoding/hex"
-	uuid "github.com/satori/go.uuid"
-	"golang.org/x/crypto/blake2b"
 	"tezosign/common/apperrors"
 	"tezosign/conf"
 	"tezosign/models"
 	"tezosign/types"
 	"time"
+
+	uuid "github.com/satori/go.uuid"
+	"golang.org/x/crypto/blake2b"
 )
 
 const expirationTime = 10 * time.Minute
@@ -16,7 +17,7 @@ const expirationTime = 10 * time.Minute
 func (s *ServiceFacade) AuthRequest(req models.AuthTokenReq) (resp models.AuthTokenResp, err error) {
 	authRepo := s.repoProvider.GetAuth()
 
-	activeToken, isFound, err := authRepo.GetActiveTokenByAddressAndType(req.Address, models.TypeAuth)
+	activeToken, isFound, err := authRepo.GetActiveTokenByPubKeyAndType(req.PubKey, models.TypeAuth)
 	if err != nil {
 		return
 	}
@@ -29,15 +30,15 @@ func (s *ServiceFacade) AuthRequest(req models.AuthTokenReq) (resp models.AuthTo
 
 	reqUUID := uuid.NewV4()
 
-	binaryAddress, err := req.Address.MarshalBinary()
+	binaryPubKey, err := req.PubKey.MarshalBinary()
 	if err != nil {
 		return resp, apperrors.NewWithDesc(apperrors.ErrBadParam, "address")
 	}
 
-	hash := blake2b.Sum256(append(binaryAddress, reqUUID.Bytes()...))
+	hash := blake2b.Sum256(append(binaryPubKey, reqUUID.Bytes()...))
 	token := hex.EncodeToString(hash[:])
 	err = authRepo.CreateAuthToken(models.AuthToken{
-		Address:   req.Address,
+		PubKey:    req.PubKey,
 		Type:      models.TypeAuth,
 		Data:      token,
 		IsUsed:    false,
@@ -76,7 +77,7 @@ func (s *ServiceFacade) Auth(req models.AuthSignature) (resp AuthResponce, err e
 		return resp, err
 	}
 
-	cryptoPubKey, err := req.PubKey.CryptoPublicKey()
+	cryptoPubKey, err := authToken.PubKey.CryptoPublicKey()
 	if err != nil {
 		return resp, err
 	}
@@ -88,7 +89,7 @@ func (s *ServiceFacade) Auth(req models.AuthSignature) (resp AuthResponce, err e
 	}
 
 	//Generate jwt
-	accessToken, refreshToken, encodedCookie, err := s.generateAuthData(authToken.Address)
+	accessToken, refreshToken, encodedCookie, err := s.generateAuthData(authToken.PubKey)
 	if err != nil {
 		return resp, err
 	}
@@ -123,7 +124,7 @@ func (s *ServiceFacade) RefreshAuthSession(oldRefreshToken string) (resp AuthRes
 		return resp, err
 	}
 
-	accessToken, refreshToken, encodedCookie, err := s.generateAuthData(token.Address)
+	accessToken, refreshToken, encodedCookie, err := s.generateAuthData(token.PubKey)
 	if err != nil {
 		return resp, err
 	}
@@ -166,15 +167,15 @@ func (s *ServiceFacade) Logout(value string) (err error) {
 	return nil
 }
 
-func (s *ServiceFacade) generateAuthData(userAddress types.Address) (accessToken string, refreshToken string, encodedCookie string, err error) {
-	accessToken, refreshToken, err = s.auth.GenerateAuthTokens(userAddress)
+func (s *ServiceFacade) generateAuthData(userPubKey types.PubKey) (accessToken string, refreshToken string, encodedCookie string, err error) {
+	accessToken, refreshToken, err = s.auth.GenerateAuthTokens(userPubKey)
 	if err != nil {
 		return "", "", "", err
 	}
 
 	//Save refresh token
 	err = s.repoProvider.GetAuth().CreateAuthToken(models.AuthToken{
-		Address:   userAddress,
+		PubKey:    userPubKey,
 		Data:      refreshToken,
 		Type:      models.TypeRefresh,
 		ExpiresAt: time.Now().Add(conf.TtlRefreshToken * time.Second),

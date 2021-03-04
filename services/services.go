@@ -46,7 +46,7 @@ type (
 	}
 
 	AuthProvider interface {
-		GenerateAuthTokens(address types.Address) (string, string, error)
+		GenerateAuthTokens(pubKey types.PubKey) (string, string, error)
 
 		EncodeSessionCookie(data map[string]string) (string, error)
 		DecodeSessionCookie(cookie string) (map[string]string, error)

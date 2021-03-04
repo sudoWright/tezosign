@@ -27,7 +27,7 @@ type Auth struct {
 
 const (
 	authorizationHeader = "Authorization"
-	UserAddressHeader   = "user_address"
+	UserPubKeyHeader    = "user_pubkey"
 	networkHeader       = "network"
 )
 
@@ -61,13 +61,13 @@ func NewAuthProvider(authConf conf.Auth, network models.Network) (*Auth, error) 
 	return &Auth{privateKey: privKey, pubKey: &privKey.PublicKey, secureCookie: sc, network: network}, nil
 }
 
-func (a *Auth) GenerateAuthTokens(address types.Address) (accessToken, refreshToken string, err error) {
-	accessToken, err = a.generateAccessToken(address)
+func (a *Auth) GenerateAuthTokens(pubkey types.PubKey) (accessToken, refreshToken string, err error) {
+	accessToken, err = a.generateAccessToken(pubkey)
 	if err != nil {
 		return "", "", err
 	}
 
-	refreshToken, err = a.generateRefreshToken(address)
+	refreshToken, err = a.generateRefreshToken(pubkey)
 	if err != nil {
 		return "", "", err
 	}
@@ -75,16 +75,16 @@ func (a *Auth) GenerateAuthTokens(address types.Address) (accessToken, refreshTo
 	return accessToken, refreshToken, nil
 }
 
-func (a *Auth) generateAccessToken(address types.Address) (accessToken string, err error) {
-	if err = address.Validate(); err != nil {
+func (a *Auth) generateAccessToken(pubkey types.PubKey) (accessToken string, err error) {
+	if err = pubkey.Validate(); err != nil {
 		return "", err
 	}
 
 	// create the jwt token
 	token := jwt.NewWithClaims(jwt.SigningMethodES256, jwt.MapClaims{
-		UserAddressHeader: address.String(),
-		networkHeader:     a.network,
-		"exp":             time.Now().Add(time.Second * conf.TtlJWT).Unix(),
+		UserPubKeyHeader: pubkey.String(),
+		networkHeader:    a.network,
+		"exp":            time.Now().Add(time.Second * conf.TtlJWT).Unix(),
 	})
 
 	accessToken, err = token.SignedString(a.privateKey)
@@ -95,7 +95,7 @@ func (a *Auth) generateAccessToken(address types.Address) (accessToken string, e
 	return accessToken, nil
 }
 
-func (a *Auth) generateRefreshToken(address types.Address) (token string, err error) {
+func (a *Auth) generateRefreshToken(pubkey types.PubKey) (token string, err error) {
 	return uuid.NewV4().String(), nil
 }
 
@@ -122,7 +122,7 @@ func (a *Auth) DecodeSessionCookie(cookie string) (map[string]string, error) {
 	return value, nil
 }
 
-func (a *Auth) CheckSignatureAndGetUserAddress(r *http.Request) (string, error) {
+func (a *Auth) CheckSignatureAndGetUserPubKey(r *http.Request) (string, error) {
 	authHeader := strings.SplitN(r.Header.Get(authorizationHeader), " ", 2)
 	if len(authHeader) != 2 {
 		return "", apperrors.New(apperrors.ErrBadAuth)
@@ -146,12 +146,12 @@ func (a *Auth) CheckSignatureAndGetUserAddress(r *http.Request) (string, error) 
 		return "", apperrors.New(apperrors.ErrBadJwt)
 	}
 
-	userAddress, ok := claims[UserAddressHeader]
-	if !ok || userAddress.(string) == "" {
+	userPubKey, ok := claims[UserPubKeyHeader]
+	if !ok || userPubKey.(string) == "" {
 		return "", apperrors.New(apperrors.ErrBadJwt)
 	}
 
-	return userAddress.(string), nil
+	return userPubKey.(string), nil
 }
 
 func (a *Auth) ParseAndCheckToken(t string) (*jwt.Token, jwt.MapClaims, error) {

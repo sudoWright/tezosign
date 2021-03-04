@@ -1,4 +1,4 @@
-create table msig.assets
+create table assets
 (
 	ast_id serial not null
 		constraint asset_pk
@@ -11,7 +11,7 @@ create table msig.assets
     ast_ticker varchar not null,
 	ctr_id int
 		constraint assets_contracts_ctr_id_fk
-			references msig.contracts
+			references contracts
 );
 
 create unique index assets_ctr_id_ast_address_uindex

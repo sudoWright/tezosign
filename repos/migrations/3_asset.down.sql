@@ -1,1 +1,1 @@
-DROP TABLE msig.assets;
+DROP TABLE assets;

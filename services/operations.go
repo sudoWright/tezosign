@@ -10,9 +10,9 @@ import (
 	"tezosign/types"
 )
 
-func (s *ServiceFacade) GetOperationsList(userAddress types.Address, contractID types.Address, params interface{}) (resp []models.RequestReport, err error) {
+func (s *ServiceFacade) GetOperationsList(userPubKey types.PubKey, contractID types.Address, params interface{}) (resp []models.RequestReport, err error) {
 
-	isOwner, err := s.GetUserAllowance(userAddress, contractID)
+	isOwner, err := s.GetUserAllowance(userPubKey, contractID)
 	if err != nil {
 		return resp, err
 	}

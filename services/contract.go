@@ -47,7 +47,7 @@ func (s *ServiceFacade) BuildContractInitStorage(req models.ContractStorageReque
 	return resp, nil
 }
 
-func (s *ServiceFacade) BuildContractStorageUpdateOperation(user, contractID types.Address, req models.ContractStorageRequest) (resp models.Request, err error) {
+func (s *ServiceFacade) BuildContractStorageUpdateOperation(userPubKey types.PubKey, contractID types.Address, req models.ContractStorageRequest) (resp models.Request, err error) {
 	if req.Threshold > uint(len(req.Entities)) {
 		return resp, apperrors.New(apperrors.ErrBadParam, "threshold")
 	}
@@ -61,7 +61,7 @@ func (s *ServiceFacade) BuildContractStorageUpdateOperation(user, contractID typ
 		return resp, err
 	}
 
-	isOwner, err := s.GetUserAllowance(user, contractID)
+	isOwner, err := s.GetUserAllowance(userPubKey, contractID)
 	if err != nil {
 		return resp, err
 	}
@@ -70,7 +70,7 @@ func (s *ServiceFacade) BuildContractStorageUpdateOperation(user, contractID typ
 		return resp, apperrors.NewWithDesc(apperrors.ErrNotAllowed, "pubkey not contains in storage")
 	}
 
-	resp, err = s.ContractOperation(user, models.ContractOperationRequest{
+	resp, err = s.ContractOperation(userPubKey, models.ContractOperationRequest{
 		ContractID: contractID,
 		Type:       models.StorageUpdate,
 		Threshold:  req.Threshold,
@@ -145,8 +145,8 @@ func (s *ServiceFacade) ContractInfo(contractID types.Address) (resp models.Cont
 	}, nil
 }
 
-func (s *ServiceFacade) ContractOperation(user types.Address, req models.ContractOperationRequest) (resp models.Request, err error) {
-	isOwner, err := s.GetUserAllowance(user, req.ContractID)
+func (s *ServiceFacade) ContractOperation(userPubKey types.PubKey, req models.ContractOperationRequest) (resp models.Request, err error) {
+	isOwner, err := s.GetUserAllowance(userPubKey, req.ContractID)
 	if err != nil {
 		return resp, err
 	}
@@ -227,30 +227,19 @@ func (s *ServiceFacade) ContractOperation(user types.Address, req models.Contrac
 }
 
 //TODO move to middleware
-func (s *ServiceFacade) GetUserAllowance(userAddress, contractAddress types.Address) (isOwner bool, err error) {
+func (s *ServiceFacade) GetUserAllowance(userPubKey types.PubKey, contractAddress types.Address) (isOwner bool, err error) {
 
 	storage, err := s.getContractStorage(contractAddress.String())
 	if err != nil {
 		return false, err
 	}
 
-	//TODO check pubkey
-
-	reveal, isRevealed, err := s.indexerRepoProvider.GetIndexer().GetContractRevealOperation(userAddress)
-	if err != nil {
-		return false, err
-	}
-
-	if !isRevealed {
-		return false, apperrors.New(apperrors.ErrBadParam, "address not revealed")
-	}
-
-	_, isOwner = storage.Contains(reveal.PublicKey)
+	_, isOwner = storage.Contains(userPubKey)
 
 	return isOwner, nil
 }
 
-func (s *ServiceFacade) BuildContractOperationToSign(user types.Address, txID string, payloadType models.PayloadType) (resp models.OperationToSignResp, err error) {
+func (s *ServiceFacade) BuildContractOperationToSign(userPubKey types.PubKey, txID string, payloadType models.PayloadType) (resp models.OperationToSignResp, err error) {
 
 	repo := s.repoProvider.GetContract()
 	operationReq, isFound, err := repo.GetPayloadByHash(txID)
@@ -267,7 +256,7 @@ func (s *ServiceFacade) BuildContractOperationToSign(user types.Address, txID st
 		return resp, err
 	}
 
-	isOwner, err := s.GetUserAllowance(user, contractModel.Address)
+	isOwner, err := s.GetUserAllowance(userPubKey, contractModel.Address)
 	if err != nil {
 		return resp, err
 	}
@@ -297,7 +286,7 @@ func (s *ServiceFacade) BuildContractOperationToSign(user types.Address, txID st
 	}, nil
 }
 
-func (s *ServiceFacade) BuildContractOperation(userAddress types.Address, txID string, payloadType models.PayloadType) (resp models.OperationParameter, err error) {
+func (s *ServiceFacade) BuildContractOperation(userPubKey types.PubKey, txID string, payloadType models.PayloadType) (resp models.OperationParameter, err error) {
 	//get payload by ID
 	repo := s.repoProvider.GetContract()
 
@@ -321,17 +310,8 @@ func (s *ServiceFacade) BuildContractOperation(userAddress types.Address, txID s
 		return resp, err
 	}
 
-	reveal, isRevealed, err := s.indexerRepoProvider.GetIndexer().GetContractRevealOperation(userAddress)
-	if err != nil {
-		return resp, err
-	}
-
-	if !isRevealed {
-		return resp, apperrors.New(apperrors.ErrBadParam, "address not revealed")
-	}
-
 	//Check user allowance
-	_, isOwner := storage.Contains(reveal.PublicKey)
+	_, isOwner := storage.Contains(userPubKey)
 	if !isOwner {
 		return resp, apperrors.NewWithDesc(apperrors.ErrNotAllowed, "pubkey not contains in storage")
 	}
@@ -348,7 +328,7 @@ func (s *ServiceFacade) BuildContractOperation(userAddress types.Address, txID s
 		signatures[sigs[i].Index] = sigs[i].Signature
 	}
 
-	operationPayload, err := s.BuildContractOperationToSign(userAddress, txID, payloadType)
+	operationPayload, err := s.BuildContractOperationToSign(userPubKey, txID, payloadType)
 	if err != nil {
 		return resp, err
 	}
@@ -364,7 +344,7 @@ func (s *ServiceFacade) BuildContractOperation(userAddress types.Address, txID s
 	}, nil
 }
 
-func (s *ServiceFacade) SaveContractOperationSignature(userAddress types.Address, operationID string, req models.OperationSignature) (resp models.OperationSignatureResp, err error) {
+func (s *ServiceFacade) SaveContractOperationSignature(userPubKey types.PubKey, operationID string, req models.OperationSignature) (resp models.OperationSignatureResp, err error) {
 
 	storage, err := s.getContractStorage(req.ContractID.String())
 	if err != nil {
@@ -393,7 +373,7 @@ func (s *ServiceFacade) SaveContractOperationSignature(userAddress types.Address
 		return resp, err
 	}
 
-	operationPayload, err := s.BuildContractOperationToSign(userAddress, operationID, req.Type)
+	operationPayload, err := s.BuildContractOperationToSign(userPubKey, operationID, req.Type)
 	if err != nil {
 		return resp, err
 	}

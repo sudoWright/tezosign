@@ -1,9 +1,9 @@
-create table msig.auth_tokens
+create table auth_tokens
 (
 	atn_id serial not null
 		constraint auth_requests_pk
 			primary key,
-	atn_address varchar(36) not null,
+	atn_pubkey varchar(55) not null,
     atn_data varchar(64) not null,
     atn_type varchar not null,
     atn_is_used boolean not null,

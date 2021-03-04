@@ -1,1 +1,1 @@
-DROP TABLE msig.auth_tokens;
+DROP TABLE auth_tokens;
