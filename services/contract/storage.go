@@ -83,7 +83,13 @@ type ContractStorageContainer struct {
 	storage   *micheline.Prim
 }
 
-var contractStorageEntrypoints = map[string]micheline.OpCode{"counter": micheline.T_NAT, "keys": micheline.T_LIST, "threshold": micheline.T_NAT}
+const (
+	counterEntrypoint   = "counter"
+	keysEntrypoint      = "keys"
+	thresholdEntrypoint = "threshold"
+)
+
+var contractStorageEntrypoints = map[string]micheline.OpCode{counterEntrypoint: micheline.T_NAT, keysEntrypoint: micheline.T_LIST, thresholdEntrypoint: micheline.T_NAT}
 
 func NewContractStorageContainer(script micheline.Script) (c ContractStorageContainer, err error) {
 
@@ -99,21 +105,21 @@ func NewContractStorageContainer(script micheline.Script) (c ContractStorageCont
 
 	c.storage = script.Storage
 
-	counter, err := GetStorageValue(e["counter"], script.Storage)
+	counter, err := GetStorageValue(e[counterEntrypoint], script.Storage)
 	if err != nil {
 		return c, err
 	}
 
 	c.counter = counter.Int.Int64()
 
-	threshold, err := GetStorageValue(e["threshold"], script.Storage)
+	threshold, err := GetStorageValue(e[thresholdEntrypoint], script.Storage)
 	if err != nil {
 		return c, err
 	}
 
 	c.threshold = threshold.Int.Int64()
 
-	keys, err := GetStorageValue(e["keys"], script.Storage)
+	keys, err := GetStorageValue(e[keysEntrypoint], script.Storage)
 	if err != nil {
 		return c, err
 	}

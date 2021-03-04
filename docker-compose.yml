@@ -16,14 +16,14 @@ services:
       dockerfile: Dockerfile-api
     ports:
       - 9080:9080
-  delphi-indexer:
-    container_name: tzkt-sync
+  edo-indexer:
+    container_name: tzkt-sync-edo
     restart: always
     image: bakingbad/tzkt-sync:latest
     network_mode: "host"
     environment:
-      TZKT_ConnectionStrings__DefaultConnection: "server=localhost;port=5432;database=delphi_tzkt_db;username=tzkt;password=qwerty;"
-      TZKT_TezosNode__ChainId: "NetXm8tYqnMWky1"
+      TZKT_ConnectionStrings__DefaultConnection: "server=localhost;port=5432;database=edo_tzkt_db;username=tzkt;password=qwerty;"
+      TZKT_TezosNode__ChainId: "NetXSp4gfdanies"
       TZKT_TezosNode__Endpoint: "https://testnet-tezos.giganode.io"
       TZKT_TezosNode_Timeout: 60
       TZKT_Logging__LogLevel__Default: "Debug"
