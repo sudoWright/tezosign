@@ -68,8 +68,10 @@ type TezosOperation struct {
 type TransactionOperation struct {
 	TezosOperation
 
-	Amount             uint64 `gorm:"column:Amount"`
-	Parameters         string `gorm:"column:Parameters"`
+	Amount     uint64 `gorm:"column:Amount"`
+	Entrypoint string `gorm:"column:Entrypoint"`
+	//JsonParameters     []byte `gorm:"column:JsonParameters"`
+	RawParameters      []byte `gorm:"column:RawParameters"`
 	InternalOperations uint64 `gorm:"column:InternalOperations"`
 }
 

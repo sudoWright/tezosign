@@ -61,14 +61,14 @@ func dfs(e Entrypoints, vertex *vertex, path []micheline.OpCode) {
 
 func pathInit(e Entrypoints, prim *micheline.Prim, path []micheline.OpCode) {
 	//For now process only values with annotation
-	if prim == nil || prim.GetAnno() == "" {
+	if prim == nil || prim.GetFieldAnnoAny() == "" {
 		return
 	}
 
 	//Init new list
 	p := make([]micheline.OpCode, len(path))
 	copy(p, path)
-	anno := prim.GetAnno()
+	anno := prim.GetFieldAnnoAny()
 
 	//Dexter delphi and mainnet have diff anno
 	anno = strings.ToLower(anno)

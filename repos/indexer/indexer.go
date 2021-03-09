@@ -59,7 +59,53 @@ func (r *Repository) GetContractRevealOperation(address types.Address) (tx model
 	}
 
 	return tx, true, nil
+}
 
+//TODO WIP
+type Storage struct {
+	Level     uint64 `gorm:"column:Level"`
+	Current   bool   `gorm:"column:Current"`
+	RawValue  []byte `gorm:"column:RawValue"`
+	JsonValue string `gorm:"column:JsonValue"`
+}
+
+func (r *Repository) GetContractStorage(address types.Address) (storage Storage, isFound bool, err error) {
+	err = r.db.Select("*").
+		Table("Storages").
+		Joins(`LEFT JOIN "Accounts" a on "ContractId" = a."Id"`).
+		Where(`"Address" = ?`, address.String()).
+		First(&storage).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return storage, false, nil
+		}
+		return storage, false, err
+	}
+
+	return storage, true, nil
+}
+
+type Script struct {
+	Current         bool   `gorm:"column:Current"`
+	ParameterSchema []byte `gorm:"column:ParameterSchema"`
+	StorageSchema   []byte `gorm:"column:StorageSchema"`
+	CodeSchema      []byte `gorm:"column:CodeSchema"`
+}
+
+func (r *Repository) GetContractScript(address types.Address) (script Script, isFound bool, err error) {
+	err = r.db.Select("*").
+		Table("Scripts").
+		Joins(`LEFT JOIN "Accounts" a on "ContractId" = a."Id"`).
+		Where(`"Address" = ?`, address.String()).
+		First(&script).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return script, false, nil
+		}
+		return script, false, err
+	}
+
+	return script, true, nil
 }
 
 func (r *Repository) GetTezosQuote() (quote models.Quote, err error) {
