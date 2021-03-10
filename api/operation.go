@@ -27,7 +27,7 @@ func (api *API) ContractOperationsList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	service := services.New(repos.New(networkContext.Db), repos.New(networkContext.Db), networkContext.Client, nil, net)
+	service := services.New(repos.New(networkContext.Db), repos.New(networkContext.IndexerDB), networkContext.Client, nil, net)
 
 	list, err := service.GetOperationsList(user, contractAddress, nil)
 	if err != nil {
