@@ -33,18 +33,23 @@ func (p TZKTPrim) MichelinePrim() *micheline.Prim {
 	return &prim
 }
 
+//TODO add more OpCodes
 func PrimTypeFromTypeCode(o micheline.OpCode) micheline.PrimType {
 
 	switch o {
 	case micheline.D_PAIR, micheline.T_PAIR, micheline.T_OR, micheline.T_LAMBDA:
 		return micheline.PrimBinary
-	case micheline.K_STORAGE, micheline.K_PARAMETER, micheline.T_LIST, micheline.T_OPTION:
+	case micheline.K_STORAGE, micheline.K_PARAMETER, micheline.T_LIST, micheline.T_OPTION, micheline.D_LEFT, micheline.D_RIGHT, micheline.D_SOME,
+		micheline.I_NIL, micheline.I_DROP, micheline.I_SOME:
 		return micheline.PrimUnary
-	case micheline.T_KEY, micheline.T_STRING, micheline.T_NAT, micheline.T_INT, micheline.T_MUTEZ, micheline.T_TIMESTAMP, micheline.T_SIGNATURE, micheline.T_UNIT, micheline.T_ADDRESS, micheline.T_KEY_HASH, micheline.T_OPERATION:
+	case micheline.T_KEY, micheline.T_STRING, micheline.T_NAT, micheline.T_INT, micheline.T_MUTEZ,
+		micheline.T_TIMESTAMP, micheline.T_SIGNATURE, micheline.T_UNIT, micheline.T_ADDRESS, micheline.T_KEY_HASH, micheline.T_OPERATION,
+		micheline.D_NONE:
 		return micheline.PrimNullary
 	default:
 		return micheline.PrimBytes
 	}
+
 }
 
 //Implementation of TZKT decoder

@@ -71,8 +71,8 @@ type TransactionOperation struct {
 	Amount     uint64 `gorm:"column:Amount"`
 	Entrypoint string `gorm:"column:Entrypoint"`
 	//JsonParameters     []byte `gorm:"column:JsonParameters"`
-	RawParameters      []byte `gorm:"column:RawParameters"`
-	InternalOperations uint64 `gorm:"column:InternalOperations"`
+	RawParameters      *types.TZKTPrim `gorm:"column:RawParameters"`
+	InternalOperations uint64          `gorm:"column:InternalOperations"`
 }
 
 type RevealOperation struct {
