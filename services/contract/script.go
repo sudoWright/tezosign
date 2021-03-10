@@ -4,6 +4,7 @@ import (
 	"blockwatch.cc/tzindex/micheline"
 )
 
+//TODO recheck this method with indexer data
 func CheckFATransferMethod(script *micheline.Script) (ok bool) {
 
 	entrypoints, err := script.Entrypoints(true)

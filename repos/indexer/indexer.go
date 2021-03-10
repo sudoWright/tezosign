@@ -18,6 +18,9 @@ type (
 	Repo interface {
 		GetContractOperations(contract types.Address, blockLevel uint64) ([]models.TransactionOperation, error)
 		GetContractRevealOperation(contract types.Address) (models.RevealOperation, bool, error)
+		GetContractStorage(address types.Address) (storage models.Storage, isFound bool, err error)
+		GetContractScript(address types.Address) (script models.Script, isFound bool, err error)
+
 		GetTezosQuote() (models.Quote, error)
 	}
 )
@@ -61,19 +64,11 @@ func (r *Repository) GetContractRevealOperation(address types.Address) (tx model
 	return tx, true, nil
 }
 
-//TODO WIP
-type Storage struct {
-	Level     uint64 `gorm:"column:Level"`
-	Current   bool   `gorm:"column:Current"`
-	RawValue  []byte `gorm:"column:RawValue"`
-	JsonValue string `gorm:"column:JsonValue"`
-}
-
-func (r *Repository) GetContractStorage(address types.Address) (storage Storage, isFound bool, err error) {
+func (r *Repository) GetContractStorage(address types.Address) (storage models.Storage, isFound bool, err error) {
 	err = r.db.Select("*").
 		Table("Storages").
 		Joins(`LEFT JOIN "Accounts" a on "ContractId" = a."Id"`).
-		Where(`"Address" = ?`, address.String()).
+		Where(`"Address" = ? AND "Current" IS TRUE`, address.String()).
 		First(&storage).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -85,18 +80,11 @@ func (r *Repository) GetContractStorage(address types.Address) (storage Storage,
 	return storage, true, nil
 }
 
-type Script struct {
-	Current         bool   `gorm:"column:Current"`
-	ParameterSchema []byte `gorm:"column:ParameterSchema"`
-	StorageSchema   []byte `gorm:"column:StorageSchema"`
-	CodeSchema      []byte `gorm:"column:CodeSchema"`
-}
-
-func (r *Repository) GetContractScript(address types.Address) (script Script, isFound bool, err error) {
+func (r *Repository) GetContractScript(address types.Address) (script models.Script, isFound bool, err error) {
 	err = r.db.Select("*").
 		Table("Scripts").
 		Joins(`LEFT JOIN "Accounts" a on "ContractId" = a."Id"`).
-		Where(`"Address" = ?`, address.String()).
+		Where(`"Address" = ? AND "Current" IS TRUE`, address.String()).
 		First(&script).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
