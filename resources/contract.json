@@ -1,7 +1,15 @@
 [
   {
     "prim": "storage",
-    "args": [ { "prim": "pair", "args": [ { "prim": "nat", "annots": [ "%counter" ] }, { "prim": "pair", "args": [ { "prim": "nat", "annots": [ "%threshold" ] }, { "prim": "list", "annots": [ "%keys" ], "args": [ { "prim": "key" } ] } ] } ] } ]
+    "args": [
+      {
+        "prim": "pair",
+        "args": [
+          { "prim": "nat", "annots": [ "%counter" ] },
+          { "prim": "pair", "args": [ { "prim": "nat", "annots": [ "%threshold" ] }, { "prim": "list", "args": [ { "prim": "key" } ], "annots": [ "%keys" ] } ] }
+        ]
+      }
+    ]
   },
   {
     "prim": "parameter",
@@ -35,12 +43,52 @@
                                 "annots": [ ":direct_action" ]
                               },
                               {
-                                "prim": "pair",
+                                "prim": "or",
                                 "args": [
-                                  { "prim": "address" },
-                                  { "prim": "pair", "args": [ { "prim": "address" }, { "prim": "pair", "args": [ { "prim": "address" }, { "prim": "nat" } ] } ] }
-                                ],
-                                "annots": [ ":transferFA" ]
+                                  {
+                                    "prim": "pair",
+                                    "args": [
+                                      { "prim": "address" },
+                                      {
+                                        "prim": "or",
+                                        "args": [
+                                          {
+                                            "prim": "pair",
+                                            "args": [ { "prim": "address" }, { "prim": "pair", "args": [ { "prim": "address" }, { "prim": "nat" } ] } ],
+                                            "annots": [ ":transferFA1.2" ]
+                                          },
+                                          {
+                                            "prim": "list",
+                                            "args": [
+                                              {
+                                                "prim": "pair",
+                                                "args": [
+                                                  { "prim": "address", "annots": [ ":from_" ] },
+                                                  {
+                                                    "prim": "list",
+                                                    "args": [
+                                                      {
+                                                        "prim": "pair",
+                                                        "args": [
+                                                          { "prim": "address", "annots": [ ":to_" ] },
+                                                          { "prim": "pair", "args": [ { "prim": "nat", "annots": [ ":token_id" ] }, { "prim": "nat", "annots": [ ":amount" ] } ] }
+                                                        ]
+                                                      }
+                                                    ],
+                                                    "annots": [ ":txs" ]
+                                                  }
+                                                ]
+                                              }
+                                            ],
+                                            "annots": [ ":transferFA2" ]
+                                          }
+                                        ]
+                                      }
+                                    ],
+                                    "annots": [ ":transferFA" ]
+                                  },
+                                  { "prim": "unit", "annots": [ ":vesting_mock" ] }
+                                ]
                               }
                             ],
                             "annots": [ ":action" ]
@@ -100,10 +148,41 @@
                                           ]
                                         },
                                         {
-                                          "prim": "pair",
+                                          "prim": "or",
                                           "args": [
-                                            { "prim": "address" },
-                                            { "prim": "pair", "args": [ { "prim": "address" }, { "prim": "pair", "args": [ { "prim": "address" }, { "prim": "nat" } ] } ] }
+                                            {
+                                              "prim": "pair",
+                                              "args": [
+                                                { "prim": "address" },
+                                                {
+                                                  "prim": "or",
+                                                  "args": [
+                                                    { "prim": "pair", "args": [ { "prim": "address" }, { "prim": "pair", "args": [ { "prim": "address" }, { "prim": "nat" } ] } ] },
+                                                    {
+                                                      "prim": "list",
+                                                      "args": [
+                                                        {
+                                                          "prim": "pair",
+                                                          "args": [
+                                                            { "prim": "address" },
+                                                            {
+                                                              "prim": "list",
+                                                              "args": [
+                                                                {
+                                                                  "prim": "pair",
+                                                                  "args": [ { "prim": "address" }, { "prim": "pair", "args": [ { "prim": "nat" }, { "prim": "nat" } ] } ]
+                                                                }
+                                                              ]
+                                                            }
+                                                          ]
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            },
+                                            { "prim": "unit" }
                                           ]
                                         }
                                       ]
@@ -126,7 +205,7 @@
             }
           ]
         },
-        { "prim": "DUP" },{ "prim": "CAR" }, { "prim": "DIP", "args": [ [ { "prim": "CDR" } ] ] },
+        { "prim": "UNPAIR" },
         {
           "prim": "IF_LEFT",
           "args": [
@@ -153,10 +232,9 @@
                 "args": [
                   [
                     { "prim": "SWAP" },
-                    { "prim": "DUP" },{ "prim": "CAR" }, { "prim": "DIP", "args": [ [ { "prim": "CDR" } ] ] },
+                    { "prim": "UNPAIR" },
                     { "prim": "DUP" },
-                    { "prim": "SELF" },
-                    { "prim": "ADDRESS" },
+                    { "prim": "SELF_ADDRESS" },
                     { "prim": "CHAIN_ID" },
                     { "prim": "PAIR" },
                     { "prim": "PAIR" },
@@ -235,7 +313,7 @@
               { "prim": "LE" },
               { "prim": "IF", "args": [ [], [ { "prim": "PUSH", "args": [ { "prim": "string" }, { "string": "Quorum not present" } ] }, { "prim": "FAILWITH" } ] ] },
               { "prim": "IF_CONS", "args": [ [ { "prim": "FAILWITH" } ], [ { "prim": "DROP" } ] ] },
-              { "prim": "DIP", "args": [ [ { "prim": "DUP" },{ "prim": "CAR" }, { "prim": "DIP", "args": [ [ { "prim": "CDR" } ] ] }, { "prim": "PUSH", "args": [ { "prim": "nat" }, { "int": "1" } ] }, { "prim": "ADD" }, { "prim": "PAIR" } ] ] },
+              { "prim": "DIP", "args": [ [ { "prim": "UNPAIR" }, { "prim": "PUSH", "args": [ { "prim": "nat" }, { "int": "1" } ] }, { "prim": "ADD" }, { "prim": "PAIR" } ] ] },
               {
                 "prim": "IF_LEFT",
                 "args": [
@@ -277,26 +355,88 @@
                                 }
                               ],
                               [
-                                { "prim": "DUP" },
-                                { "prim": "CAR" },
                                 {
-                                  "prim": "CONTRACT",
-                                  "args": [ { "prim": "pair", "args": [ { "prim": "address" }, { "prim": "pair", "args": [ { "prim": "address" }, { "prim": "nat" } ] } ] } ],
-                                  "annots": [ "%transfer" ]
-                                },
-                                {
-                                  "prim": "IF_NONE",
+                                  "prim": "IF_LEFT",
                                   "args": [
-                                    [ { "prim": "PUSH", "args": [ { "prim": "string" }, { "string": "bad address for get_entrypoint (%transfer)" } ] }, { "prim": "FAILWITH" } ],
-                                    []
+                                    [
+                                      { "prim": "UNPAIR" },
+                                      { "prim": "SWAP" },
+                                      {
+                                        "prim": "IF_LEFT",
+                                        "args": [
+                                          [
+                                            { "prim": "SWAP" },
+                                            {
+                                              "prim": "CONTRACT",
+                                              "args": [
+                                                { "prim": "pair", "args": [ { "prim": "address" }, { "prim": "pair", "args": [ { "prim": "address" }, { "prim": "nat" } ] } ] }
+                                              ],
+                                              "annots": [ "%transfer" ]
+                                            },
+                                            {
+                                              "prim": "IF_NONE",
+                                              "args": [
+                                                [
+                                                  { "prim": "PUSH", "args": [ { "prim": "string" }, { "string": "bad address for get_entrypoint (%transfer)" } ] },
+                                                  { "prim": "FAILWITH" }
+                                                ],
+                                                []
+                                              ]
+                                            },
+                                            { "prim": "SWAP" },
+                                            { "prim": "DIP", "args": [ [ { "prim": "PUSH", "args": [ { "prim": "mutez" }, { "int": "0" } ] } ] ] },
+                                            { "prim": "TRANSFER_TOKENS" }
+                                          ],
+                                          [
+                                            { "prim": "SWAP" },
+                                            {
+                                              "prim": "CONTRACT",
+                                              "args": [
+                                                {
+                                                  "prim": "list",
+                                                  "args": [
+                                                    {
+                                                      "prim": "pair",
+                                                      "args": [
+                                                        { "prim": "address" },
+                                                        {
+                                                          "prim": "list",
+                                                          "args": [
+                                                            {
+                                                              "prim": "pair",
+                                                              "args": [ { "prim": "address" }, { "prim": "pair", "args": [ { "prim": "nat" }, { "prim": "nat" } ] } ]
+                                                            }
+                                                          ]
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ],
+                                              "annots": [ "%transfer" ]
+                                            },
+                                            {
+                                              "prim": "IF_NONE",
+                                              "args": [
+                                                [
+                                                  { "prim": "PUSH", "args": [ { "prim": "string" }, { "string": "bad address for get_entrypoint (%transfer)" } ] },
+                                                  { "prim": "FAILWITH" }
+                                                ],
+                                                []
+                                              ]
+                                            },
+                                            { "prim": "SWAP" },
+                                            { "prim": "DIP", "args": [ [ { "prim": "PUSH", "args": [ { "prim": "mutez" }, { "int": "0" } ] } ] ] },
+                                            { "prim": "TRANSFER_TOKENS" }
+                                          ]
+                                        ]
+                                      },
+                                      { "prim": "DIP", "args": [ [ { "prim": "NIL", "args": [ { "prim": "operation" } ] } ] ] },
+                                      { "prim": "CONS" }
+                                    ],
+                                    [ { "prim": "DROP" }, { "prim": "NIL", "args": [ { "prim": "operation" } ] } ]
                                   ]
-                                },
-                                { "prim": "SWAP" },
-                                { "prim": "DIP", "args": [ [ { "prim": "PUSH", "args": [ { "prim": "mutez" }, { "int": "0" } ] } ] ] },
-                                { "prim": "CDR" },
-                                { "prim": "TRANSFER_TOKENS" },
-                                { "prim": "DIP", "args": [ [ { "prim": "NIL", "args": [ { "prim": "operation" } ] } ] ] },
-                                { "prim": "CONS" }
+                                }
                               ]
                             ]
                           }

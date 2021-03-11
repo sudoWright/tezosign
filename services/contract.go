@@ -202,7 +202,8 @@ func (s *ServiceFacade) ContractOperation(userPubKey types.PubKey, req models.Co
 		return resp, err
 	}
 
-	if req.Type == models.FATransfer {
+	if req.Type == models.FATransfer /*|| req.Type == models.FA2Transfer*/ {
+		//TODO check FA2
 		isFAContract, err := s.checkFAStandart(req.AssetID.String())
 		if err != nil {
 			return resp, err
