@@ -91,8 +91,8 @@ type ContractOperationRequest struct {
 	CustomPayload types.Payload `json:"custom_payload,omitempty"`
 	//Internal params
 	//Update storage
-	Threshold uint           `json:"-"`
-	Keys      []types.PubKey `json:"-"`
+	Threshold uint           `json:"threshold,omitempty"`
+	Keys      []types.PubKey `json:"keys,omitempty"`
 }
 
 type TransferUnit struct {
