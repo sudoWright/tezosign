@@ -677,11 +677,32 @@ definitions:
         type: string
       asset_id:
         type: string
+      # Assets operations
+      transfer_list:
+        type: array
+        items:
+          $ref: '#/definitions/TransferUnit'
       # Custom michelson bytes or JSON payload
       custom_payload:
         type: string
     required:
       - contract_id
+  TransferUnit:
+    properties:
+      from:
+        type: string
+      txs:
+        type: array
+        items:
+          $ref: '#/definitions/Tx'
+  Tx:
+    properties:
+      to:
+        type: string
+      token_id:
+        type: integer
+      amount:
+        type: integer
   ContractOperationResp:
     properties:
       operation_id:

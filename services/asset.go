@@ -74,7 +74,7 @@ func (s *ServiceFacade) AssetsExchangeRates(userPubKey types.PubKey, contractAdd
 			return assetsRates, err
 		}
 
-		eps, err := contract.InitStorageAnnotsEntrypoints(script.Code.Storage)
+		eps, err := contract.InitAnnotsEntrypoints(script.Code.Storage)
 		if err != nil {
 			return assetsRates, err
 		}
@@ -122,8 +122,8 @@ func (s *ServiceFacade) ContractAsset(userPubKey types.PubKey, contractAddress t
 		return asset, apperrors.New(apperrors.ErrNotAllowed)
 	}
 
-	//Сheck contract for FA
-	isFAAsset, err := s.checkFAStandart(reqAsset.Address.String())
+	//Сheck contract for FA1.2 or FA2
+	isFAAsset, err := s.checkFAStandart(reqAsset.Address, reqAsset.ContractType)
 	if err != nil {
 		return asset, err
 	}

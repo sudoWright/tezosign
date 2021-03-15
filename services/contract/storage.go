@@ -93,12 +93,12 @@ var contractStorageEntrypoints = map[string]micheline.OpCode{counterEntrypoint: 
 
 func NewContractStorageContainer(script micheline.Script) (c ContractStorageContainer, err error) {
 
-	e, err := InitStorageAnnotsEntrypoints(script.Code.Storage)
+	e, err := InitAnnotsEntrypoints(script.Code.Storage)
 	if err != nil {
 		return c, err
 	}
 
-	err = checkStorage(e, contractStorageEntrypoints)
+	err = checkFields(e, contractStorageEntrypoints)
 	if err != nil {
 		return c, err
 	}
@@ -136,11 +136,11 @@ func NewContractStorageContainer(script micheline.Script) (c ContractStorageCont
 	return
 }
 
-func checkStorage(e Entrypoints, contractStorageEntrypoints map[string]micheline.OpCode) error {
+func checkFields(e Entrypoints, contractAnnoFields map[string]micheline.OpCode) error {
 
 	var entrypoint Entrypoint
 	var ok bool
-	for eName, opCode := range contractStorageEntrypoints {
+	for eName, opCode := range contractAnnoFields {
 		if entrypoint, ok = e[eName]; !ok {
 			return errors.New("entrypoint not found")
 		}
@@ -174,13 +174,19 @@ func (c ContractStorageContainer) Contains(pubKey types.PubKey) (index int64, is
 	return 0, false
 }
 
-func InitStorageAnnotsEntrypoints(codeStorage *micheline.Prim) (e Entrypoints, err error) {
-	if len(codeStorage.Args) == 0 {
+func InitAnnotsEntrypoints(prim *micheline.Prim) (e Entrypoints, err error) {
+	if len(prim.Args) == 0 {
 		return e, errors.New("wrong code storage")
 	}
 
 	e = make(Entrypoints)
-	dfs(e, newVertex(codeStorage.Args[0]), []micheline.OpCode{})
+	arg := prim
+	//Use arg instead of naming prim
+	if prim.OpCode >= micheline.K_PARAMETER && prim.OpCode <= micheline.K_CODE {
+		arg = prim.Args[0]
+	}
+
+	dfs(e, newVertex(arg), []micheline.OpCode{})
 
 	return
 }

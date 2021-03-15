@@ -20,6 +20,7 @@ type (
 		GetContractRevealOperation(contract types.Address) (models.RevealOperation, bool, error)
 		GetContractStorage(address types.Address) (storage models.Storage, isFound bool, err error)
 		GetContractScript(address types.Address) (script models.Script, isFound bool, err error)
+		GetAccount(address types.Address) (account models.Account, isFound bool, err error)
 
 		GetTezosQuote() (models.Quote, error)
 	}
@@ -94,6 +95,21 @@ func (r *Repository) GetContractScript(address types.Address) (script models.Scr
 	}
 
 	return script, true, nil
+}
+
+func (r *Repository) GetAccount(address types.Address) (account models.Account, isFound bool, err error) {
+	err = r.db.
+		Table("Accounts").
+		Where(`"Address" = ?`, address.String()).
+		First(&account).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return account, false, nil
+		}
+		return account, false, err
+	}
+
+	return account, true, nil
 }
 
 func (r *Repository) GetTezosQuote() (quote models.Quote, err error) {

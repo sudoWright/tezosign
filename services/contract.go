@@ -163,13 +163,19 @@ func (s *ServiceFacade) ContractOperation(userPubKey types.PubKey, req models.Co
 		return resp, apperrors.NewWithDesc(apperrors.ErrNotAllowed, "pubkey not contains in storage")
 	}
 
+	//Get contact
+	storage, err := s.getContractStorage(req.ContractID)
+	if err != nil {
+		return resp, err
+	}
+
 	chainID, err := s.rpcClient.ChainID(context.Background())
 	if err != nil {
 		return resp, err
 	}
 
-	//Get contact
-	storage, err := s.getContractStorage(req.ContractID)
+	//Specific checks
+	err = s.checkOperation(req)
 	if err != nil {
 		return resp, err
 	}
@@ -202,18 +208,6 @@ func (s *ServiceFacade) ContractOperation(userPubKey types.PubKey, req models.Co
 		return resp, err
 	}
 
-	if req.Type == models.FATransfer /*|| req.Type == models.FA2Transfer*/ {
-		//TODO check FA2
-		isFAContract, err := s.checkFAStandart(req.AssetID.String())
-		if err != nil {
-			return resp, err
-		}
-
-		if !isFAContract {
-			return resp, apperrors.New(apperrors.ErrBadParam, "not FA asset contract")
-		}
-	}
-
 	request := models.Request{
 		ContractID: contr.ID,
 		Hash:       operationID,
@@ -233,6 +227,45 @@ func (s *ServiceFacade) ContractOperation(userPubKey types.PubKey, req models.Co
 	}
 
 	return request, nil
+}
+
+func (s *ServiceFacade) checkOperation(req models.ContractOperationRequest) (err error) {
+	switch req.Type {
+	//Check account balance
+	case models.Transfer:
+		acc, isFound, err := s.indexerRepoProvider.GetIndexer().GetAccount(req.ContractID)
+		if err != nil {
+			return err
+		}
+
+		if !isFound {
+			return apperrors.New(apperrors.ErrNotFound, "account")
+		}
+
+		//TODO count fee
+		if req.Amount > acc.Balance {
+			return apperrors.New(apperrors.ErrNotAllowed, "not enough balance")
+		}
+	//Check FA standart and balance
+	case models.FATransfer, models.FA2Transfer:
+		assetType := models.TypeFA12
+		if req.Type == models.FA2Transfer {
+			assetType = models.TypeFA2
+		}
+
+		isFAContract, err := s.checkFAStandart(req.AssetID, assetType)
+		if err != nil {
+			return err
+		}
+
+		if !isFAContract {
+			return apperrors.New(apperrors.ErrBadParam, "not FA asset contract")
+		}
+
+		//TODO check FA balance
+	}
+
+	return nil
 }
 
 //TODO move to middleware
@@ -463,13 +496,24 @@ func (s *ServiceFacade) getContractStorage(contractID types.Address) (storageCon
 	return storageContainer, err
 }
 
-func (s *ServiceFacade) checkFAStandart(contractID string) (isFAContract bool, err error) {
-	script, err := s.rpcClient.Script(context.Background(), contractID)
+func (s *ServiceFacade) checkFAStandart(contractID types.Address, assetType models.AssetType) (isFAContract bool, err error) {
+
+	script, isFound, err := s.indexerRepoProvider.GetIndexer().GetContractScript(contractID)
 	if err != nil {
 		return false, err
 	}
 
-	return contract.CheckFATransferMethod(&script), nil
+	if !isFound {
+		return false, apperrors.New(apperrors.ErrNotFound, "contract")
+	}
+
+	return contract.CheckFATransferMethod(&micheline.Script{
+		Code: &micheline.Code{
+			Param:   script.ParameterSchema.MichelinePrim(),
+			Storage: script.StorageSchema.MichelinePrim(),
+			Code:    script.CodeSchema.MichelinePrim(),
+		},
+	}, assetType), nil
 }
 
 func operationID(payload string) string {

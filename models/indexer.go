@@ -17,3 +17,9 @@ type Script struct {
 	StorageSchema   types.TZKTPrim `gorm:"column:StorageSchema"`
 	CodeSchema      types.TZKTPrim `gorm:"column:CodeSchema"`
 }
+
+type Account struct {
+	Address types.Address `gorm:"column:Address"`
+	Type    uint8         `gorm:"column:Type"`
+	Balance uint64        `gorm:"column:Balance"`
+}
