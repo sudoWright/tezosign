@@ -10,16 +10,16 @@ import (
 	"blockwatch.cc/tzindex/micheline"
 )
 
-//TODO reformat consts
+//Byte constants on int format
 const (
-	MichelineTypeInt    byte = 0b_0000_0000
-	MichelineTypeBytes       = 0b_0010_0000
-	MichelineTypeString      = 0b_0100_0000
-	MichelineTypeArray       = 0b_0110_0000
+	MichelineTypeInt    byte = 0
+	MichelineTypeBytes       = 32
+	MichelineTypeString      = 64
+	MichelineTypeArray       = 96
 
-	AnnotationTypeField    = 0b_0100_0000
-	AnnotationTypeType     = 0b_1000_0000
-	AnnotationTypeVariable = 0b_1100_0000
+	AnnotationTypeField    = 64
+	AnnotationTypeType     = 128
+	AnnotationTypeVariable = 192
 )
 
 type TZKTPrim micheline.Prim

@@ -271,7 +271,6 @@ func buildTransferTxsPrim(txs []models.Tx) (txsPrim *micheline.Prim, err error) 
 					Type:   micheline.PrimBinary,
 					OpCode: micheline.D_PAIR,
 					Args: []*micheline.Prim{
-						//TODO fix After txIndex will be fixed
 						//Token_ID
 						{
 							Type:   micheline.PrimInt,
