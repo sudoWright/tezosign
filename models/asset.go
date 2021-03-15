@@ -24,7 +24,8 @@ type Asset struct {
 
 	ContractID sql.NullInt64 `gorm:"column:ctr_id" json:"-"`
 
-	IsGlobal bool `gorm:"-" json:"is_global"`
+	Balances []TokenBalance `gorm:"-" json:"balances"`
+	IsGlobal bool           `gorm:"-" json:"is_global"`
 }
 
 func (a Asset) Validate() (err error) {

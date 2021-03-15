@@ -43,11 +43,27 @@ func (s *ServiceFacade) AssetsList(userPubKey types.PubKey, contractAddress type
 		return assets, err
 	}
 
+	userAddress, err := userPubKey.Address()
+	if err != nil {
+		return assets, err
+	}
+
+	balances, err := getAccountTokensBalance(userAddress)
+	if err != nil {
+		return assets, err
+	}
+
+	tokensMap := make(map[types.Address][]models.TokenBalance, len(balances.Tokens))
+	for i := range balances.Tokens {
+		tokensMap[balances.Tokens[i].Asset] = append(tokensMap[balances.Tokens[i].Asset], balances.Tokens[i].TokenBalance)
+	}
+
 	for i := range assets {
+		assets[i].Balances = tokensMap[assets[i].Address]
+
 		if assets[i].ContractID.Valid {
 			continue
 		}
-
 		assets[i].IsGlobal = true
 	}
 

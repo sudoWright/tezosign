@@ -97,6 +97,7 @@ func (s *ServiceFacade) processOperations(repo contractRepo.Repo, c models.Contr
 		}
 
 		//TODO add assets income transfers
+
 		//Default entrypoint
 		if operations[j].RawParameters == nil {
 			err = repo.SavePayload(models.Request{

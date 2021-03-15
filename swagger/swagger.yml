@@ -759,8 +759,18 @@ definitions:
         type: integer
       ticker:
         type: string
+      balances:
+        type: array
+        items:
+          $ref: '#/definitions/AssetBalance'
       is_global:
         type: boolean
+  AssetBalance:
+    properties:
+      balance:
+        type: string
+      token_id:
+        type: integer
   ExchangeRatesResp:
     properties:
       btc:
