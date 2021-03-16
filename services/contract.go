@@ -14,6 +14,8 @@ import (
 	"tezosign/types"
 	"time"
 
+	"blockwatch.cc/tzindex/micheline"
+
 	"github.com/anchorageoss/tezosprotocol/v2"
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/pkg/errors"
@@ -111,7 +113,7 @@ func (s *ServiceFacade) getPubKeys(threshold uint, entities []models.StorageEnti
 
 func (s *ServiceFacade) ContractInfo(contractID types.Address) (resp models.ContractInfo, err error) {
 	//Get contact
-	storage, err := s.getContractStorage(contractID.String())
+	storage, err := s.getContractStorage(contractID)
 	if err != nil {
 		return resp, err
 	}
@@ -161,13 +163,19 @@ func (s *ServiceFacade) ContractOperation(userPubKey types.PubKey, req models.Co
 		return resp, apperrors.NewWithDesc(apperrors.ErrNotAllowed, "pubkey not contains in storage")
 	}
 
+	//Get contact
+	storage, err := s.getContractStorage(req.ContractID)
+	if err != nil {
+		return resp, err
+	}
+
 	chainID, err := s.rpcClient.ChainID(context.Background())
 	if err != nil {
 		return resp, err
 	}
 
-	//Get contact
-	storage, err := s.getContractStorage(req.ContractID.String())
+	//Specific checks
+	err = s.checkOperation(req)
 	if err != nil {
 		return resp, err
 	}
@@ -200,17 +208,6 @@ func (s *ServiceFacade) ContractOperation(userPubKey types.PubKey, req models.Co
 		return resp, err
 	}
 
-	if req.Type == models.FATransfer {
-		isFAContract, err := s.checkFAStandart(req.AssetID.String())
-		if err != nil {
-			return resp, err
-		}
-
-		if !isFAContract {
-			return resp, apperrors.New(apperrors.ErrBadParam, "not FA asset contract")
-		}
-	}
-
 	request := models.Request{
 		ContractID: contr.ID,
 		Hash:       operationID,
@@ -232,10 +229,49 @@ func (s *ServiceFacade) ContractOperation(userPubKey types.PubKey, req models.Co
 	return request, nil
 }
 
+func (s *ServiceFacade) checkOperation(req models.ContractOperationRequest) (err error) {
+	switch req.Type {
+	//Check account balance
+	case models.Transfer:
+		acc, isFound, err := s.indexerRepoProvider.GetIndexer().GetAccount(req.ContractID)
+		if err != nil {
+			return err
+		}
+
+		if !isFound {
+			return apperrors.New(apperrors.ErrNotFound, "account")
+		}
+
+		//TODO count fee
+		if req.Amount > acc.Balance {
+			return apperrors.New(apperrors.ErrNotAllowed, "not enough balance")
+		}
+	//Check FA standart and balance
+	case models.FATransfer, models.FA2Transfer:
+		assetType := models.TypeFA12
+		if req.Type == models.FA2Transfer {
+			assetType = models.TypeFA2
+		}
+
+		isFAContract, err := s.checkFAStandart(req.AssetID, assetType)
+		if err != nil {
+			return err
+		}
+
+		if !isFAContract {
+			return apperrors.New(apperrors.ErrBadParam, "not FA asset contract")
+		}
+
+		//TODO check FA balance
+	}
+
+	return nil
+}
+
 //TODO move to middleware
 func (s *ServiceFacade) GetUserAllowance(userPubKey types.PubKey, contractAddress types.Address) (isOwner bool, err error) {
 
-	storage, err := s.getContractStorage(contractAddress.String())
+	storage, err := s.getContractStorage(contractAddress)
 	if err != nil {
 		return false, err
 	}
@@ -311,7 +347,7 @@ func (s *ServiceFacade) BuildContractOperation(userPubKey types.PubKey, txID str
 	}
 
 	//Get contact
-	storage, err := s.getContractStorage(contr.Address.String())
+	storage, err := s.getContractStorage(contr.Address)
 	if err != nil {
 		return resp, err
 	}
@@ -352,7 +388,7 @@ func (s *ServiceFacade) BuildContractOperation(userPubKey types.PubKey, txID str
 
 func (s *ServiceFacade) SaveContractOperationSignature(userPubKey types.PubKey, operationID string, req models.OperationSignature) (resp models.OperationSignatureResp, err error) {
 
-	storage, err := s.getContractStorage(req.ContractID.String())
+	storage, err := s.getContractStorage(req.ContractID)
 	if err != nil {
 		return resp, err
 	}
@@ -423,27 +459,61 @@ func (s *ServiceFacade) SaveContractOperationSignature(userPubKey types.PubKey, 
 	}, nil
 }
 
-func (s *ServiceFacade) getContractStorage(contractID string) (storage contract.ContractStorageContainer, err error) {
-	script, err := s.rpcClient.Script(context.Background(), contractID)
+func (s *ServiceFacade) getContractStorage(contractID types.Address) (storageContainer contract.ContractStorageContainer, err error) {
+
+	indexerRepo := s.indexerRepoProvider.GetIndexer()
+
+	script, isFound, err := indexerRepo.GetContractScript(contractID)
 	if err != nil {
-		return storage, err
+		return storageContainer, err
 	}
 
-	storage, err = contract.NewContractStorageContainer(script)
-	if err != nil {
-		return storage, fmt.Errorf("%v; %w", err, apperrors.NewWithDesc(apperrors.ErrBadParam, "wrong contract type"))
+	if !isFound {
+		return storageContainer, apperrors.New(apperrors.ErrNotFound, "contract")
 	}
 
-	return storage, err
+	storage, isFound, err := indexerRepo.GetContractStorage(contractID)
+	if err != nil {
+		return storageContainer, err
+	}
+
+	if !isFound {
+		return storageContainer, apperrors.New(apperrors.ErrNotFound, "contract")
+	}
+
+	storageContainer, err = contract.NewContractStorageContainer(micheline.Script{
+		Code: &micheline.Code{
+			Param:   script.ParameterSchema.MichelinePrim(),
+			Storage: script.StorageSchema.MichelinePrim(),
+			Code:    script.CodeSchema.MichelinePrim(),
+		},
+		Storage: storage.RawValue.MichelinePrim(),
+	})
+	if err != nil {
+		return storageContainer, fmt.Errorf("%v; %w", err, apperrors.NewWithDesc(apperrors.ErrBadParam, "wrong contract type"))
+	}
+
+	return storageContainer, err
 }
 
-func (s *ServiceFacade) checkFAStandart(contractID string) (isFAContract bool, err error) {
-	script, err := s.rpcClient.Script(context.Background(), contractID)
+func (s *ServiceFacade) checkFAStandart(contractID types.Address, assetType models.AssetType) (isFAContract bool, err error) {
+
+	script, isFound, err := s.indexerRepoProvider.GetIndexer().GetContractScript(contractID)
 	if err != nil {
 		return false, err
 	}
 
-	return contract.CheckFATransferMethod(&script), nil
+	if !isFound {
+		return false, apperrors.New(apperrors.ErrNotFound, "contract")
+	}
+
+	return contract.CheckFATransferMethod(&micheline.Script{
+		Code: &micheline.Code{
+			Param:   script.ParameterSchema.MichelinePrim(),
+			Storage: script.StorageSchema.MichelinePrim(),
+			Code:    script.CodeSchema.MichelinePrim(),
+		},
+	}, assetType), nil
 }
 
 func operationID(payload string) string {

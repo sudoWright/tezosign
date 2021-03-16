@@ -1,10 +1,13 @@
 package contract
 
 import (
-	"blockwatch.cc/tzindex/micheline"
+	"errors"
 	"fmt"
 	"math/big"
 	"tezosign/models"
+	"tezosign/types"
+
+	"blockwatch.cc/tzindex/micheline"
 )
 
 func buildActionParams(operationParams models.ContractOperationRequest) (actionParams *micheline.Prim, err error) {
@@ -36,6 +39,11 @@ func buildActionParams(operationParams models.ContractOperationRequest) (actionP
 			},
 		}
 
+	case models.FATransfer, models.FA2Transfer:
+		actionParams, err = buildFATransferParams(operationParams)
+		if err != nil {
+			return actionParams, err
+		}
 	case models.Delegation:
 		if operationParams.To == "" {
 			//None
@@ -68,72 +76,7 @@ func buildActionParams(operationParams models.ContractOperationRequest) (actionP
 		if err != nil {
 			return actionParams, err
 		}
-	case models.FATransfer:
-		encodedAssetAddress, err := operationParams.AssetID.MarshalBinary()
-		if err != nil {
-			return actionParams, err
-		}
 
-		//Use contract self address as default from
-		from := operationParams.ContractID
-		if operationParams.From != "" {
-			from = operationParams.From
-		}
-
-		encodedFromAddress, err := from.MarshalBinary()
-		if err != nil {
-			return actionParams, err
-		}
-
-		encodedDestinationAddress, err := operationParams.To.MarshalBinary()
-		if err != nil {
-			return actionParams, err
-		}
-
-		//(pair address (pair  address (pair address nat)))
-		actionParams = &micheline.Prim{
-			Type:   micheline.PrimBinary,
-			OpCode: micheline.D_PAIR,
-			Args: []*micheline.Prim{
-				//Asset
-				{
-					Type:   micheline.PrimBytes,
-					OpCode: micheline.T_BYTES,
-					Bytes:  encodedAssetAddress,
-				},
-				//Contract call pair
-				{
-					Type:   micheline.PrimBinary,
-					OpCode: micheline.D_PAIR,
-					Args: []*micheline.Prim{
-						//From address
-						{
-							Type:   micheline.PrimBytes,
-							OpCode: micheline.T_BYTES,
-							Bytes:  encodedFromAddress,
-						},
-						{
-							Type:   micheline.PrimBinary,
-							OpCode: micheline.D_PAIR,
-							Args: []*micheline.Prim{
-								//Destination address
-								{
-									Type:   micheline.PrimBytes,
-									OpCode: micheline.T_BYTES,
-									Bytes:  encodedDestinationAddress,
-								},
-								//Amount
-								{
-									Type:   micheline.PrimInt,
-									OpCode: micheline.T_INT,
-									Int:    big.NewInt(int64(operationParams.Amount)),
-								},
-							},
-						},
-					},
-				},
-			},
-		}
 	case models.CustomPayload:
 		actionParams = &micheline.Prim{}
 		if len(operationParams.CustomPayload) == 0 {
@@ -166,4 +109,201 @@ func buildActionParams(operationParams models.ContractOperationRequest) (actionP
 	}
 
 	return actionParams, nil
+}
+
+func buildFATransferParams(operationParams models.ContractOperationRequest) (actionParams *micheline.Prim, err error) {
+	encodedAssetAddress, err := operationParams.AssetID.MarshalBinary()
+	if err != nil {
+		return actionParams, err
+	}
+
+	var transferParam *micheline.Prim
+	var opCode micheline.OpCode
+	switch operationParams.Type {
+	//(pair  address (pair address nat))
+	case models.FATransfer:
+		opCode = micheline.D_LEFT
+
+		//Check TransferList len
+		if len(operationParams.TransferList) != 1 || len(operationParams.TransferList[0].Txs) != 1 {
+			return actionParams, errors.New("wrong transfers num")
+		}
+
+		//Use contract self address as default from
+		from := operationParams.ContractID
+		if operationParams.TransferList[0].From != "" {
+			from = operationParams.TransferList[0].From
+		}
+
+		encodedFromAddress, err := from.MarshalBinary()
+		if err != nil {
+			return actionParams, err
+		}
+
+		encodedDestinationAddress, err := operationParams.TransferList[0].Txs[0].To.MarshalBinary()
+		if err != nil {
+			return actionParams, err
+		}
+
+		transferParam = &micheline.Prim{
+			Type:   micheline.PrimBinary,
+			OpCode: micheline.D_PAIR,
+			Args: []*micheline.Prim{
+				//From address
+				{
+					Type:   micheline.PrimBytes,
+					OpCode: micheline.T_BYTES,
+					Bytes:  encodedFromAddress,
+				},
+				{
+					Type:   micheline.PrimBinary,
+					OpCode: micheline.D_PAIR,
+					Args: []*micheline.Prim{
+						//Destination address
+						{
+							Type:   micheline.PrimBytes,
+							OpCode: micheline.T_BYTES,
+							Bytes:  encodedDestinationAddress,
+						},
+						//Amount
+						{
+							Type:   micheline.PrimInt,
+							OpCode: micheline.T_INT,
+							Int:    big.NewInt(int64(operationParams.TransferList[0].Txs[0].Amount)),
+						},
+					},
+				},
+			},
+		}
+
+		//(list (pair address (list (pair address (pair nat nat)))))
+	case models.FA2Transfer:
+		opCode = micheline.D_RIGHT
+
+		transfers := make([]*micheline.Prim, len(operationParams.TransferList))
+
+		for i := range operationParams.TransferList {
+			//(list (pair address (pair nat nat)))
+			txsPrim, err := buildTransferTxsPrim(operationParams.TransferList[i].Txs)
+			if err != nil {
+				return actionParams, err
+			}
+
+			//Use contract self address as default from
+			from := getFATransferAddressFrom(operationParams, int64(i))
+
+			encodedFromAddress, err := from.MarshalBinary()
+			if err != nil {
+				return actionParams, err
+			}
+
+			//(pair address (list (pair address (pair nat nat))))
+			transfers[i] = &micheline.Prim{
+				Type:   micheline.PrimBinary,
+				OpCode: micheline.D_PAIR,
+				Args: []*micheline.Prim{
+					{
+						Type:   micheline.PrimBytes,
+						OpCode: micheline.T_BYTES,
+						Bytes:  encodedFromAddress,
+					},
+					txsPrim,
+				},
+			}
+		}
+
+		// list
+		transferParam = &micheline.Prim{
+			Type:   micheline.PrimSequence,
+			OpCode: micheline.T_LIST,
+			Args:   transfers,
+		}
+
+	default:
+		return actionParams, errors.New("unknown FA format")
+	}
+
+	//(pair address (or (pair  address (pair address nat)) (list (pair address (list (pair address (pair nat nat))))) ) )
+	actionParams = &micheline.Prim{
+		Type:   micheline.PrimBinary,
+		OpCode: micheline.D_PAIR,
+		Args: []*micheline.Prim{
+			//Asset
+			{
+				Type:   micheline.PrimBytes,
+				OpCode: micheline.T_BYTES,
+				Bytes:  encodedAssetAddress,
+			},
+			//Contract call pair
+			{
+				Type:   micheline.PrimUnary,
+				OpCode: opCode,
+				Args:   []*micheline.Prim{transferParam},
+			},
+		},
+	}
+
+	return actionParams, nil
+}
+
+func buildTransferTxsPrim(txs []models.Tx) (txsPrim *micheline.Prim, err error) {
+
+	txsPrimArgs := make([]*micheline.Prim, len(txs))
+
+	for j := range txs {
+		encodedDestinationAddress, err := txs[j].To.MarshalBinary()
+		if err != nil {
+			return txsPrim, err
+		}
+
+		//(pair address (pair nat nat))
+		txsPrimArgs[j] = &micheline.Prim{
+			Type:   micheline.PrimBinary,
+			OpCode: micheline.D_PAIR,
+			Args: []*micheline.Prim{
+				//Destination address
+				{
+					Type:   micheline.PrimBytes,
+					OpCode: micheline.T_BYTES,
+					Bytes:  encodedDestinationAddress,
+				},
+				{
+					Type:   micheline.PrimBinary,
+					OpCode: micheline.D_PAIR,
+					Args: []*micheline.Prim{
+						//Token_ID
+						{
+							Type:   micheline.PrimInt,
+							OpCode: micheline.T_INT,
+							Int:    big.NewInt(int64(txs[j].TokenID)),
+						},
+						//Amount
+						{
+							Type:   micheline.PrimInt,
+							OpCode: micheline.T_INT,
+							Int:    big.NewInt(int64(txs[j].Amount)),
+						},
+					},
+				},
+			},
+		}
+	}
+
+	txsPrim = &micheline.Prim{
+		Type:   micheline.PrimSequence,
+		OpCode: micheline.T_LIST,
+		Args:   txsPrimArgs,
+	}
+
+	return txsPrim, nil
+}
+
+func getFATransferAddressFrom(operationParams models.ContractOperationRequest, index int64) (from types.Address) {
+	//Use contract self address as default from
+	from = operationParams.ContractID
+	if operationParams.TransferList[index].From != "" {
+		from = operationParams.TransferList[index].From
+	}
+
+	return from
 }

@@ -84,14 +84,63 @@ type ContractOperationRequest struct {
 	From types.Address `json:"from,omitempty"`
 
 	//FA transfer
-	AssetID types.Address `json:"asset_id,omitempty"`
+	AssetID      types.Address  `json:"asset_id,omitempty"`
+	TransferList []TransferUnit `json:"transfer_list,omitempty"`
 
 	//Custom json michelson payload
 	CustomPayload types.Payload `json:"custom_payload,omitempty"`
 	//Internal params
 	//Update storage
-	Threshold uint           `json:"-"`
-	Keys      []types.PubKey `json:"-"`
+	Threshold uint           `json:"threshold,omitempty"`
+	Keys      []types.PubKey `json:"keys,omitempty"`
+}
+
+type TransferUnit struct {
+	From types.Address `json:"from,omitempty"`
+	Txs  []Tx          `json:"txs,omitempty"`
+}
+
+type Tx struct {
+	To      types.Address `json:"to,omitempty"`
+	TokenID uint64        `json:"token_id,omitempty"`
+	Amount  uint64        `json:"amount,omitempty"`
+}
+
+func (u TransferUnit) Validate() (err error) {
+
+	//If From field not presented send from current contract
+	if u.From.String() != "" {
+		err = u.From.Validate()
+	}
+	if err != nil {
+		return err
+	}
+
+	if len(u.Txs) == 0 {
+		return fmt.Errorf("empty txs")
+	}
+
+	for i := range u.Txs {
+		err = u.Txs[i].Validate()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (tx Tx) Validate() (err error) {
+	err = tx.To.Validate()
+	if err != nil {
+		return err
+	}
+
+	if tx.Amount == 0 {
+		return fmt.Errorf("zero amount")
+	}
+
+	return nil
 }
 
 func (r ContractOperationRequest) Validate() (err error) {
@@ -110,21 +159,39 @@ func (r ContractOperationRequest) Validate() (err error) {
 		if err != nil {
 			return err
 		}
+	case FA2Transfer:
+		err = r.AssetID.Validate()
+		if err != nil {
+			return err
+		}
+
+		if len(r.TransferList) == 0 {
+			return fmt.Errorf("empty transfer list")
+		}
+
+		for i := range r.TransferList {
+			err = r.TransferList[i].Validate()
+			if err != nil {
+				return err
+			}
+		}
+
 	case FATransfer:
 		err = r.AssetID.Validate()
 		if err != nil {
 			return err
 		}
 
-		//If From field not presented send from current contract
-		if r.From.String() != "" {
-			err = r.To.Validate()
+		//Same as FA2Transfer with 1 tx restriction
+		if len(r.TransferList) != 1 || len(r.TransferList[0].Txs) != 1 {
+			return fmt.Errorf("wrong transfers num")
 		}
+
+		err = r.TransferList[0].Validate()
 		if err != nil {
 			return err
 		}
 
-		fallthrough
 	case Transfer:
 		err = r.To.Validate()
 		if err != nil {

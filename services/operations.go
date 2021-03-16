@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"encoding/json"
 	"tezosign/models"
 	"tezosign/services/contract"
 
@@ -90,7 +89,6 @@ func (s *ServiceFacade) CheckOperations() (counter int64, err error) {
 }
 
 func (s *ServiceFacade) processOperations(repo contractRepo.Repo, c models.Contract, networkID string, operations []models.TransactionOperation) (counter int64, err error) {
-	var parameter contract.Operation
 
 	for j := range operations {
 		//Not success tx
@@ -99,8 +97,9 @@ func (s *ServiceFacade) processOperations(repo contractRepo.Repo, c models.Contr
 		}
 
 		//TODO add assets income transfers
+
 		//Default entrypoint
-		if len(operations[j].Parameters) == 0 {
+		if operations[j].RawParameters == nil {
 			err = repo.SavePayload(models.Request{
 				Hash:       operationID(operations[j].OpHash),
 				ContractID: c.ID,
@@ -124,13 +123,11 @@ func (s *ServiceFacade) processOperations(repo contractRepo.Repo, c models.Contr
 			continue
 		}
 
-		err = json.Unmarshal([]byte(operations[j].Parameters), &parameter)
-		if err != nil {
-			return counter, err
-		}
-
 		//Parse value
-		counter, isReject, err := contract.GetOperationCounter(parameter)
+		counter, isReject, err := contract.GetOperationCounter(contract.Operation{
+			Entrypoint: operations[j].Entrypoint,
+			Value:      operations[j].RawParameters.MichelinePrim(),
+		})
 		if err != nil {
 			return counter, err
 		}

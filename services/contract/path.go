@@ -9,9 +9,10 @@ import (
 )
 
 var (
-	delegationPath    = []micheline.OpCode{micheline.D_LEFT, micheline.D_LEFT, micheline.D_LEFT, micheline.D_RIGHT}
-	transferPath      = []micheline.OpCode{micheline.D_LEFT, micheline.D_LEFT, micheline.D_LEFT, micheline.D_LEFT}
-	transferFAPath    = []micheline.OpCode{micheline.D_LEFT, micheline.D_LEFT, micheline.D_RIGHT}
+	transferPath   = []micheline.OpCode{micheline.D_LEFT, micheline.D_LEFT, micheline.D_LEFT, micheline.D_LEFT}
+	delegationPath = []micheline.OpCode{micheline.D_LEFT, micheline.D_LEFT, micheline.D_LEFT, micheline.D_RIGHT}
+	//Transfer have branching inside
+	transferFAPath    = []micheline.OpCode{micheline.D_LEFT, micheline.D_LEFT, micheline.D_RIGHT, micheline.D_LEFT}
 	customPayloadPath = []micheline.OpCode{micheline.D_LEFT, micheline.D_RIGHT}
 	updateStoragePath = []micheline.OpCode{micheline.D_RIGHT}
 )
@@ -129,7 +130,7 @@ func getPathByType(actionType models.ActionType) (path []micheline.OpCode, err e
 		path = delegationPath
 	case models.StorageUpdate:
 		path = updateStoragePath
-	case models.FATransfer:
+	case models.FATransfer, models.FA2Transfer:
 		path = transferFAPath
 	case models.CustomPayload:
 		path = customPayloadPath

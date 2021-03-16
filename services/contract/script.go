@@ -1,10 +1,15 @@
 package contract
 
 import (
+	"tezosign/models"
+
 	"blockwatch.cc/tzindex/micheline"
 )
 
-func CheckFATransferMethod(script *micheline.Script) (ok bool) {
+var fa12TransferFields = map[string]micheline.OpCode{"from": micheline.T_ADDRESS, "to": micheline.T_ADDRESS, "value": micheline.T_NAT}
+var fa2TransferFields = map[string]micheline.OpCode{"from": micheline.T_ADDRESS, "txs": micheline.T_LIST, "to": micheline.T_ADDRESS, "tokenid": micheline.T_NAT, "amount": micheline.T_NAT}
+
+func CheckFATransferMethod(script *micheline.Script, faType models.AssetType) (ok bool) {
 
 	entrypoints, err := script.Entrypoints(true)
 	if err != nil {
@@ -16,30 +21,20 @@ func CheckFATransferMethod(script *micheline.Script) (ok bool) {
 		return false
 	}
 
-	//FA Transfer method checks
-	if transferEntrypoint.Prim.OpCode != micheline.T_PAIR {
+	//Init transfer method fields
+	e, err := InitAnnotsEntrypoints(transferEntrypoint.Prim)
+	if err != nil {
 		return false
 	}
 
-	//FA transfer(from: to: address value: nat)
-
-	//From Address
-	if transferEntrypoint.Prim.Args[0].OpCode != micheline.T_ADDRESS {
-		return false
+	//Check FA1.2
+	faFieldsTransfer := fa12TransferFields
+	if faType == models.TypeFA2 {
+		faFieldsTransfer = fa2TransferFields
 	}
 
-	// Pair to: address value: nat
-	if transferEntrypoint.Prim.Args[1].OpCode != micheline.T_PAIR {
-		return false
-	}
-
-	//to : address
-	if transferEntrypoint.Prim.Args[1].Args[0].OpCode != micheline.T_ADDRESS {
-		return false
-	}
-
-	//value: nat
-	if transferEntrypoint.Prim.Args[1].Args[1].OpCode != micheline.T_NAT {
+	err = checkFields(e, faFieldsTransfer)
+	if err != nil {
 		return false
 	}
 

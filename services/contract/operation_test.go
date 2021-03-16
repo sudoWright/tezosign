@@ -87,12 +87,19 @@ func Test_BuildContractSignPayload(t *testing.T) {
 					ContractID: "KT1LAuGLiaCF9A72qZtFvVhyzzNFg86fwFnV",
 					AssetID:    "KT1NtGnEjacAkBph7k9HWVrN38PoYjcXTxdY",
 					Type:       models.FATransfer,
-					To:         "tz1dBT7PKeSDbPK1No7KNhTvrr3XoLe8vKLH",
-					Amount:     110,
+					TransferList: []models.TransferUnit{
+						{
+							From: "",
+							Txs: []models.Tx{{
+								To:     "tz1dBT7PKeSDbPK1No7KNhTvrr3XoLe8vKLH",
+								Amount: 110,
+							}},
+						},
+					},
 				},
 			},
 
-			expResult: "05070707070a000000049caecab90a00000016017f1df41f643db8039663fd5eb3b025e07efbaf3d000707000005050505050807070a00000016019ce13845659ff2582555ec08dc322007f6493e800007070a00000016017f1df41f643db8039663fd5eb3b025e07efbaf3d0007070a000000160000c06b6aa5308a9a89a628ebb8234d5055bf9ba1d000ae01",
+			expResult: "05070707070a000000049caecab90a00000016017f1df41f643db8039663fd5eb3b025e07efbaf3d0007070000050505050508050507070a00000016019ce13845659ff2582555ec08dc322007f6493e8000050507070a00000016017f1df41f643db8039663fd5eb3b025e07efbaf3d0007070a000000160000c06b6aa5308a9a89a628ebb8234d5055bf9ba1d000ae01",
 			wantErr:   false,
 		},
 		{
@@ -103,13 +110,50 @@ func Test_BuildContractSignPayload(t *testing.T) {
 					ContractID: "KT1LAuGLiaCF9A72qZtFvVhyzzNFg86fwFnV",
 					AssetID:    "KT1NtGnEjacAkBph7k9HWVrN38PoYjcXTxdY",
 					Type:       models.FATransfer,
-					To:         "tz1dBT7PKeSDbPK1No7KNhTvrr3XoLe8vKLH",
-					From:       "tz29nEixktH9p9XTFX7p8hATUyeLxXEz96KR",
-					Amount:     110,
+					TransferList: []models.TransferUnit{
+						{
+							From: "tz29nEixktH9p9XTFX7p8hATUyeLxXEz96KR",
+							Txs: []models.Tx{{
+								To:     "tz1dBT7PKeSDbPK1No7KNhTvrr3XoLe8vKLH",
+								Amount: 110,
+							}},
+						},
+					},
 				},
 			},
 
-			expResult: "05070707070a000000049caecab90a00000016017f1df41f643db8039663fd5eb3b025e07efbaf3d000707000005050505050807070a00000016019ce13845659ff2582555ec08dc322007f6493e800007070a000000160001101368afffeb1dc3c089facbbe23f5c30b787ce907070a000000160000c06b6aa5308a9a89a628ebb8234d5055bf9ba1d000ae01",
+			expResult: "05070707070a000000049caecab90a00000016017f1df41f643db8039663fd5eb3b025e07efbaf3d0007070000050505050508050507070a00000016019ce13845659ff2582555ec08dc322007f6493e8000050507070a000000160001101368afffeb1dc3c089facbbe23f5c30b787ce907070a000000160000c06b6aa5308a9a89a628ebb8234d5055bf9ba1d000ae01",
+			wantErr:   false,
+		},
+		{
+			name: "fa2 transfer with custom From",
+			args: args{
+				networkID: "NetXjD3HPJJjmcd",
+				operationParams: models.ContractOperationRequest{
+					ContractID: "KT1LAuGLiaCF9A72qZtFvVhyzzNFg86fwFnV",
+					AssetID:    "KT1NtGnEjacAkBph7k9HWVrN38PoYjcXTxdY",
+					Type:       models.FA2Transfer,
+					TransferList: []models.TransferUnit{
+						{
+							From: "tz29nEixktH9p9XTFX7p8hATUyeLxXEz96KR",
+							Txs: []models.Tx{
+								{
+									To:      "tz1dBT7PKeSDbPK1No7KNhTvrr3XoLe8vKLH",
+									TokenID: 3,
+									Amount:  110,
+								},
+								{
+									To:      "tz3Mo3gHekQhCmykfnC58ecqJLXrjMKzkF2Q",
+									TokenID: 2,
+									Amount:  410,
+								},
+							},
+						},
+					},
+				},
+			},
+
+			expResult: "05070707070a000000049caecab90a00000016017f1df41f643db8039663fd5eb3b025e07efbaf3d0007070000050505050508050507070a00000016019ce13845659ff2582555ec08dc322007f6493e80000508020000006a07070a000000160001101368afffeb1dc3c089facbbe23f5c30b787ce9020000004807070a000000160000c06b6aa5308a9a89a628ebb8234d5055bf9ba1d00707000300ae0107070a000000160002101368afffeb1dc3c089facbbe23f5c30b787ce907070002009a06",
 			wantErr:   false,
 		},
 		{

@@ -18,6 +18,10 @@ type (
 	Repo interface {
 		GetContractOperations(contract types.Address, blockLevel uint64) ([]models.TransactionOperation, error)
 		GetContractRevealOperation(contract types.Address) (models.RevealOperation, bool, error)
+		GetContractStorage(address types.Address) (storage models.Storage, isFound bool, err error)
+		GetContractScript(address types.Address) (script models.Script, isFound bool, err error)
+		GetAccount(address types.Address) (account models.Account, isFound bool, err error)
+
 		GetTezosQuote() (models.Quote, error)
 	}
 )
@@ -59,7 +63,53 @@ func (r *Repository) GetContractRevealOperation(address types.Address) (tx model
 	}
 
 	return tx, true, nil
+}
 
+func (r *Repository) GetContractStorage(address types.Address) (storage models.Storage, isFound bool, err error) {
+	err = r.db.Select("*").
+		Table("Storages").
+		Joins(`LEFT JOIN "Accounts" a on "ContractId" = a."Id"`).
+		Where(`"Address" = ? AND "Current" IS TRUE`, address.String()).
+		First(&storage).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return storage, false, nil
+		}
+		return storage, false, err
+	}
+
+	return storage, true, nil
+}
+
+func (r *Repository) GetContractScript(address types.Address) (script models.Script, isFound bool, err error) {
+	err = r.db.Select("*").
+		Table("Scripts").
+		Joins(`LEFT JOIN "Accounts" a on "ContractId" = a."Id"`).
+		Where(`"Address" = ? AND "Current" IS TRUE`, address.String()).
+		First(&script).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return script, false, nil
+		}
+		return script, false, err
+	}
+
+	return script, true, nil
+}
+
+func (r *Repository) GetAccount(address types.Address) (account models.Account, isFound bool, err error) {
+	err = r.db.
+		Table("Accounts").
+		Where(`"Address" = ?`, address.String()).
+		First(&account).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return account, false, nil
+		}
+		return account, false, err
+	}
+
+	return account, true, nil
 }
 
 func (r *Repository) GetTezosQuote() (quote models.Quote, err error) {
