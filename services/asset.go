@@ -48,7 +48,7 @@ func (s *ServiceFacade) AssetsList(userPubKey types.PubKey, contractAddress type
 		return assets, err
 	}
 
-	balances, err := getAccountTokensBalance(userAddress)
+	balances, err := getAccountTokensBalance(userAddress, s.net)
 	if err != nil {
 		return assets, err
 	}
