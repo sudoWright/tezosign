@@ -9,11 +9,16 @@ import (
 	"tezosign/types"
 )
 
-const betterCallDevAccountAPI = "https://better-call.dev/v1/account/edo2net/"
+const betterCallDevAccountAPI = "https://better-call.dev/v1/account/%s/%s"
 
-func getAccountTokensBalance(account types.Address) (balances models.AssetBalances, err error) {
+var bcdNetworks = map[models.Network]string{
+	models.NetworkMain: "mainnet",
+	models.NetworkEdo:  "edo2net",
+}
 
-	resp, err := http.Get(fmt.Sprint(betterCallDevAccountAPI, account.String()))
+func getAccountTokensBalance(account types.Address, network models.Network) (balances models.AssetBalances, err error) {
+
+	resp, err := http.Get(fmt.Sprintf(betterCallDevAccountAPI, bcdNetworks[network], account.String()))
 	if err != nil {
 		return balances, err
 	}
