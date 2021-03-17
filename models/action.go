@@ -10,6 +10,10 @@ const (
 	StorageUpdate ActionType = "storage_update"
 	CustomPayload ActionType = "custom"
 
+	//Vesting
+	VestingVest        ActionType = "vesting_vest"
+	VestingSetDelegate ActionType = "vesting_set_delegate"
+
 	//Income transfer
 	IncomeTransfer ActionType = "income_transfer"
 )
