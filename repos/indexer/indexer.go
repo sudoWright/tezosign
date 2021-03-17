@@ -18,6 +18,7 @@ type (
 	Repo interface {
 		GetContractOperations(contract types.Address, blockLevel uint64) ([]models.TransactionOperation, error)
 		GetContractRevealOperation(contract types.Address) (models.RevealOperation, bool, error)
+		GetContractOriginationOperation(txID string) (tx models.OriginationOperation, isFound bool, err error)
 		GetContractStorage(address types.Address) (storage models.Storage, isFound bool, err error)
 		GetContractScript(address types.Address) (script models.Script, isFound bool, err error)
 		GetAccount(address types.Address) (account models.Account, isFound bool, err error)
@@ -54,6 +55,23 @@ func (r *Repository) GetContractRevealOperation(address types.Address) (tx model
 		Table("RevealOps").
 		Joins(`LEFT JOIN "Accounts" a on "SenderId" = a."Id"`).
 		Where(`"Address" = ?`, address.String()).
+		First(&tx).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return tx, false, nil
+		}
+		return tx, false, err
+	}
+
+	return tx, true, nil
+}
+
+func (r *Repository) GetContractOriginationOperation(txID string) (tx models.OriginationOperation, isFound bool, err error) {
+
+	err = r.db.Select("*").
+		Table("OriginationOps").
+		Joins(`LEFT JOIN "Accounts" a on "ContractId" = a."Id"`).
+		Where(`"OpHash" = ?`, txID).
 		First(&tx).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

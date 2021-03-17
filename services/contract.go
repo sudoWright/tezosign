@@ -386,6 +386,20 @@ func (s *ServiceFacade) BuildContractOperation(userPubKey types.PubKey, txID str
 	}, nil
 }
 
+func (s *ServiceFacade) CheckContractOrigination(txID string) (contract types.Address, err error) {
+
+	tx, isFound, err := s.indexerRepoProvider.GetIndexer().GetContractOriginationOperation(txID)
+	if err != nil {
+		return contract, nil
+	}
+
+	if !isFound {
+		return contract, apperrors.New(apperrors.ErrNotFound, "tx")
+	}
+
+	return tx.ContractAddress, nil
+}
+
 func (s *ServiceFacade) SaveContractOperationSignature(userPubKey types.PubKey, operationID string, req models.OperationSignature) (resp models.OperationSignatureResp, err error) {
 
 	storage, err := s.getContractStorage(req.ContractID)
