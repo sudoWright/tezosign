@@ -43,3 +43,29 @@ func (api *API) ContractOperationsList(w http.ResponseWriter, r *http.Request) {
 
 	response.Json(w, list)
 }
+
+func (api *API) ContractOrigination(w http.ResponseWriter, r *http.Request) {
+	net, networkContext, err := GetNetworkContext(r)
+	if err != nil {
+		response.JsonError(w, err)
+		return
+	}
+
+	txID := mux.Vars(r)["tx_id"]
+	if txID == "" {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "tx_id"))
+		return
+	}
+
+	service := services.New(repos.New(networkContext.Db), repos.New(networkContext.IndexerDB), networkContext.Client, networkContext.Auth, net)
+
+	contractID, err := service.CheckContractOrigination(txID)
+	if err != nil {
+		response.JsonError(w, err)
+		return
+	}
+
+	response.Json(w, map[string]interface{}{
+		"contract": contractID,
+	})
+}

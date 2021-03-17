@@ -560,6 +560,37 @@ paths:
           description: Internal server error
       tags:
         - Helpers
+  '/{network}/origination/{tx_id}':
+    get:
+      operationId: contractOriginated
+      summary: Check that contract is originated
+      produces:
+        - application/json
+      security:
+        - Bearer: []
+      parameters:
+        - in: path
+          name: network
+          required: true
+          type : string
+        - in: path
+          name: tx_id
+          required: true
+          type : string
+      responses:
+        '200':
+          description: Is originated
+          schema:
+            type: object
+            properties:
+              contract:
+                type: string
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+      tags:
+        - Helpers
   '/{network}/exchange_rates':
     get:
       operationId: exchangeRates

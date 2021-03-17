@@ -79,3 +79,8 @@ type RevealOperation struct {
 	TezosOperation
 	PublicKey types.PubKey `gorm:"column:PublicKey"`
 }
+
+type OriginationOperation struct {
+	TezosOperation
+	ContractAddress types.Address `gorm:"column:Address"`
+}

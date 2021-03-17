@@ -118,6 +118,7 @@ func (api *API) initialize(handlerArr ...negroni.Handler) {
 		{Path: "/{network}/exchange_rates", Method: http.MethodGet, Func: api.TezosExchangeRates, Middleware: mw},
 
 		{Path: "/{network}/{address}/revealed", Method: http.MethodGet, Func: api.AddressIsRevealed, Middleware: mw},
+		{Path: "/{network}/origination/{tx_id}", Method: http.MethodGet, Func: api.ContractOrigination, Middleware: mw},
 	})
 
 	mw = []negroni.HandlerFunc{

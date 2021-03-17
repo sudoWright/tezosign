@@ -34,21 +34,12 @@ func (s *ServiceFacade) AssetsList(userPubKey types.PubKey, contractAddress type
 		return assets, err
 	}
 
-	if !isOwner {
-		return assets, apperrors.New(apperrors.ErrNotAllowed)
-	}
-
-	assets, err = s.repoProvider.GetAsset().GetAssetsList(contract.ID, limit, 0)
+	assets, err = s.repoProvider.GetAsset().GetAssetsList(contract.ID, isOwner, limit, 0)
 	if err != nil {
 		return assets, err
 	}
 
-	userAddress, err := userPubKey.Address()
-	if err != nil {
-		return assets, err
-	}
-
-	balances, err := getAccountTokensBalance(userAddress)
+	balances, err := getAccountTokensBalance(contractAddress, s.net)
 	if err != nil {
 		return assets, err
 	}
