@@ -76,7 +76,11 @@ func buildActionParams(operationParams models.ContractOperationRequest) (actionP
 		if err != nil {
 			return actionParams, err
 		}
-
+	case models.VestingVest, models.VestingSetDelegate:
+		actionParams, err = buildVestingTxPrim(operationParams)
+		if err != nil {
+			return actionParams, err
+		}
 	case models.CustomPayload:
 		actionParams = &micheline.Prim{}
 		if len(operationParams.CustomPayload) == 0 {
@@ -306,4 +310,61 @@ func getFATransferAddressFrom(operationParams models.ContractOperationRequest, i
 	}
 
 	return from
+}
+
+func buildVestingTxPrim(operationParams models.ContractOperationRequest) (prim *micheline.Prim, err error) {
+
+	encodedVestingContract, err := operationParams.VestingID.MarshalBinary()
+	if err != nil {
+		return prim, err
+	}
+
+	var opCode micheline.OpCode
+	var arg *micheline.Prim
+	switch operationParams.Type {
+	case models.VestingSetDelegate: //	setDelegate
+		opCode = micheline.D_LEFT
+
+		encodedDelegate, err := operationParams.To.MarshalBinary()
+		if err != nil {
+			return prim, err
+		}
+
+		//key_hash
+		arg = &micheline.Prim{
+			Type:   micheline.PrimBytes,
+			OpCode: micheline.T_BYTES,
+			Bytes:  encodedDelegate,
+		}
+	case models.VestingVest: // vest
+		opCode = micheline.D_RIGHT
+
+		//nat
+		arg = &micheline.Prim{
+			Type:   micheline.PrimInt,
+			OpCode: micheline.T_INT,
+			Int:    big.NewInt(int64(operationParams.Amount)),
+		}
+	default:
+		return prim, errors.New("wrong type")
+	}
+
+	prim = &micheline.Prim{
+		Type:   micheline.PrimBinary,
+		OpCode: micheline.D_PAIR,
+		Args: []*micheline.Prim{
+			{
+				Type:   micheline.PrimBytes,
+				OpCode: micheline.T_BYTES,
+				Bytes:  encodedVestingContract,
+			},
+			{
+				Type:   micheline.PrimUnary,
+				OpCode: opCode,
+				Args:   []*micheline.Prim{arg},
+			},
+		},
+	}
+
+	return prim, err
 }
