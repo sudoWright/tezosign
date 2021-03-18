@@ -1,7 +1,9 @@
 package contract
 
 import (
+	"errors"
 	"math/big"
+	"tezosign/models"
 	"tezosign/types"
 
 	"blockwatch.cc/tzindex/micheline"
@@ -99,4 +101,44 @@ func BuildVestingContractStorage(vestingAddress, delegateAdmin types.Address, ti
 	}
 
 	return storage.MarshalJSON()
+}
+
+const (
+	setDelegateEntrypoint = "setDelegate"
+	vestEntrypoint        = "vest"
+)
+
+func VestingContractParamAndEntrypoint(req models.VestingContractOperation) (arg []byte, entrypoint string, err error) {
+
+	var prim *micheline.Prim
+	switch req.Type {
+	case models.VestingSetDelegate:
+		encodedDelegate, err := req.To.MarshalBinary()
+		if err != nil {
+			return nil, "", err
+		}
+		prim = &micheline.Prim{
+			Type:   micheline.PrimBytes,
+			OpCode: micheline.T_BYTES,
+			Bytes:  encodedDelegate,
+		}
+
+		entrypoint = setDelegateEntrypoint
+	case models.VestingVest:
+		prim = &micheline.Prim{
+			Type:   micheline.PrimInt,
+			OpCode: micheline.T_INT,
+			Int:    big.NewInt(int64(req.Amount)),
+		}
+		entrypoint = vestEntrypoint
+	default:
+		return nil, "", errors.New("wrong request type")
+	}
+
+	arg, err = prim.MarshalJSON()
+	if err != nil {
+		return nil, "", err
+	}
+
+	return arg, entrypoint, nil
 }

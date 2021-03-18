@@ -617,7 +617,75 @@ paths:
           description: Internal server error
       tags:
         - Helpers
+  '/{network}/contract/vesting/storage/init':
+    post:
+      operationId: vestingContractStorageInit
+      summary: Vesting contract init storage
+      produces:
+        - application/json
+      security:
+        - Bearer: []
+      parameters:
+        - in: path
+          name: network
+          required: true
+          type : string
+        - in: body
+          name: user
+          schema:
+            $ref: '#/definitions/VestingStorageInitBody'
+      responses:
+        '200':
+          description: Vesting contract storage json
+          schema:
+            type: string
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+      tags:
+        - Vesting
+  '/{network}/contract/vesting/operation':
+    post:
+      operationId: vestingContractOperation
+      summary: Vesting contract direct operation args
+      produces:
+        - application/json
+      security:
+        - Bearer: []
+      parameters:
+        - in: path
+          name: network
+          required: true
+          type : string
+        - in: body
+          name: user
+          schema:
+            $ref: '#/definitions/ContractOperationBody'
+      responses:
+        '200':
+          description: Vesting contract storage json
+          schema:
+            $ref: '#/definitions/BuildOperationResp'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+      tags:
+        - Vesting
 definitions:
+  VestingStorageInitBody:
+    properties:
+      vesting_address:
+        type: string
+      delegate_admin:
+        type: string
+      timestamp:
+        type: integer
+      seconds_per_tick:
+        type: integer
+      tokens_per_tick:
+        type: integer
   AuthRequestBody:
     properties:
       pubkey:
@@ -713,6 +781,9 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/TransferUnit'
+      # Vesting contract
+      vesting_id:
+        type: string
       # Custom michelson bytes or JSON payload
       custom_payload:
         type: string

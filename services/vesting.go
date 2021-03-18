@@ -14,3 +14,16 @@ func (s *ServiceFacade) BuildVestingContractInitStorage(storageReq models.Vestin
 
 	return resp, nil
 }
+
+func (s *ServiceFacade) VestingContractOperation(req models.VestingContractOperation) (param models.OperationParameter, err error) {
+
+	value, entrypoint, err := contract.VestingContractParamAndEntrypoint(req)
+	if err != nil {
+		return param, err
+	}
+
+	return models.OperationParameter{
+		Entrypoint: entrypoint,
+		Value:      string(value),
+	}, nil
+}

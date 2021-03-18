@@ -42,3 +42,27 @@ func (v VestingContractStorageRequest) Validate() (err error) {
 
 	return nil
 }
+
+type VestingContractOperation struct {
+	Type   ActionType    `json:"type"`
+	Amount uint64        `json:"amount,omitempty"`
+	To     types.Address `json:"to,omitempty"`
+}
+
+func (v VestingContractOperation) Validate() (err error) {
+
+	switch v.Type {
+	case VestingVest:
+		if v.Amount == 0 {
+			return errors.New("amount")
+		}
+	case VestingSetDelegate:
+		if err = v.To.Validate(); err != nil {
+			return err
+		}
+	default:
+		return errors.New("wrong type")
+	}
+
+	return nil
+}

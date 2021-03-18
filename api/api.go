@@ -156,6 +156,8 @@ func (api *API) initialize(handlerArr ...negroni.Handler) {
 
 		//Vesting contract
 		{Path: "/{network}/contract/vesting/storage/init", Method: http.MethodPost, Func: api.VestingContractStorageInit, Middleware: mw},
+		//Direct vesting contract call
+		{Path: "/{network}/contract/vesting/operation", Method: http.MethodPost, Func: api.VestingContractOperation, Middleware: mw},
 	})
 
 	api.server = &http.Server{Addr: fmt.Sprintf(":%d", api.cfg.API.ListenOnPort), Handler: api.router}

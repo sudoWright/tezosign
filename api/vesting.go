@@ -51,3 +51,40 @@ func (api *API) VestingContractStorageInit(w http.ResponseWriter, r *http.Reques
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(resp)
 }
+
+func (api *API) VestingContractOperation(w http.ResponseWriter, r *http.Request) {
+	_, net, networkContext, err := GetUserNetworkContext(r)
+	if err != nil {
+		response.JsonError(w, err)
+		return
+	}
+
+	var req models.VestingContractOperation
+	err = json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadRequest))
+		return
+	}
+
+	err = req.Validate()
+	if err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadRequest, err.Error()))
+		return
+	}
+
+	service := services.New(repos.New(networkContext.Db), repos.New(networkContext.IndexerDB), networkContext.Client, networkContext.Auth, net)
+
+	resp, err := service.VestingContractOperation(req)
+	if err != nil {
+		//Unwrap apperror
+		err, IsAppErr := apperrors.Unwrap(err)
+		if !IsAppErr {
+			log.Error("VestingContractOperation error: ", zap.Error(err))
+		}
+
+		response.JsonError(w, err)
+		return
+	}
+
+	response.Json(w, resp)
+}
