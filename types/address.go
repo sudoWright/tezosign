@@ -40,3 +40,15 @@ func (a Address) String() string {
 func (a Address) MarshalBinary() ([]byte, error) {
 	return tezosprotocol.ContractID(a).MarshalBinary()
 }
+
+func (a *Address) UnmarshalBinary(data []byte) (err error) {
+	adr := tezosprotocol.ContractID(*a)
+
+	err = adr.UnmarshalBinary(data)
+	if err != nil {
+		return err
+	}
+	*a = Address(adr)
+
+	return nil
+}

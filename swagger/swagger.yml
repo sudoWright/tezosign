@@ -673,7 +673,47 @@ paths:
           description: Internal server error
       tags:
         - Vesting
+  '/{network}}/contract/vesting/{contract_id}/info':
+    get:
+      operationId: vestingContractInfo
+      summary: Vesting contract info
+      produces:
+        - application/json
+      security:
+        - Bearer: []
+      parameters:
+        - in: path
+          name: network
+          required: true
+          type : string
+        - in: path
+          name: contract_id
+          required: true
+          type : string
+      responses:
+        '200':
+          description: Contract info
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/VestingContractInfo'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+      tags:
+        - Vesting
 definitions:
+  VestingContractInfo:
+    properties:
+      balance:
+        type: integer
+      delegate:
+        type: integer
+      opened_balance:
+        type: integer
+      storage:
+        $ref: '#/definitions/VestingStorageInitBody'
   VestingStorageInitBody:
     properties:
       vesting_address:

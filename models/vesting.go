@@ -66,3 +66,12 @@ func (v VestingContractOperation) Validate() (err error) {
 
 	return nil
 }
+
+type VestingContractInfo struct {
+	Balance  uint64        `json:"balance"`
+	Delegate types.Address `json:"delegate"`
+
+	OpenedBalance uint64 `json:"opened_balance"`
+	//Init from storage
+	Storage VestingContractStorageRequest `json:"storage"`
+}

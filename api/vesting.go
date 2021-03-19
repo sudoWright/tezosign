@@ -9,6 +9,9 @@ import (
 	"tezosign/models"
 	"tezosign/repos"
 	"tezosign/services"
+	"tezosign/types"
+
+	"github.com/gorilla/mux"
 
 	"go.uber.org/zap"
 )
@@ -80,6 +83,37 @@ func (api *API) VestingContractOperation(w http.ResponseWriter, r *http.Request)
 		err, IsAppErr := apperrors.Unwrap(err)
 		if !IsAppErr {
 			log.Error("VestingContractOperation error: ", zap.Error(err))
+		}
+
+		response.JsonError(w, err)
+		return
+	}
+
+	response.Json(w, resp)
+}
+
+func (api *API) VestingContractInfo(w http.ResponseWriter, r *http.Request) {
+	//Use GetUserNetworkContext to check user middleware
+	_, net, networkContext, err := GetUserNetworkContext(r)
+	if err != nil {
+		response.JsonError(w, err)
+		return
+	}
+
+	contractID := types.Address(mux.Vars(r)["contract_id"])
+	if err := contractID.Validate(); err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "contract_id"))
+		return
+	}
+
+	service := services.New(repos.New(networkContext.Db), repos.New(networkContext.IndexerDB), networkContext.Client, networkContext.Auth, net)
+
+	resp, err := service.VestingContractInfo(contractID)
+	if err != nil {
+		//Unwrap apperror
+		err, IsAppErr := apperrors.Unwrap(err)
+		if !IsAppErr {
+			log.Error("VestingContractInfo error: ", zap.Error(err))
 		}
 
 		response.JsonError(w, err)

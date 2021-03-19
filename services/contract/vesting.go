@@ -142,3 +142,93 @@ func VestingContractParamAndEntrypoint(req models.VestingContractOperation) (arg
 
 	return arg, entrypoint, nil
 }
+
+type VestingContractStorageContainer struct {
+	VestingAddress types.Address
+	DelegateAdmin  types.Address
+	VestedAmount   uint64
+	Timestamp      uint64
+	SecondsPerTick uint64
+	TokensPerTick  uint64
+	storage        *micheline.Prim
+}
+
+const (
+	targetEntrypoint         = "target"
+	delegateAdminEntrypoint  = "delegateadmin"
+	vestedEntrypoint         = "vested"
+	epochEntrypoint          = "epoch"
+	secondsPerTickEntrypoint = "secondspertick"
+	tokensPerTickEntrypoint  = "tokenspertick"
+)
+
+var vestingContractStorageEntrypoints = map[string]micheline.OpCode{
+	targetEntrypoint:         micheline.T_ADDRESS,
+	delegateAdminEntrypoint:  micheline.T_ADDRESS,
+	vestedEntrypoint:         micheline.T_NAT,
+	epochEntrypoint:          micheline.T_TIMESTAMP,
+	secondsPerTickEntrypoint: micheline.T_NAT,
+	tokensPerTickEntrypoint:  micheline.T_NAT,
+}
+
+func NewVestingContractStorageContainer(script micheline.Script) (c VestingContractStorageContainer, err error) {
+
+	e, err := InitAnnotsEntrypoints(script.Code.Storage)
+	if err != nil {
+		return c, err
+	}
+
+	err = checkFields(e, vestingContractStorageEntrypoints)
+	if err != nil {
+		return c, err
+	}
+
+	c.storage = script.Storage
+
+	address, err := GetStorageValue(e[targetEntrypoint], script.Storage)
+	if err != nil {
+		return c, err
+	}
+
+	err = c.VestingAddress.UnmarshalBinary(address.Bytes)
+	if err != nil {
+		return c, err
+	}
+
+	address, err = GetStorageValue(e[delegateAdminEntrypoint], script.Storage)
+	if err != nil {
+		return c, err
+	}
+
+	err = c.DelegateAdmin.UnmarshalBinary(address.Bytes)
+	if err != nil {
+		return c, err
+	}
+
+	amount, err := GetStorageValue(e[vestedEntrypoint], script.Storage)
+	if err != nil {
+		return c, err
+	}
+
+	c.VestedAmount = amount.Int.Uint64()
+
+	amount, err = GetStorageValue(e[epochEntrypoint], script.Storage)
+	if err != nil {
+		return c, err
+	}
+	c.Timestamp = amount.Int.Uint64()
+
+	amount, err = GetStorageValue(e[secondsPerTickEntrypoint], script.Storage)
+	if err != nil {
+		return c, err
+	}
+	c.SecondsPerTick = amount.Int.Uint64()
+
+	amount, err = GetStorageValue(e[tokensPerTickEntrypoint], script.Storage)
+	if err != nil {
+		return c, err
+	}
+	c.TokensPerTick = amount.Int.Uint64()
+
+	return
+}
