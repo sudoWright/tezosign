@@ -160,6 +160,15 @@ func (api *API) initialize(handlerArr ...negroni.Handler) {
 		{Path: "/{network}/contract/vesting/{contract_id}/info", Method: http.MethodGet, Func: api.VestingContractInfo, Middleware: mw},
 		//Direct vesting contract call
 		{Path: "/{network}/contract/vesting/operation", Method: http.MethodPost, Func: api.VestingContractOperation, Middleware: mw},
+
+		//Get contract vestings list
+		{Path: "/{network}/contract/{contract_id}/vestings", Method: http.MethodGet, Func: api.VestingsList, Middleware: mw},
+		//Add vesting contract
+		{Path: "/{network}/contract/{contract_id}/vesting", Method: http.MethodPost, Func: api.ContractVesting, Middleware: mw},
+		//Edit contract asset
+		{Path: "/{network}/contract/{contract_id}/vesting/edit", Method: http.MethodPost, Func: api.ContractVestingEdit, Middleware: mw},
+		//Remove contract asset
+		{Path: "/{network}/contract/{contract_id}/vesting/delete", Method: http.MethodPost, Func: api.RemoveContractVesting, Middleware: mw},
 	})
 
 	api.server = &http.Server{Addr: fmt.Sprintf(":%d", api.cfg.API.ListenOnPort), Handler: api.router}

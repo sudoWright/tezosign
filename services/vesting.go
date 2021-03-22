@@ -1,6 +1,7 @@
 package services
 
 import (
+	"database/sql"
 	"tezosign/common/apperrors"
 	"tezosign/models"
 	"tezosign/services/contract"
@@ -105,4 +106,180 @@ func (s *ServiceFacade) VestingContractOperation(req models.VestingContractOpera
 		Entrypoint: entrypoint,
 		Value:      string(value),
 	}, nil
+}
+
+func (s *ServiceFacade) VestingsList(userPubKey types.PubKey, contractAddress types.Address) (vestings []models.Vesting, err error) {
+
+	//TODO init limit from request
+	limit := 100
+	contract, isFound, err := s.repoProvider.GetContract().GetContract(contractAddress)
+	if err != nil {
+		return vestings, err
+	}
+
+	if !isFound {
+		return vestings, apperrors.New(apperrors.ErrNotFound, "contract")
+	}
+
+	isOwner, err := s.GetUserAllowance(userPubKey, contractAddress)
+	if err != nil {
+		return vestings, err
+	}
+
+	//For viewer return empty arr
+	if !isOwner {
+		return vestings, nil
+	}
+
+	vestings, err = s.repoProvider.GetVesting().GetVestingsList(contract.ID, limit, 0)
+	if err != nil {
+		return vestings, err
+	}
+
+	//TODO add balances
+
+	return vestings, err
+}
+
+func (s *ServiceFacade) ContractVesting(userPubKey types.PubKey, contractAddress types.Address, reqVesting models.Vesting) (vesting models.Vesting, err error) {
+
+	contract, isFound, err := s.repoProvider.GetContract().GetContract(contractAddress)
+	if err != nil {
+		return vesting, err
+	}
+
+	if !isFound {
+		return vesting, apperrors.New(apperrors.ErrNotFound, "contract")
+	}
+
+	isOwner, err := s.GetUserAllowance(userPubKey, contractAddress)
+	if err != nil {
+		return vesting, err
+	}
+
+	if !isOwner {
+		return vesting, apperrors.New(apperrors.ErrNotAllowed)
+	}
+
+	//Сheck contract for vesting type
+	isVestingContract, err := s.checkVestingContract(reqVesting.Address)
+	if err != nil {
+		return vesting, err
+	}
+
+	if !isVestingContract {
+		return vesting, apperrors.New(apperrors.ErrBadParam, "not vesting contract")
+	}
+
+	vestingRepo := s.repoProvider.GetVesting()
+	vesting, isFound, err = vestingRepo.GetVesting(contract.ID, reqVesting.Address)
+	if err != nil {
+		return vesting, err
+	}
+
+	//Already created
+	if isFound {
+		return vesting, apperrors.New(apperrors.ErrAlreadyExists, "asset")
+	}
+
+	reqVesting.ContractID = sql.NullInt64{
+		Int64: int64(contract.ID),
+		Valid: true,
+	}
+
+	err = vestingRepo.CreateVesting(reqVesting)
+	if err != nil {
+		return vesting, err
+	}
+
+	return reqVesting, nil
+}
+
+func (s *ServiceFacade) ContractVestingEdit(userPubKey types.PubKey, contractAddress types.Address, reqVesting models.Vesting) (vesting models.Vesting, err error) {
+
+	contract, isFound, err := s.repoProvider.GetContract().GetContract(contractAddress)
+	if err != nil {
+		return vesting, err
+	}
+
+	if !isFound {
+		return vesting, apperrors.New(apperrors.ErrNotFound, "contract")
+	}
+
+	isOwner, err := s.GetUserAllowance(userPubKey, contractAddress)
+	if err != nil {
+		return vesting, err
+	}
+
+	if !isOwner {
+		return vesting, apperrors.New(apperrors.ErrNotAllowed)
+	}
+
+	vestingRepo := s.repoProvider.GetVesting()
+	vesting, isFound, err = vestingRepo.GetVesting(contract.ID, reqVesting.Address)
+	if err != nil {
+		return vesting, err
+	}
+
+	//Not created
+	if !isFound {
+		return vesting, apperrors.New(apperrors.ErrNotFound, "asset")
+	}
+
+	//Global asset cannot be edited
+	if !vesting.ContractID.Valid {
+		return vesting, apperrors.New(apperrors.ErrNotAllowed, "global asset")
+	}
+
+	vesting.Name = reqVesting.Name
+
+	err = vestingRepo.UpdateVesting(vesting)
+	if err != nil {
+		return vesting, err
+	}
+
+	return vesting, nil
+}
+
+func (s *ServiceFacade) RemoveContractVesting(userPubKey types.PubKey, contractAddress types.Address, vesting models.Vesting) (err error) {
+
+	contract, isFound, err := s.repoProvider.GetContract().GetContract(contractAddress)
+	if err != nil {
+		return err
+	}
+
+	if !isFound {
+		return apperrors.New(apperrors.ErrNotFound, "contract")
+	}
+
+	isOwner, err := s.GetUserAllowance(userPubKey, contractAddress)
+	if err != nil {
+		return err
+	}
+
+	if !isOwner {
+		return apperrors.New(apperrors.ErrNotAllowed)
+	}
+
+	vestingRepo := s.repoProvider.GetVesting()
+	vesting, isFound, err = vestingRepo.GetVesting(contract.ID, vesting.Address)
+	if err != nil {
+		return err
+	}
+
+	if !isFound {
+		return apperrors.New(apperrors.ErrNotFound, "asset")
+	}
+
+	//Global asset cannot be removed
+	if !vesting.ContractID.Valid {
+		return apperrors.New(apperrors.ErrNotAllowed, "global asset")
+	}
+
+	err = vestingRepo.DeleteContractVesting(vesting.ID)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

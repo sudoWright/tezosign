@@ -122,3 +122,163 @@ func (api *API) VestingContractInfo(w http.ResponseWriter, r *http.Request) {
 
 	response.Json(w, resp)
 }
+
+func (api *API) VestingsList(w http.ResponseWriter, r *http.Request) {
+	user, net, networkContext, err := GetUserNetworkContext(r)
+	if err != nil {
+		response.JsonError(w, err)
+		return
+	}
+
+	contractAddress := types.Address(mux.Vars(r)["contract_id"])
+	err = contractAddress.Validate()
+	if err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "contract_id"))
+		return
+	}
+
+	service := services.New(repos.New(networkContext.Db), repos.New(networkContext.IndexerDB), networkContext.Client, networkContext.Auth, net)
+
+	reps, err := service.VestingsList(user, contractAddress)
+	if err != nil {
+		//Unwrap apperror
+		err, IsAppErr := apperrors.Unwrap(err)
+		if !IsAppErr {
+			log.Error("VestingsList error: ", zap.Error(err))
+		}
+
+		response.JsonError(w, err)
+		return
+	}
+
+	response.Json(w, reps)
+}
+
+func (api *API) ContractVesting(w http.ResponseWriter, r *http.Request) {
+	user, net, networkContext, err := GetUserNetworkContext(r)
+	if err != nil {
+		response.JsonError(w, err)
+		return
+	}
+
+	contractAddress := types.Address(mux.Vars(r)["contract_id"])
+	err = contractAddress.Validate()
+	if err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "contract_id"))
+		return
+	}
+
+	var data models.Vesting
+	err = json.NewDecoder(r.Body).Decode(&data)
+	if err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadRequest))
+		return
+	}
+
+	if err = data.Validate(); err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadRequest, err.Error()))
+		return
+	}
+
+	service := services.New(repos.New(networkContext.Db), repos.New(networkContext.IndexerDB), networkContext.Client, networkContext.Auth, net)
+
+	reps, err := service.ContractVesting(user, contractAddress, data)
+	if err != nil {
+		//Unwrap apperror
+		err, IsAppErr := apperrors.Unwrap(err)
+		if !IsAppErr {
+			log.Error("ContractVesting error: ", zap.Error(err))
+		}
+
+		response.JsonError(w, err)
+		return
+	}
+
+	response.Json(w, reps)
+}
+
+func (api *API) ContractVestingEdit(w http.ResponseWriter, r *http.Request) {
+	user, net, networkContext, err := GetUserNetworkContext(r)
+	if err != nil {
+		response.JsonError(w, err)
+		return
+	}
+
+	contractAddress := types.Address(mux.Vars(r)["contract_id"])
+	err = contractAddress.Validate()
+	if err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "contract_id"))
+		return
+	}
+
+	var data models.Vesting
+	err = json.NewDecoder(r.Body).Decode(&data)
+	if err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadRequest))
+		return
+	}
+
+	if err = data.Validate(); err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadRequest, err.Error()))
+		return
+	}
+
+	service := services.New(repos.New(networkContext.Db), repos.New(networkContext.IndexerDB), networkContext.Client, networkContext.Auth, net)
+
+	reps, err := service.ContractVestingEdit(user, contractAddress, data)
+	if err != nil {
+		//Unwrap apperror
+		err, IsAppErr := apperrors.Unwrap(err)
+		if !IsAppErr {
+			log.Error("ContractVestingEdit error: ", zap.Error(err))
+		}
+
+		response.JsonError(w, err)
+		return
+	}
+
+	response.Json(w, reps)
+}
+
+func (api *API) RemoveContractVesting(w http.ResponseWriter, r *http.Request) {
+	user, net, networkContext, err := GetUserNetworkContext(r)
+	if err != nil {
+		response.JsonError(w, err)
+		return
+	}
+
+	contractAddress := types.Address(mux.Vars(r)["contract_id"])
+	err = contractAddress.Validate()
+	if err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "contract_id"))
+		return
+	}
+
+	var data models.Vesting
+	err = json.NewDecoder(r.Body).Decode(&data)
+	if err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadRequest))
+		return
+	}
+
+	if err = data.Address.Validate(); err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "address"))
+		return
+	}
+
+	service := services.New(repos.New(networkContext.Db), repos.New(networkContext.IndexerDB), networkContext.Client, networkContext.Auth, net)
+
+	err = service.RemoveContractVesting(user, contractAddress, data)
+	if err != nil {
+		//Unwrap apperror
+		err, IsAppErr := apperrors.Unwrap(err)
+		if !IsAppErr {
+			log.Error("RemoveContractVesting error: ", zap.Error(err))
+		}
+
+		response.JsonError(w, err)
+		return
+	}
+
+	response.Json(w, map[string]interface{}{"message": "success"})
+}

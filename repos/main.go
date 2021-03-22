@@ -7,6 +7,7 @@ import (
 	"tezosign/repos/auth"
 	"tezosign/repos/contract"
 	"tezosign/repos/indexer"
+	"tezosign/repos/vesting"
 
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
@@ -56,6 +57,10 @@ func (u *Provider) GetAuth() auth.Repo {
 
 func (u *Provider) GetAsset() asset.Repo {
 	return asset.New(u.getDB())
+}
+
+func (u *Provider) GetVesting() vesting.Repo {
+	return vesting.New(u.getDB())
 }
 
 //Indexer repo should use indexer connection

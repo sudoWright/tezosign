@@ -1,6 +1,7 @@
 package models
 
 import (
+	"database/sql"
 	"errors"
 	"tezosign/types"
 )
@@ -74,4 +75,24 @@ type VestingContractInfo struct {
 	OpenedBalance uint64 `json:"opened_balance"`
 	//Init from storage
 	Storage VestingContractStorageRequest `json:"storage"`
+}
+
+type Vesting struct {
+	ID         uint64        `gorm:"column:vst_id" json:"-"`
+	Name       string        `gorm:"column:vst_name"  json:"name"`
+	Address    types.Address `gorm:"column:vst_address"  json:"address"`
+	ContractID sql.NullInt64 `gorm:"column:ctr_id" json:"-"`
+}
+
+func (v Vesting) Validate() (err error) {
+
+	if err = v.Address.Validate(); err != nil {
+		return err
+	}
+
+	if len(v.Name) == 0 || len(v.Name) > 32 {
+		return errors.New("name")
+	}
+
+	return nil
 }

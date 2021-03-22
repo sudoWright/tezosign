@@ -530,6 +530,41 @@ func (s *ServiceFacade) checkFAStandart(contractID types.Address, assetType mode
 	}, assetType), nil
 }
 
+func (s *ServiceFacade) checkVestingContract(contractID types.Address) (isVestingContract bool, err error) {
+
+	indexerRepo := s.indexerRepoProvider.GetIndexer()
+	script, isFound, err := indexerRepo.GetContractScript(contractID)
+	if err != nil {
+		return false, err
+	}
+
+	if !isFound {
+		return false, apperrors.New(apperrors.ErrNotFound, "contract")
+	}
+
+	storage, isFound, err := indexerRepo.GetContractStorage(contractID)
+	if err != nil {
+		return false, err
+	}
+
+	if !isFound {
+		return false, apperrors.New(apperrors.ErrNotFound, "contract")
+	}
+
+	_, err = contract.NewVestingContractStorageContainer(micheline.Script{
+		Code: &micheline.Code{
+			Param:   script.ParameterSchema.MichelinePrim(),
+			Storage: script.StorageSchema.MichelinePrim(),
+			Code:    script.CodeSchema.MichelinePrim(),
+		},
+		Storage: storage.RawValue.MichelinePrim()})
+	if err != nil {
+		return false, nil
+	}
+
+	return true, nil
+}
+
 func operationID(payload string) string {
 	return fmt.Sprintf("%x", md5.Sum([]byte(payload)))
 }
