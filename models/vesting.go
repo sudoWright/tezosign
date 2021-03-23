@@ -82,6 +82,8 @@ type Vesting struct {
 	Name       string        `gorm:"column:vst_name"  json:"name"`
 	Address    types.Address `gorm:"column:vst_address"  json:"address"`
 	ContractID sql.NullInt64 `gorm:"column:ctr_id" json:"-"`
+	//Json only
+	Balance uint64 `gorm:"-"  json:"balance"`
 }
 
 func (v Vesting) Validate() (err error) {
