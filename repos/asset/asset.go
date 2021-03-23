@@ -16,7 +16,7 @@ type (
 	}
 
 	Repo interface {
-		GetAssetsList(contract uint64, isOwner bool, limit, offset int) (assets []models.Asset, err error)
+		GetAssetsList(contract uint64, isOwner bool) (assets []models.Asset, err error)
 		GetAsset(contract uint64, assetAddress types.Address) (assets models.Asset, isFound bool, err error)
 		CreateAsset(asset models.Asset) (err error)
 		UpdateAsset(asset models.Asset) (err error)
@@ -56,7 +56,7 @@ func (r *Repository) UpdateAsset(asset models.Asset) (err error) {
 	return nil
 }
 
-func (r *Repository) GetAssetsList(contractID uint64, isOwner bool, limit, offset int) (assets []models.Asset, err error) {
+func (r *Repository) GetAssetsList(contractID uint64, isOwner bool) (assets []models.Asset, err error) {
 
 	db := r.db.Model(models.Asset{}).
 		Where("ctr_id IS NULL")
@@ -65,9 +65,7 @@ func (r *Repository) GetAssetsList(contractID uint64, isOwner bool, limit, offse
 		db = db.Or("ctr_id = ?", contractID)
 	}
 
-	err = db.Limit(limit).
-		Offset(offset).
-		Find(&assets).Error
+	err = db.Find(&assets).Error
 	if err != nil {
 		return assets, err
 	}

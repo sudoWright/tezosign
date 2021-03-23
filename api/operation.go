@@ -35,6 +35,11 @@ func (api *API) ContractOperationsList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err = params.Validate(); err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadRequest, err.Error()))
+		return
+	}
+
 	service := services.New(repos.New(networkContext.Db), repos.New(networkContext.IndexerDB), networkContext.Client, nil, net)
 
 	list, err := service.GetOperationsList(user, contractAddress, params)

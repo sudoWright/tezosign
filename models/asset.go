@@ -14,13 +14,14 @@ const (
 )
 
 type Asset struct {
-	ID            uint64        `gorm:"column:ast_id;primaryKey" json:"-"`
-	Name          string        `gorm:"column:ast_name" json:"name"`
-	ContractType  AssetType     `gorm:"column:ast_contract_type" json:"contract_type"`
-	Address       types.Address `gorm:"column:ast_address" json:"address"`
-	DexterAddress *string       `gorm:"column:ast_dexter_address" json:"-"`
-	Scale         uint8         `gorm:"column:ast_scale" json:"scale"`
-	Ticker        string        `gorm:"column:ast_ticker" json:"ticker"`
+	ID           uint64        `gorm:"column:ast_id;primaryKey" json:"-"`
+	Name         string        `gorm:"column:ast_name" json:"name"`
+	ContractType AssetType     `gorm:"column:ast_contract_type" json:"contract_type"`
+	Address      types.Address `gorm:"column:ast_address" json:"address"`
+	//TODO migrate to quipuswap
+	DexterAddress *string `gorm:"column:ast_dexter_address" json:"-"`
+	Scale         uint8   `gorm:"column:ast_scale" json:"scale"`
+	Ticker        string  `gorm:"column:ast_ticker" json:"ticker"`
 
 	ContractID sql.NullInt64 `gorm:"column:ctr_id" json:"-"`
 

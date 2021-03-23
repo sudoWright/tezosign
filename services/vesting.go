@@ -108,7 +108,7 @@ func (s *ServiceFacade) VestingContractOperation(req models.VestingContractOpera
 	}, nil
 }
 
-func (s *ServiceFacade) VestingsList(userPubKey types.PubKey, contractAddress types.Address, params models.CommonParams) (vestings []models.Vesting, err error) {
+func (s *ServiceFacade) VestingsList(userPubKey types.PubKey, contractAddress types.Address) (vestings []models.Vesting, err error) {
 
 	contract, isFound, err := s.repoProvider.GetContract().GetContract(contractAddress)
 	if err != nil {
@@ -129,12 +129,20 @@ func (s *ServiceFacade) VestingsList(userPubKey types.PubKey, contractAddress ty
 		return vestings, nil
 	}
 
-	vestings, err = s.repoProvider.GetVesting().GetVestingsList(contract.ID, params.Limit, params.Offset)
+	vestings, err = s.repoProvider.GetVesting().GetVestingsList(contract.ID)
 	if err != nil {
 		return vestings, err
 	}
 
-	//TODO add balances
+	indexerRepo := s.indexerRepoProvider.GetIndexer()
+	for i := range vestings {
+		acc, _, err := indexerRepo.GetAccount(vestings[i].Address)
+		if err != nil {
+			return vestings, err
+		}
+
+		vestings[i].Balance = acc.Balance
+	}
 
 	return vestings, err
 }

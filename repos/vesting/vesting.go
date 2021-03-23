@@ -16,7 +16,7 @@ type (
 	}
 
 	Repo interface {
-		GetVestingsList(contract uint64, limit, offset int) (assets []models.Vesting, err error)
+		GetVestingsList(contract uint64) (assets []models.Vesting, err error)
 		GetVesting(contract uint64, vestingAddress types.Address) (vesting models.Vesting, isFound bool, err error)
 		CreateVesting(asset models.Vesting) (err error)
 		UpdateVesting(asset models.Vesting) (err error)
@@ -54,12 +54,10 @@ func (r *Repository) UpdateVesting(vesting models.Vesting) (err error) {
 	return nil
 }
 
-func (r *Repository) GetVestingsList(contractID uint64, limit, offset int) (vesting []models.Vesting, err error) {
+func (r *Repository) GetVestingsList(contractID uint64) (vesting []models.Vesting, err error) {
 
 	err = r.db.Model(models.Vesting{}).
 		Where("ctr_id = ?", contractID).
-		Limit(limit).
-		Offset(offset).
 		Find(&vesting).Error
 	if err != nil {
 		return vesting, err

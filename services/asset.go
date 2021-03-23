@@ -16,7 +16,7 @@ const (
 	TruncatePrecision = 8
 )
 
-func (s *ServiceFacade) AssetsList(userPubKey types.PubKey, contractAddress types.Address, params models.CommonParams) (assets []models.Asset, err error) {
+func (s *ServiceFacade) AssetsList(userPubKey types.PubKey, contractAddress types.Address) (assets []models.Asset, err error) {
 
 	contract, isFound, err := s.repoProvider.GetContract().GetContract(contractAddress)
 	if err != nil {
@@ -32,7 +32,7 @@ func (s *ServiceFacade) AssetsList(userPubKey types.PubKey, contractAddress type
 		return assets, err
 	}
 
-	assets, err = s.repoProvider.GetAsset().GetAssetsList(contract.ID, isOwner, params.Limit, params.Offset)
+	assets, err = s.repoProvider.GetAsset().GetAssetsList(contract.ID, isOwner)
 	if err != nil {
 		return assets, err
 	}
@@ -60,10 +60,7 @@ func (s *ServiceFacade) AssetsList(userPubKey types.PubKey, contractAddress type
 }
 
 func (s *ServiceFacade) AssetsExchangeRates(userPubKey types.PubKey, contractAddress types.Address) (assetsRates map[string]interface{}, err error) {
-	assets, err := s.AssetsList(userPubKey, contractAddress, models.CommonParams{
-		Limit:  100,
-		Offset: 0,
-	})
+	assets, err := s.AssetsList(userPubKey, contractAddress)
 	if err != nil {
 		return assetsRates, err
 	}
