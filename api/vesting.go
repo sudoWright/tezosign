@@ -137,9 +137,16 @@ func (api *API) VestingsList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var params models.CommonParams
+	err = api.queryDecoder.Decode(&params, r.URL.Query())
+	if err != nil {
+		response.JsonError(w, err)
+		return
+	}
+
 	service := services.New(repos.New(networkContext.Db), repos.New(networkContext.IndexerDB), networkContext.Client, networkContext.Auth, net)
 
-	reps, err := service.VestingsList(user, contractAddress)
+	reps, err := service.VestingsList(user, contractAddress, params)
 	if err != nil {
 		//Unwrap apperror
 		err, IsAppErr := apperrors.Unwrap(err)

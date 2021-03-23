@@ -5,6 +5,7 @@ import (
 	"tezosign/api/response"
 	"tezosign/common/apperrors"
 	"tezosign/common/log"
+	"tezosign/models"
 	"tezosign/repos"
 	"tezosign/services"
 	"tezosign/types"
@@ -27,9 +28,16 @@ func (api *API) ContractOperationsList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var params models.CommonParams
+	err = api.queryDecoder.Decode(&params, r.URL.Query())
+	if err != nil {
+		response.JsonError(w, err)
+		return
+	}
+
 	service := services.New(repos.New(networkContext.Db), repos.New(networkContext.IndexerDB), networkContext.Client, nil, net)
 
-	list, err := service.GetOperationsList(user, contractAddress, nil)
+	list, err := service.GetOperationsList(user, contractAddress, params)
 	if err != nil {
 		//Unwrap apperror
 		err, IsAppErr := apperrors.Unwrap(err)

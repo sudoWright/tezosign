@@ -9,7 +9,7 @@ import (
 	"tezosign/types"
 )
 
-func (s *ServiceFacade) GetOperationsList(userPubKey types.PubKey, contractID types.Address, params interface{}) (resp []models.RequestReport, err error) {
+func (s *ServiceFacade) GetOperationsList(userPubKey types.PubKey, contractID types.Address, params models.CommonParams) (resp []models.RequestReport, err error) {
 
 	isOwner, err := s.GetUserAllowance(userPubKey, contractID)
 	if err != nil {
@@ -23,9 +23,9 @@ func (s *ServiceFacade) GetOperationsList(userPubKey types.PubKey, contractID ty
 		return resp, err
 	}
 
-	resp, err = repo.GetPayloadsReportByContractID(contract.ID, isOwner)
+	resp, err = repo.GetPayloadsReportByContractID(contract.ID, isOwner, params.Limit, params.Offset)
 	if err != nil {
-		return
+		return resp, err
 	}
 
 	return resp, nil

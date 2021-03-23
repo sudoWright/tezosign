@@ -108,10 +108,8 @@ func (s *ServiceFacade) VestingContractOperation(req models.VestingContractOpera
 	}, nil
 }
 
-func (s *ServiceFacade) VestingsList(userPubKey types.PubKey, contractAddress types.Address) (vestings []models.Vesting, err error) {
+func (s *ServiceFacade) VestingsList(userPubKey types.PubKey, contractAddress types.Address, params models.CommonParams) (vestings []models.Vesting, err error) {
 
-	//TODO init limit from request
-	limit := 100
 	contract, isFound, err := s.repoProvider.GetContract().GetContract(contractAddress)
 	if err != nil {
 		return vestings, err
@@ -131,7 +129,7 @@ func (s *ServiceFacade) VestingsList(userPubKey types.PubKey, contractAddress ty
 		return vestings, nil
 	}
 
-	vestings, err = s.repoProvider.GetVesting().GetVestingsList(contract.ID, limit, 0)
+	vestings, err = s.repoProvider.GetVesting().GetVestingsList(contract.ID, params.Limit, params.Offset)
 	if err != nil {
 		return vestings, err
 	}
