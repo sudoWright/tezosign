@@ -184,6 +184,13 @@ func (s *ServiceFacade) ContractVesting(userPubKey types.PubKey, contractAddress
 		Valid: true,
 	}
 
+	vestingAcc, _, err := s.indexerRepoProvider.GetIndexer().GetAccount(reqVesting.Address)
+	if err != nil {
+		return vesting, err
+	}
+
+	reqVesting.Balance = vestingAcc.Balance
+
 	err = vestingRepo.CreateVesting(reqVesting)
 	if err != nil {
 		return vesting, err
@@ -220,6 +227,13 @@ func (s *ServiceFacade) ContractVestingEdit(userPubKey types.PubKey, contractAdd
 	}
 
 	vesting.Name = reqVesting.Name
+
+	vestingAcc, _, err := s.indexerRepoProvider.GetIndexer().GetAccount(vesting.Address)
+	if err != nil {
+		return vesting, err
+	}
+
+	vesting.Balance = vestingAcc.Balance
 
 	err = vestingRepo.UpdateVesting(vesting)
 	if err != nil {
