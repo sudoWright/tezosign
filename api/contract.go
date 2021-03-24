@@ -61,9 +61,9 @@ func (api *API) ContractStorageUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	contractID := types.Address(mux.Vars(r)["contract_id"])
+	contractID := types.Address(mux.Vars(r)[ContractIDParam])
 	if contractID == "" || contractID.Validate() != nil {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "contract_id"))
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, ContractIDParam))
 		return
 	}
 
@@ -105,9 +105,9 @@ func (api *API) ContractInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	contractID := types.Address(mux.Vars(r)["contract_id"])
+	contractID := types.Address(mux.Vars(r)[ContractIDParam])
 	if err := contractID.Validate(); err != nil {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "contract_id"))
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, ContractIDParam))
 		return
 	}
 

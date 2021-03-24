@@ -130,10 +130,10 @@ func (api *API) VestingsList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	contractAddress := types.Address(mux.Vars(r)["contract_id"])
+	contractAddress := types.Address(mux.Vars(r)[ContractIDParam])
 	err = contractAddress.Validate()
 	if err != nil {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "contract_id"))
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, ContractIDParam))
 		return
 	}
 
@@ -161,10 +161,10 @@ func (api *API) ContractVesting(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	contractAddress := types.Address(mux.Vars(r)["contract_id"])
+	contractAddress := types.Address(mux.Vars(r)[ContractIDParam])
 	err = contractAddress.Validate()
 	if err != nil {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "contract_id"))
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, ContractIDParam))
 		return
 	}
 
@@ -204,10 +204,10 @@ func (api *API) ContractVestingEdit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	contractAddress := types.Address(mux.Vars(r)["contract_id"])
+	contractAddress := types.Address(mux.Vars(r)[ContractIDParam])
 	err = contractAddress.Validate()
 	if err != nil {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "contract_id"))
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, ContractIDParam))
 		return
 	}
 
@@ -247,10 +247,10 @@ func (api *API) RemoveContractVesting(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	contractAddress := types.Address(mux.Vars(r)["contract_id"])
+	contractAddress := types.Address(mux.Vars(r)[ContractIDParam])
 	err = contractAddress.Validate()
 	if err != nil {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "contract_id"))
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, ContractIDParam))
 		return
 	}
 

@@ -127,14 +127,12 @@ func (api *API) initialize(handlerArr ...negroni.Handler) {
 	}
 
 	HandleActions(api.router, wrapper, actionsAPIPrefix, []*Route{
-
 		{Path: "/{network}/contract/storage/init", Method: http.MethodPost, Func: api.ContractStorageInit, Middleware: mw},
 		//Get contract info
 		{Path: "/{network}/contract/{contract_id}/info", Method: http.MethodGet, Func: api.ContractInfo, Middleware: mw},
 		//Create operation
 		{Path: "/{network}/contract/operation", Method: http.MethodPost, Func: api.ContractOperation, Middleware: mw},
-		//Create update storage operation
-		{Path: "/{network}/contract/{contract_id}/storage/update", Method: http.MethodPost, Func: api.ContractStorageUpdate, Middleware: mw},
+
 		//Build payload by operation
 		{Path: "/{network}/contract/operation/{operation_id}/payload", Method: http.MethodGet, Func: api.OperationSignPayload, Middleware: mw},
 		//Save payload signature
@@ -143,12 +141,7 @@ func (api *API) initialize(handlerArr ...negroni.Handler) {
 		{Path: "/{network}/contract/operation/{operation_id}/build", Method: http.MethodGet, Func: api.ContractOperationBuild, Middleware: mw},
 		//Operation list
 		{Path: "/{network}/contract/{contract_id}/operations", Method: http.MethodGet, Func: api.ContractOperationsList, Middleware: mw},
-		//Create contract asset
-		{Path: "/{network}/contract/{contract_id}/asset", Method: http.MethodPost, Func: api.ContractAsset, Middleware: mw},
-		//Edit contract asset
-		{Path: "/{network}/contract/{contract_id}/asset/edit", Method: http.MethodPost, Func: api.ContractAssetEdit, Middleware: mw},
-		//Remove contract asset
-		{Path: "/{network}/contract/{contract_id}/asset/delete", Method: http.MethodPost, Func: api.RemoveContractAsset, Middleware: mw},
+
 		//Get contract assets list
 		{Path: "/{network}/contract/{contract_id}/assets", Method: http.MethodGet, Func: api.AssetsList, Middleware: mw},
 		//Get contract assets list
@@ -160,9 +153,30 @@ func (api *API) initialize(handlerArr ...negroni.Handler) {
 		{Path: "/{network}/contract/vesting/{contract_id}/info", Method: http.MethodGet, Func: api.VestingContractInfo, Middleware: mw},
 		//Direct vesting contract call
 		{Path: "/{network}/contract/vesting/operation", Method: http.MethodPost, Func: api.VestingContractOperation, Middleware: mw},
-
 		//Get contract vestings list
 		{Path: "/{network}/contract/{contract_id}/vestings", Method: http.MethodGet, Func: api.VestingsList, Middleware: mw},
+	})
+
+	mw = []negroni.HandlerFunc{
+		api.CheckAndLoadNetwork,
+		api.RequireJWT,
+		api.OwnerAllowance,
+	}
+
+	//Endpoints with contract owner restriction
+	HandleActions(api.router, wrapper, actionsAPIPrefix, []*Route{
+		//Create update storage operation
+		{Path: "/{network}/contract/{contract_id}/storage/update", Method: http.MethodPost, Func: api.ContractStorageUpdate, Middleware: mw},
+
+		//Assets
+		//Create contract asset
+		{Path: "/{network}/contract/{contract_id}/asset", Method: http.MethodPost, Func: api.ContractAsset, Middleware: mw},
+		//Edit contract asset
+		{Path: "/{network}/contract/{contract_id}/asset/edit", Method: http.MethodPost, Func: api.ContractAssetEdit, Middleware: mw},
+		//Remove contract asset
+		{Path: "/{network}/contract/{contract_id}/asset/delete", Method: http.MethodPost, Func: api.RemoveContractAsset, Middleware: mw},
+
+		//Vesting
 		//Add vesting contract
 		{Path: "/{network}/contract/{contract_id}/vesting", Method: http.MethodPost, Func: api.ContractVesting, Middleware: mw},
 		//Edit contract asset

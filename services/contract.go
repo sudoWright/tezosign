@@ -63,15 +63,6 @@ func (s *ServiceFacade) BuildContractStorageUpdateOperation(userPubKey types.Pub
 		return resp, err
 	}
 
-	isOwner, err := s.GetUserAllowance(userPubKey, contractID)
-	if err != nil {
-		return resp, err
-	}
-
-	if !isOwner {
-		return resp, apperrors.NewWithDesc(apperrors.ErrNotAllowed, "pubkey not contains in storage")
-	}
-
 	resp, err = s.ContractOperation(userPubKey, models.ContractOperationRequest{
 		ContractID: contractID,
 		Type:       models.StorageUpdate,
@@ -268,7 +259,6 @@ func (s *ServiceFacade) checkOperation(req models.ContractOperationRequest) (err
 	return nil
 }
 
-//TODO move to middleware
 func (s *ServiceFacade) GetUserAllowance(userPubKey types.PubKey, contractAddress types.Address) (isOwner bool, err error) {
 
 	storage, err := s.getContractStorage(contractAddress)

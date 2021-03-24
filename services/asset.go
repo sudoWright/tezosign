@@ -118,15 +118,6 @@ func (s *ServiceFacade) ContractAsset(userPubKey types.PubKey, contractAddress t
 		return asset, apperrors.New(apperrors.ErrNotFound, "contract")
 	}
 
-	isOwner, err := s.GetUserAllowance(userPubKey, contractAddress)
-	if err != nil {
-		return asset, err
-	}
-
-	if !isOwner {
-		return asset, apperrors.New(apperrors.ErrNotAllowed)
-	}
-
 	//Сheck contract for FA1.2 or FA2
 	isFAAsset, err := s.checkFAStandart(reqAsset.Address, reqAsset.ContractType)
 	if err != nil {
@@ -172,15 +163,6 @@ func (s *ServiceFacade) ContractAssetEdit(userPubKey types.PubKey, contractAddre
 		return asset, apperrors.New(apperrors.ErrNotFound, "contract")
 	}
 
-	isOwner, err := s.GetUserAllowance(userPubKey, contractAddress)
-	if err != nil {
-		return asset, err
-	}
-
-	if !isOwner {
-		return asset, apperrors.New(apperrors.ErrNotAllowed)
-	}
-
 	assetRepo := s.repoProvider.GetAsset()
 	asset, isFound, err = assetRepo.GetAsset(contract.ID, reqAsset.Address)
 	if err != nil {
@@ -221,15 +203,6 @@ func (s *ServiceFacade) RemoveContractAsset(userPubKey types.PubKey, contractAdd
 
 	if !isFound {
 		return apperrors.New(apperrors.ErrNotFound, "contract")
-	}
-
-	isOwner, err := s.GetUserAllowance(userPubKey, contractAddress)
-	if err != nil {
-		return err
-	}
-
-	if !isOwner {
-		return apperrors.New(apperrors.ErrNotAllowed)
 	}
 
 	assetRepo := s.repoProvider.GetAsset()

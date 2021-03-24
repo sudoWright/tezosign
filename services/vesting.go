@@ -158,15 +158,6 @@ func (s *ServiceFacade) ContractVesting(userPubKey types.PubKey, contractAddress
 		return vesting, apperrors.New(apperrors.ErrNotFound, "contract")
 	}
 
-	isOwner, err := s.GetUserAllowance(userPubKey, contractAddress)
-	if err != nil {
-		return vesting, err
-	}
-
-	if !isOwner {
-		return vesting, apperrors.New(apperrors.ErrNotAllowed)
-	}
-
 	//Сheck contract for vesting type
 	isVestingContract, err := s.checkVestingContract(reqVesting.Address)
 	if err != nil {
@@ -212,15 +203,6 @@ func (s *ServiceFacade) ContractVestingEdit(userPubKey types.PubKey, contractAdd
 		return vesting, apperrors.New(apperrors.ErrNotFound, "contract")
 	}
 
-	isOwner, err := s.GetUserAllowance(userPubKey, contractAddress)
-	if err != nil {
-		return vesting, err
-	}
-
-	if !isOwner {
-		return vesting, apperrors.New(apperrors.ErrNotAllowed)
-	}
-
 	vestingRepo := s.repoProvider.GetVesting()
 	vesting, isFound, err = vestingRepo.GetVesting(contract.ID, reqVesting.Address)
 	if err != nil {
@@ -256,15 +238,6 @@ func (s *ServiceFacade) RemoveContractVesting(userPubKey types.PubKey, contractA
 
 	if !isFound {
 		return apperrors.New(apperrors.ErrNotFound, "contract")
-	}
-
-	isOwner, err := s.GetUserAllowance(userPubKey, contractAddress)
-	if err != nil {
-		return err
-	}
-
-	if !isOwner {
-		return apperrors.New(apperrors.ErrNotAllowed)
 	}
 
 	vestingRepo := s.repoProvider.GetVesting()
