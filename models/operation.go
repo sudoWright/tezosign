@@ -41,6 +41,7 @@ type RequestReport struct {
 type OperationToSignResp struct {
 	OperationID string        `json:"operation_id"`
 	Payload     types.Payload `json:"payload"`
+	PayloadJSON string        `json:"payload_json"`
 }
 
 type OperationSignatureResp struct {

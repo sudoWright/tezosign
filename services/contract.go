@@ -303,10 +303,11 @@ func (s *ServiceFacade) BuildContractOperationToSign(userPubKey types.PubKey, tx
 
 	counter := *operationReq.Counter
 	var signPayload types.Payload
+	var payloadJson string
 	if payloadType == models.TypeReject {
-		signPayload, err = contract.BuildRejectSignPayload(operationReq.NetworkID, counter, contractModel.Address)
+		signPayload, payloadJson, err = contract.BuildRejectSignPayload(operationReq.NetworkID, counter, contractModel.Address)
 	} else {
-		signPayload, err = contract.BuildContractSignPayload(operationReq.NetworkID, counter, operationReq.Info)
+		signPayload, payloadJson, err = contract.BuildContractSignPayload(operationReq.NetworkID, counter, operationReq.Info)
 	}
 	if err != nil {
 		return resp, err
@@ -315,6 +316,7 @@ func (s *ServiceFacade) BuildContractOperationToSign(userPubKey types.PubKey, tx
 	return models.OperationToSignResp{
 		OperationID: operationReq.Hash,
 		Payload:     signPayload,
+		PayloadJSON: payloadJson,
 	}, nil
 }
 

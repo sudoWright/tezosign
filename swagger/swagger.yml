@@ -1004,6 +1004,8 @@ definitions:
         type: string
       payload:
         type: string
+      payload_json:
+        type: string
   OperationSignatute:
     properties:
       contract_id:
