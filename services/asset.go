@@ -37,14 +37,9 @@ func (s *ServiceFacade) AssetsList(userPubKey types.PubKey, contractAddress type
 		return assets, err
 	}
 
-	balances, err := getAccountTokensBalance(contractAddress, s.net)
+	tokensMap, err := s.getContractTokensBalancesMap(contractAddress)
 	if err != nil {
 		return assets, err
-	}
-
-	tokensMap := make(map[types.Address][]models.TokenBalance, len(balances.Tokens))
-	for i := range balances.Tokens {
-		tokensMap[balances.Tokens[i].Asset] = append(tokensMap[balances.Tokens[i].Asset], balances.Tokens[i].TokenBalance)
 	}
 
 	for i := range assets {
@@ -144,6 +139,13 @@ func (s *ServiceFacade) ContractAsset(userPubKey types.PubKey, contractAddress t
 		Valid: true,
 	}
 
+	tokensMap, err := s.getContractTokensBalancesMap(contractAddress)
+	if err != nil {
+		return asset, err
+	}
+
+	reqAsset.Balances = tokensMap[reqAsset.Address]
+
 	err = assetRepo.CreateAsset(reqAsset)
 	if err != nil {
 		return asset, err
@@ -186,6 +188,13 @@ func (s *ServiceFacade) ContractAssetEdit(userPubKey types.PubKey, contractAddre
 
 	reqAsset.ID = asset.ID
 
+	tokensMap, err := s.getContractTokensBalancesMap(contractAddress)
+	if err != nil {
+		return asset, err
+	}
+
+	reqAsset.Balances = tokensMap[reqAsset.Address]
+
 	err = assetRepo.UpdateAsset(reqAsset)
 	if err != nil {
 		return asset, err
@@ -226,4 +235,19 @@ func (s *ServiceFacade) RemoveContractAsset(userPubKey types.PubKey, contractAdd
 	}
 
 	return nil
+}
+
+func (s *ServiceFacade) getContractTokensBalancesMap(contractAddress types.Address) (tokensMap map[types.Address][]models.TokenBalance, err error) {
+
+	balances, err := getAccountTokensBalance(contractAddress, s.net)
+	if err != nil {
+		return tokensMap, err
+	}
+
+	tokensMap = make(map[types.Address][]models.TokenBalance, len(balances.Tokens))
+	for i := range balances.Tokens {
+		tokensMap[balances.Tokens[i].Asset] = append(tokensMap[balances.Tokens[i].Asset], balances.Tokens[i].TokenBalance)
+	}
+
+	return tokensMap, nil
 }

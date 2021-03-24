@@ -127,4 +127,5 @@ func (api *API) OwnerAllowance(w http.ResponseWriter, r *http.Request, next http
 		return
 	}
 
+	next(w, r)
 }
