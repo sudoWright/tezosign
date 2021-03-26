@@ -17,6 +17,9 @@ type VestingContractStorageRequest struct {
 	Timestamp      uint64        `json:"timestamp"`
 	SecondsPerTick uint64        `json:"seconds_per_tick"`
 	TokensPerTick  uint64        `json:"tokens_per_tick"`
+
+	//Used only in resp
+	VestedAmount uint64 `json:"vested_amount"`
 }
 
 func (v VestingContractStorageRequest) Validate() (err error) {

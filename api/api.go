@@ -150,7 +150,7 @@ func (api *API) initialize(handlerArr ...negroni.Handler) {
 		//Vesting contract
 		{Path: "/{network}/contract/vesting/storage/init", Method: http.MethodPost, Func: api.VestingContractStorageInit, Middleware: mw},
 		//Vesting contract info
-		{Path: "/{network}/contract/vesting/{contract_id}/info", Method: http.MethodGet, Func: api.VestingContractInfo, Middleware: mw},
+		{Path: "/{network}/contract/vesting/{vesting_contract_id}/info", Method: http.MethodGet, Func: api.VestingContractInfo, Middleware: mw},
 		//Direct vesting contract call
 		{Path: "/{network}/contract/vesting/operation", Method: http.MethodPost, Func: api.VestingContractOperation, Middleware: mw},
 		//Get contract vestings list

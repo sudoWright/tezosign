@@ -22,7 +22,7 @@ paths:
           required: true
           type : string
         - in: body
-          name: user
+          name: body
           description: The user to create.
           schema:
             $ref: '#/definitions/AuthRequestBody'
@@ -49,7 +49,7 @@ paths:
           required: true
           type : string
         - in: body
-          name: user
+          name: body
           description: Signed request
           schema:
             $ref: '#/definitions/AuthBody'
@@ -76,7 +76,7 @@ paths:
           required: true
           type : string
         - in: body
-          name: user
+          name: body
           description: Refresh token
           schema:
             $ref: '#/definitions/RefreshBody'
@@ -154,7 +154,7 @@ paths:
           required: true
           type : string
         - in: body
-          name: user
+          name: body
           schema:
             $ref: '#/definitions/StorageInitBody'
       responses:
@@ -210,7 +210,7 @@ paths:
           required: true
           type : string
         - in: body
-          name: user
+          name: body
           schema:
             $ref: '#/definitions/ContractOperationBody'
       responses:
@@ -242,7 +242,7 @@ paths:
           required: true
           type : string
         - in: body
-          name: user
+          name: body
           schema:
             $ref: '#/definitions/StorageInitBody'
       responses:
@@ -302,7 +302,7 @@ paths:
           required: true
           type : string
         - in: body
-          name: user
+          name: body
           schema:
             $ref: '#/definitions/OperationSignatute'
       responses:
@@ -631,7 +631,7 @@ paths:
           required: true
           type : string
         - in: body
-          name: user
+          name: body
           schema:
             $ref: '#/definitions/VestingStorageInitBody'
       responses:
@@ -659,9 +659,9 @@ paths:
           required: true
           type : string
         - in: body
-          name: user
+          name: body
           schema:
-            $ref: '#/definitions/ContractOperationBody'
+            $ref: '#/definitions/VestingOperation'
       responses:
         '200':
           description: Vesting contract storage json
@@ -673,7 +673,7 @@ paths:
           description: Internal server error
       tags:
         - Vesting
-  '/{network}}/contract/vesting/{contract_id}/info':
+  '/{network}}/contract/vesting/{vesting_contract_id}/info':
     get:
       operationId: vestingContractInfo
       summary: Vesting contract info
@@ -687,7 +687,7 @@ paths:
           required: true
           type : string
         - in: path
-          name: contract_id
+          name: vesting_contract_id
           required: true
           type : string
       responses:
@@ -751,9 +751,17 @@ paths:
           required: true
           type: string
         - in: body
-          name: asset
+          name: vesting
           schema:
-            $ref: '#/definitions/VestingListItem'
+            type: object
+            required:
+              - name
+              - address
+            properties:
+              name:
+                type: string
+              address:
+                type: string
       responses:
         '200':
           description: Vesting item
@@ -783,9 +791,17 @@ paths:
           required: true
           type : string
         - in: body
-          name: asset
+          name: vesting
           schema:
-            $ref: '#/definitions/VestingListItem'
+            type: object
+            required:
+              - name
+              - address
+            properties:
+              name:
+                type: string
+              address:
+                type: string
       responses:
         '200':
           description: Vesting item
@@ -815,9 +831,14 @@ paths:
           required: true
           type : string
         - in: body
-          name: asset
+          name: vesting
           schema:
-            $ref: '#/definitions/VestingListItem'
+            type: object
+            required:
+              - address
+            properties:
+              address:
+                type: string
       responses:
         '200':
           description: Message
@@ -835,6 +856,14 @@ paths:
       tags:
         - Vesting
 definitions:
+  VestingOperation:
+    properties:
+      type:
+        type: string
+      amount:
+        type: integer
+      to:
+        type: string
   VestingListItem:
     properties:
       address:
@@ -852,13 +881,27 @@ definitions:
       opened_balance:
         type: integer
       storage:
-        $ref: '#/definitions/VestingStorageInitBody'
+        $ref: '#/definitions/VestingStorage'
   VestingStorageInitBody:
     properties:
       vesting_address:
         type: string
       delegate_admin:
         type: string
+      timestamp:
+        type: integer
+      seconds_per_tick:
+        type: integer
+      tokens_per_tick:
+        type: integer
+  VestingStorage:
+    properties:
+      vesting_address:
+        type: string
+      delegate_admin:
+        type: string
+      vested_amount:
+        type: integer
       timestamp:
         type: integer
       seconds_per_tick:

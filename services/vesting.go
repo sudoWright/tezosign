@@ -88,6 +88,7 @@ func (s *ServiceFacade) VestingContractInfo(contractID types.Address) (info mode
 		Storage: models.VestingContractStorageRequest{
 			VestingAddress: storageContainer.VestingAddress,
 			DelegateAdmin:  storageContainer.DelegateAdmin,
+			VestedAmount:   storageContainer.VestedAmount,
 			Timestamp:      storageContainer.Timestamp,
 			SecondsPerTick: storageContainer.SecondsPerTick,
 			TokensPerTick:  storageContainer.TokensPerTick,
