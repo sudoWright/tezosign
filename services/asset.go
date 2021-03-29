@@ -237,6 +237,163 @@ func (s *ServiceFacade) RemoveContractAsset(userPubKey types.PubKey, contractAdd
 	return nil
 }
 
+const transferEntrypoint = "transfer"
+
+func (s *ServiceFacade) AssetsIncomeOperations() (count uint64, err error) {
+	//Get global assets
+	//TODO add personal assets
+	assets, err := s.repoProvider.GetAsset().GetAssetsList(0, false)
+	if err != nil {
+		return count, err
+	}
+
+	//TODO add limit
+	limit := 1000
+	contracts, err := s.repoProvider.GetContract().GetContractsList(limit, 0)
+	if err != nil {
+		return count, err
+	}
+
+	contractsMap := make(map[types.Address]models.Contract, len(contracts))
+
+	for i := range contracts {
+		contractsMap[contracts[i].Address] = contracts[i]
+	}
+
+	networkID, err := s.rpcClient.ChainID(context.Background())
+	if err != nil {
+		return count, err
+	}
+
+	for i := range assets {
+
+		operationsCount, err := s.processAssetOperations(contractsMap, networkID, assets[i])
+		if err != nil {
+			return count, err
+		}
+
+		count += operationsCount
+	}
+
+	return count, err
+}
+
+func (s *ServiceFacade) processAssetOperations(contractsMap map[types.Address]models.Contract, networkID string, asset models.Asset) (count uint64, err error) {
+
+	transferType := models.IncomeFATransfer
+	if asset.ContractType == models.TypeFA2 {
+		transferType = models.IncomeFA2Transfer
+	}
+
+	assetOperations, err := s.indexerRepoProvider.GetIndexer().GetContractOperations(asset.Address, asset.LastOperationBlockLevel, transferEntrypoint)
+	if err != nil {
+		return count, err
+	}
+
+	//New operations not founds
+	if len(assetOperations) == 0 {
+		return 0, nil
+	}
+
+	s.repoProvider.Start(context.Background())
+	defer s.repoProvider.RollbackUnlessCommitted()
+
+	for j := range assetOperations {
+		txs := contract.AssetOperation(assetOperations[j].RawParameters.MichelinePrim(), asset.ContractType)
+
+		transferUnits := groupOperations(contractsMap, txs)
+		for contractAddress, transfers := range transferUnits {
+
+			err = s.repoProvider.GetContract().SavePayload(models.Request{
+				Hash:       operationID(assetOperations[j].OpHash),
+				ContractID: contractsMap[contractAddress].ID,
+				Counter:    nil,
+				Status:     models.StatusSuccess,
+				CreatedAt:  assetOperations[j].Timestamp,
+				Info: models.ContractOperationRequest{
+					ContractID:   contractAddress,
+					Type:         transferType,
+					TransferList: transfers,
+				},
+				NetworkID:   networkID,
+				OperationID: &assetOperations[j].OpHash,
+			})
+
+			//Increment counter of saved operations
+			count++
+		}
+		asset.LastOperationBlockLevel = assetOperations[j].Level
+
+	}
+
+	err = s.repoProvider.GetAsset().UpdateAsset(asset)
+	if err != nil {
+		return 0, err
+	}
+
+	err = s.repoProvider.Commit()
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func groupOperations(contractsMap map[types.Address]models.Contract, txs []models.TransferUnit) map[types.Address][]models.TransferUnit {
+	//map Address TO map address From
+	transferUnitsGroupsByFromAddress := map[types.Address]map[types.Address]models.TransferUnit{}
+
+	for k := range txs {
+		from := txs[k].From
+
+		for _, value := range txs[k].Txs {
+
+			//Skip txs to not our contracts
+			_, ok := contractsMap[value.To]
+			if !ok {
+				continue
+			}
+
+			//Init internal map
+			if _, ok = transferUnitsGroupsByFromAddress[value.To]; !ok {
+				transferUnitsGroupsByFromAddress[value.To] = map[types.Address]models.TransferUnit{}
+			}
+
+			//Init first value
+			_, ok = transferUnitsGroupsByFromAddress[value.To][from]
+			if !ok {
+				transferUnitsGroupsByFromAddress[value.To][from] = models.TransferUnit{
+					From: from,
+					Txs:  []models.Tx{value},
+				}
+				continue
+			}
+
+			//Append tx
+			transferUnitsGroupsByFromAddress[value.To][from] = models.TransferUnit{
+				From: from,
+				Txs:  append(transferUnitsGroupsByFromAddress[value.To][from].Txs, value),
+			}
+		}
+	}
+
+	transferUnits := map[types.Address][]models.TransferUnit{}
+
+	//Merge to map Address TO
+	for address, mapFrom := range transferUnitsGroupsByFromAddress {
+
+		units := make([]models.TransferUnit, 0, len(mapFrom))
+
+		for _, value := range mapFrom {
+			units = append(units, value)
+		}
+
+		transferUnits[address] = append(transferUnits[address], units...)
+	}
+
+	return transferUnits
+}
+
 func (s *ServiceFacade) getContractTokensBalancesMap(contractAddress types.Address) (tokensMap map[types.Address][]models.TokenBalance, err error) {
 
 	balances, err := getAccountTokensBalance(contractAddress, s.net)

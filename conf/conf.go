@@ -25,6 +25,7 @@ type (
 
 	Cron struct {
 		Operations int64
+		Assets     int64
 	}
 
 	Auth struct {

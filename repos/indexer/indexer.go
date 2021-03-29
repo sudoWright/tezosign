@@ -16,7 +16,7 @@ type (
 	}
 
 	Repo interface {
-		GetContractOperations(contract types.Address, blockLevel uint64) ([]models.TransactionOperation, error)
+		GetContractOperations(contract types.Address, blockLevel uint64, entrypoint string) ([]models.TransactionOperation, error)
 		GetContractRevealOperation(contract types.Address) (models.RevealOperation, bool, error)
 		GetContractOriginationOperation(txID string) (tx models.OriginationOperation, isFound bool, err error)
 		GetContractStorage(address types.Address) (storage models.Storage, isFound bool, err error)
@@ -35,13 +35,18 @@ func New(db *gorm.DB) *Repository {
 	}
 }
 
-func (r *Repository) GetContractOperations(contract types.Address, blockLevel uint64) (operations []models.TransactionOperation, err error) {
+func (r *Repository) GetContractOperations(contract types.Address, blockLevel uint64, entrypoint string) (operations []models.TransactionOperation, err error) {
 
-	err = r.db.Table("TransactionOps").
+	db := r.db.Table("TransactionOps").
 		Joins(`LEFT JOIN "Accounts" a on "TargetId" = a."Id"`).
 		Where(`"Address" = ?`, contract.String()).
-		Where(`"Level" > ?`, blockLevel).
-		Order(`"TransactionOps"."Id" asc`).
+		Where(`"Level" > ?`, blockLevel)
+
+	if len(entrypoint) > 0 {
+		db = db.Where(`"Entrypoint" = ?`, entrypoint)
+	}
+
+	err = db.Order(`"TransactionOps"."Id" asc`).
 		Find(&operations).Error
 	if err != nil {
 		return operations, err

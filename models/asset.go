@@ -27,6 +27,8 @@ type Asset struct {
 
 	Balances []TokenBalance `gorm:"-" json:"balances"`
 	IsGlobal bool           `gorm:"-" json:"is_global"`
+
+	LastOperationBlockLevel uint64 `gorm:"column:ast_last_block_level" json:"-"`
 }
 
 func (a Asset) Validate() (err error) {

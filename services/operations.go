@@ -57,7 +57,7 @@ func (s *ServiceFacade) CheckOperations() (counter int64, err error) {
 	//var parameter contract.Operation
 	for i := range contracts {
 
-		operations, err := indexerRepo.GetContractOperations(contracts[i].Address, contracts[i].LastOperationBlockLevel)
+		operations, err := indexerRepo.GetContractOperations(contracts[i].Address, contracts[i].LastOperationBlockLevel, "")
 		if err != nil {
 			return counter, err
 		}
@@ -95,8 +95,6 @@ func (s *ServiceFacade) processOperations(repo contractRepo.Repo, c models.Contr
 		if operations[j].Status != 1 {
 			continue
 		}
-
-		//TODO add assets income transfers
 
 		//Default entrypoint
 		if operations[j].RawParameters == nil {

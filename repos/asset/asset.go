@@ -45,9 +45,10 @@ func (r *Repository) CreateAsset(asset models.Asset) (err error) {
 func (r *Repository) UpdateAsset(asset models.Asset) (err error) {
 	err = r.db.Model(&models.Asset{ID: asset.ID}).
 		Updates(models.Asset{
-			Name:   asset.Name,
-			Scale:  asset.Scale,
-			Ticker: asset.Ticker,
+			Name:                    asset.Name,
+			Scale:                   asset.Scale,
+			Ticker:                  asset.Ticker,
+			LastOperationBlockLevel: asset.LastOperationBlockLevel,
 		}).
 		Error
 	if err != nil {
