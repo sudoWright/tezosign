@@ -61,7 +61,7 @@ func (r ContractStorageRequest) Validate() (err error) {
 
 type ContractInfo struct {
 	Address   types.Address `json:"address"`
-	Balance   int64         `json:"balance"`
+	Balance   uint64        `json:"balance"`
 	Threshold int64         `json:"threshold"`
 	Counter   int64         `json:"counter"`
 	Owners    []Owner       `json:"owners"`

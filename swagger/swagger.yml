@@ -560,6 +560,37 @@ paths:
           description: Internal server error
       tags:
         - Helpers
+  '/{network}/{address}/balance':
+    get:
+      operationId: addressBalance
+      summary: Get address balance
+      produces:
+        - application/json
+      security:
+        - Bearer: []
+      parameters:
+        - in: path
+          name: network
+          required: true
+          type : string
+        - in: path
+          name: address
+          required: true
+          type : string
+      responses:
+        '200':
+          description: Balance
+          schema:
+            type: object
+            properties:
+              balance:
+                type: integer
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+      tags:
+        - Helpers
   '/{network}/origination/{tx_id}':
     get:
       operationId: contractOriginated

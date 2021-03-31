@@ -119,6 +119,7 @@ func (api *API) initialize(handlerArr ...negroni.Handler) {
 
 		{Path: "/{network}/{address}/revealed", Method: http.MethodGet, Func: api.AddressIsRevealed, Middleware: mw},
 		{Path: "/{network}/origination/{tx_id}", Method: http.MethodGet, Func: api.ContractOrigination, Middleware: mw},
+		{Path: "/{network}/{address}/balance", Method: http.MethodGet, Func: api.AddressBalance, Middleware: mw},
 	})
 
 	mw = []negroni.HandlerFunc{

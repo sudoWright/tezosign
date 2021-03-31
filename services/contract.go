@@ -130,14 +130,18 @@ func (s *ServiceFacade) ContractInfo(contractID types.Address) (resp models.Cont
 		}
 	}
 
-	balance, err := s.rpcClient.Balance(context.Background(), contractID.String())
+	acc, isFound, err := s.indexerRepoProvider.GetIndexer().GetAccount(contractID)
 	if err != nil {
 		return resp, err
 	}
 
+	if !isFound {
+		return resp, apperrors.New(apperrors.ErrNotFound, "contract")
+	}
+
 	return models.ContractInfo{
 		Address:   contractID,
-		Balance:   balance,
+		Balance:   acc.Balance,
 		Threshold: storage.Threshold(),
 		Counter:   storage.Counter(),
 		Owners:    owners,

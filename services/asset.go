@@ -312,6 +312,7 @@ func (s *ServiceFacade) processAssetOperations(contractsMap map[types.Address]mo
 				CreatedAt:  assetOperations[j].Timestamp,
 				Info: models.ContractOperationRequest{
 					ContractID:   contractAddress,
+					AssetID:      asset.Address,
 					Type:         transferType,
 					TransferList: transfers,
 				},
