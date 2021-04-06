@@ -217,7 +217,11 @@ func (r ContractOperationRequest) Validate() (err error) {
 		if err != nil {
 			return err
 		}
-		err = r.To.Validate()
+
+		//Delegation destination can be empty
+		if r.To.String() != "" {
+			err = r.To.Validate()
+		}
 		if err != nil {
 			return err
 		}

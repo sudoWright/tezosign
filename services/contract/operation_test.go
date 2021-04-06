@@ -235,7 +235,7 @@ func Test_BuildContractSignPayload(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
-			got, gotErr := BuildContractSignPayload(test.args.networkID, test.args.counter, test.args.operationParams)
+			got, _, gotErr := BuildContractSignPayload(test.args.networkID, test.args.counter, test.args.operationParams)
 			if test.wantErr != (gotErr != nil) {
 				t.Errorf("wantErr: %t | results %s == %s | err: %v", test.wantErr, got, test.expResult, gotErr)
 			}

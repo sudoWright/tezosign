@@ -40,11 +40,18 @@ func buildActionParams(operationParams models.ContractOperationRequest) (actionP
 		}
 
 	case models.FATransfer, models.FA2Transfer:
+
 		actionParams, err = buildFATransferParams(operationParams)
 		if err != nil {
 			return actionParams, err
 		}
+
 	case models.Delegation:
+		actionParams, err = buildDelegationPrim(operationParams.To)
+		if err != nil {
+			return actionParams, err
+		}
+
 		if operationParams.To == "" {
 			//None
 			actionParams = &micheline.Prim{
@@ -325,17 +332,11 @@ func buildVestingTxPrim(operationParams models.ContractOperationRequest) (prim *
 	case models.VestingSetDelegate: //	setDelegate
 		opCode = micheline.D_LEFT
 
-		encodedDelegate, err := operationParams.To.MarshalBinary()
+		arg, err = buildDelegationPrim(operationParams.To)
 		if err != nil {
 			return prim, err
 		}
 
-		//key_hash
-		arg = &micheline.Prim{
-			Type:   micheline.PrimBytes,
-			OpCode: micheline.T_BYTES,
-			Bytes:  encodedDelegate,
-		}
 	case models.VestingVest: // vest
 		opCode = micheline.D_RIGHT
 
@@ -367,4 +368,37 @@ func buildVestingTxPrim(operationParams models.ContractOperationRequest) (prim *
 	}
 
 	return prim, err
+}
+
+func buildDelegationPrim(paramTo types.Address) (delegationPrim *micheline.Prim, err error) {
+
+	if paramTo == "" {
+		//None
+		delegationPrim = &micheline.Prim{
+			Type:   micheline.PrimNullary,
+			OpCode: micheline.D_NONE,
+		}
+		return delegationPrim, nil
+	}
+
+	encodedDestinationAddress, err := paramTo.MarshalBinary()
+	if err != nil {
+		return delegationPrim, err
+	}
+
+	//option(key_hash)
+	delegationPrim = &micheline.Prim{
+		Type:   micheline.PrimUnary,
+		OpCode: micheline.D_SOME,
+		Args: []*micheline.Prim{
+			{
+				Type:   micheline.PrimBytes,
+				OpCode: micheline.T_BYTES,
+				//Remove address byte
+				Bytes: encodedDestinationAddress[1:],
+			},
+		},
+	}
+
+	return delegationPrim, nil
 }
