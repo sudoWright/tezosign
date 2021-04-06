@@ -402,9 +402,11 @@ func (s *ServiceFacade) getContractTokensBalancesMap(contractAddress types.Addre
 		return tokensMap, err
 	}
 
-	tokensMap = make(map[types.Address][]models.TokenBalance, len(balances.Tokens))
-	for i := range balances.Tokens {
-		tokensMap[balances.Tokens[i].Asset] = append(tokensMap[balances.Tokens[i].Asset], balances.Tokens[i].TokenBalance)
+	//TODO process total
+
+	tokensMap = make(map[types.Address][]models.TokenBalance, len(balances.Balances))
+	for i := range balances.Balances {
+		tokensMap[balances.Balances[i].Asset] = append(tokensMap[balances.Balances[i].Asset], balances.Balances[i].TokenBalance)
 	}
 
 	return tokensMap, nil
