@@ -258,6 +258,8 @@ func (s *ServiceFacade) checkOperation(req models.ContractOperationRequest) (err
 		}
 
 		//TODO check FA balance
+	case models.VestingSetDelegate, models.VestingVest:
+		//TODO check VESTING contract
 	}
 
 	return nil

@@ -113,14 +113,10 @@ func VestingContractParamAndEntrypoint(req models.VestingContractOperation) (arg
 	var prim *micheline.Prim
 	switch req.Type {
 	case models.VestingSetDelegate:
-		encodedDelegate, err := req.To.MarshalBinary()
+
+		prim, err = buildDelegationPrim(req.To)
 		if err != nil {
 			return nil, "", err
-		}
-		prim = &micheline.Prim{
-			Type:   micheline.PrimBytes,
-			OpCode: micheline.T_BYTES,
-			Bytes:  encodedDelegate,
 		}
 
 		entrypoint = setDelegateEntrypoint
