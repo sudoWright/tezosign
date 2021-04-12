@@ -36,7 +36,7 @@ func (s *ServiceFacade) VestingContractInfo(contractID types.Address) (info mode
 
 	var delegate types.Address
 	if account.DelegateID.Valid {
-		delegateAccount, isFound, err := indexerRepo.GetAccountByID(account.Id)
+		delegateAccount, isFound, err := indexerRepo.GetAccountByID(uint64(account.DelegateID.Int64))
 		if err != nil {
 			return info, err
 		}
