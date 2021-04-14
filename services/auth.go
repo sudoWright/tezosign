@@ -5,6 +5,7 @@ import (
 	"tezosign/common/apperrors"
 	"tezosign/conf"
 	"tezosign/models"
+	"tezosign/services/contract"
 	"tezosign/types"
 	"time"
 
@@ -36,11 +37,13 @@ func (s *ServiceFacade) AuthRequest(req models.AuthTokenReq) (resp models.AuthTo
 	}
 
 	hash := blake2b.Sum256(append(binaryPubKey, reqUUID.Bytes()...))
-	token := hex.EncodeToString(hash[:])
+
+	token := hex.EncodeToString(append([]byte{contract.TextWatermark}, hash[:]...))
+
 	err = authRepo.CreateAuthToken(models.AuthToken{
 		PubKey:    req.PubKey,
 		Type:      models.TypeAuth,
-		Data:      token,
+		Data:      types.Payload(token),
 		IsUsed:    false,
 		ExpiresAt: time.Now().Add(expirationTime),
 	})
@@ -48,7 +51,7 @@ func (s *ServiceFacade) AuthRequest(req models.AuthTokenReq) (resp models.AuthTo
 		return
 	}
 
-	resp.Token = token
+	resp.Token = types.Payload(token)
 	return resp, nil
 }
 
@@ -72,7 +75,11 @@ func (s *ServiceFacade) Auth(req models.AuthSignature) (resp AuthResponce, err e
 		return resp, apperrors.New(apperrors.ErrBadParam, "already used")
 	}
 
-	payload, err := req.Payload.MarshalBinary()
+	if authToken.Expired() {
+		return resp, apperrors.New(apperrors.ErrBadParam, "auth token already expired")
+	}
+
+	payload, err := authToken.Data.MarshalBinary()
 	if err != nil {
 		return resp, err
 	}
@@ -83,7 +90,7 @@ func (s *ServiceFacade) Auth(req models.AuthSignature) (resp AuthResponce, err e
 	}
 
 	//Validate signature
-	err = verifySign(payload, req.Signature.String(), cryptoPubKey)
+	err = verifySign(payload, req.Signature, cryptoPubKey)
 	if err != nil {
 		return resp, apperrors.New(apperrors.ErrBadParam, "signature")
 	}
@@ -176,7 +183,7 @@ func (s *ServiceFacade) generateAuthData(userPubKey types.PubKey) (accessToken s
 	//Save refresh token
 	err = s.repoProvider.GetAuth().CreateAuthToken(models.AuthToken{
 		PubKey:    userPubKey,
-		Data:      refreshToken,
+		Data:      types.Payload(refreshToken),
 		Type:      models.TypeRefresh,
 		ExpiresAt: time.Now().Add(conf.TtlRefreshToken * time.Second),
 	})

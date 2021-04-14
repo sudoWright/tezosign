@@ -10,7 +10,7 @@ func Test_verifysign(t *testing.T) {
 	type args struct {
 		payload   string
 		pubKey    types.PubKey
-		signature string
+		signature types.Signature
 	}
 
 	testCases := []struct {

@@ -439,7 +439,7 @@ func (s *ServiceFacade) SaveContractOperationSignature(userPubKey types.PubKey, 
 		return resp, err
 	}
 
-	err = verifySign(bt, req.Signature.String(), pubKey)
+	err = verifySign(bt, req.Signature, pubKey)
 	if err != nil {
 		return resp, err
 	}
@@ -535,13 +535,13 @@ func operationID(payload string) string {
 }
 
 //Verify signed payload
-func verifySign(message []byte, signature string, publicKey crypto.PublicKey) error {
+func verifySign(message []byte, signature types.Signature, publicKey crypto.PublicKey) error {
 	// hash
 	//TODO check Wallets sign with P256 and secp256k1 curves
 	payloadHash := blake2b.Sum256(message)
 
 	// verify signature over hash
-	sigPrefix, sigBytes, err := tezosprotocol.Base58CheckDecode(signature)
+	sigPrefix, sigBytes, err := tezosprotocol.Base58CheckDecode(signature.String())
 	if err != nil {
 		return errors.Errorf("failed to decode signature: %s: %s", signature, err)
 	}
