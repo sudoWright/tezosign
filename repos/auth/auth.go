@@ -46,7 +46,7 @@ func (r *Repository) GetAuthToken(data string) (authToken models.AuthToken, isFo
 
 func (r *Repository) GetActiveTokenByPubKeyAndType(address types.PubKey, tokenType models.TokenType) (authToken models.AuthToken, isFound bool, err error) {
 	err = r.db.Model(models.AuthToken{}).
-		Where("atn_pubkey = ? and atn_type = ? and atn_is_used = false and atn_expires_at < now()", address, tokenType).
+		Where("atn_pubkey = ? and atn_type = ? and atn_is_used = false and atn_expires_at > now()", address, tokenType).
 		First(&authToken).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
