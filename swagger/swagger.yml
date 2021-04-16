@@ -529,6 +529,38 @@ paths:
           description: Internal server error
       tags:
         - Assets
+  '/{network}/asset/{asset_id}/meta_data':
+    get:
+      operationId: assetMetaData
+      summary: Get asset token metadata
+      produces:
+        - application/json
+      security:
+        - Bearer: []
+      parameters:
+        - in: path
+          name: network
+          required: true
+          type : string
+        - in: path
+          name: asset_id
+          required: true
+          type : string
+        - in: query
+          name: token_id
+          required: false
+          type: integer
+      responses:
+        '200':
+          description: Meta data object
+          schema:
+            type: object
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+      tags:
+        - Assets
   '/{network}/{address}/revealed':
     get:
       operationId: addressRevealed
