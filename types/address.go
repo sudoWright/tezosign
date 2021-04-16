@@ -33,6 +33,10 @@ func (a Address) Validate() (err error) {
 	return nil
 }
 
+func (a Address) IsEmpty() bool {
+	return len(a) == 0
+}
+
 func (a Address) String() string {
 	return string(a)
 }

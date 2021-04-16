@@ -52,32 +52,6 @@ func buildActionParams(operationParams models.ContractOperationRequest) (actionP
 			return actionParams, err
 		}
 
-		if operationParams.To == "" {
-			//None
-			actionParams = &micheline.Prim{
-				Type:   micheline.PrimNullary,
-				OpCode: micheline.D_NONE,
-			}
-			break
-		}
-		encodedDestinationAddress, err := operationParams.To.MarshalBinary()
-		if err != nil {
-			return actionParams, err
-		}
-
-		//option(key_hash)
-		actionParams = &micheline.Prim{
-			Type:   micheline.PrimUnary,
-			OpCode: micheline.D_SOME,
-			Args: []*micheline.Prim{
-				{
-					Type:   micheline.PrimBytes,
-					OpCode: micheline.T_BYTES,
-					//Remove address byte
-					Bytes: encodedDestinationAddress[1:],
-				},
-			},
-		}
 	case models.StorageUpdate:
 		actionParams, err = buildStorageMichelsonArgs(int64(operationParams.Threshold), operationParams.Keys)
 		if err != nil {
@@ -142,7 +116,7 @@ func buildFATransferParams(operationParams models.ContractOperationRequest) (act
 
 		//Use contract self address as default from
 		from := operationParams.ContractID
-		if operationParams.TransferList[0].From != "" {
+		if !operationParams.TransferList[0].From.IsEmpty() {
 			from = operationParams.TransferList[0].From
 		}
 
@@ -372,7 +346,7 @@ func buildVestingTxPrim(operationParams models.ContractOperationRequest) (prim *
 
 func buildDelegationPrim(paramTo types.Address) (delegationPrim *micheline.Prim, err error) {
 
-	if paramTo == "" {
+	if paramTo.IsEmpty() {
 		//None
 		delegationPrim = &micheline.Prim{
 			Type:   micheline.PrimNullary,

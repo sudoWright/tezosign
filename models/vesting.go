@@ -61,8 +61,10 @@ func (v VestingContractOperation) Validate() (err error) {
 			return errors.New("amount")
 		}
 	case VestingSetDelegate:
-		if err = v.To.Validate(); err != nil {
-			return err
+		if !v.To.IsEmpty() {
+			if err = v.To.Validate(); err != nil {
+				return err
+			}
 		}
 	default:
 		return errors.New("wrong type")
