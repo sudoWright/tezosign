@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"strconv"
+	"strings"
 	"tezosign/models"
 	"tezosign/services/rpc_client/client"
+	"tezosign/services/rpc_client/client/big_map"
 	"tezosign/services/rpc_client/client/chains"
 	"tezosign/services/rpc_client/client/contracts"
 
@@ -99,4 +101,25 @@ func (t *Tezos) Balance(ctx context.Context, address string) (balance int64, err
 	}
 
 	return balance, nil
+}
+
+func (t *Tezos) BigMapKey(ctx context.Context, bigMapID int64, keyHash string) (value []byte, isFound bool, err error) {
+
+	params := big_map.NewGetBigMapKeyParamsWithContext(ctx).WithBigMapID(bigMapID).WithKeyHash(keyHash)
+
+	resp, err := t.client.BigMap.GetBigMapKey(params)
+	if err != nil {
+		if strings.Contains(err.Error(), "getBigMapKeyNotFound") {
+			return value, false, nil
+		}
+
+		return value, false, err
+	}
+
+	value, err = json.Marshal(resp.Payload)
+	if err != nil {
+		return value, false, err
+	}
+
+	return value, true, nil
 }

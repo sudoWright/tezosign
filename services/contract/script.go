@@ -1,13 +1,20 @@
 package contract
 
 import (
+	"math/big"
 	"tezosign/models"
+
+	"blockwatch.cc/tzindex/base58"
+	"golang.org/x/crypto/blake2b"
 
 	"blockwatch.cc/tzindex/micheline"
 )
 
-var fa12TransferFields = map[string]micheline.OpCode{"from": micheline.T_ADDRESS, "to": micheline.T_ADDRESS, "value": micheline.T_NAT}
-var fa2TransferFields = map[string]micheline.OpCode{"from": micheline.T_ADDRESS, "txs": micheline.T_LIST, "to": micheline.T_ADDRESS, "tokenid": micheline.T_NAT, "amount": micheline.T_NAT}
+var (
+	fa12TransferFields = map[string]micheline.OpCode{"from": micheline.T_ADDRESS, "to": micheline.T_ADDRESS, "value": micheline.T_NAT}
+	fa2TransferFields  = map[string]micheline.OpCode{"from": micheline.T_ADDRESS, "txs": micheline.T_LIST, "to": micheline.T_ADDRESS, "tokenid": micheline.T_NAT, "amount": micheline.T_NAT}
+	scriptHashPrefix   = []byte{13, 44, 64, 27}
+)
 
 func CheckFATransferMethod(script *micheline.Script, faType models.AssetType) (ok bool) {
 
@@ -39,4 +46,24 @@ func CheckFATransferMethod(script *micheline.Script, faType models.AssetType) (o
 	}
 
 	return true
+}
+
+func GetBigMapKeyHash(tokenID int64) (hash string, err error) {
+	p := micheline.Prim{
+		Type:   micheline.PrimInt,
+		OpCode: micheline.T_INT,
+		Int:    big.NewInt(tokenID),
+	}
+
+	bt, err := p.MarshalBinary()
+	if err != nil {
+		return hash, err
+	}
+
+	bt = append([]byte{TextWatermark}, bt...)
+
+	hh := blake2b.Sum256(bt)
+
+	hash = base58.CheckEncode(hh[:], scriptHashPrefix)
+	return
 }

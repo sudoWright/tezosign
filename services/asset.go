@@ -278,6 +278,67 @@ func (s *ServiceFacade) AssetsIncomeOperations() (count uint64, err error) {
 	return count, err
 }
 
+func (s *ServiceFacade) GetAssetMetadata(assetID types.Address, tokenID int64) (resp interface{}, err error) {
+
+	indexerRepo := s.indexerRepoProvider.GetIndexer()
+
+	script, isFound, err := indexerRepo.GetContractScript(assetID)
+	if err != nil {
+		return resp, err
+	}
+
+	if !isFound {
+		return resp, apperrors.New(apperrors.ErrNotFound, "script")
+	}
+
+	e, err := contract.InitAnnotsEntrypoints(script.StorageSchema.MichelinePrim())
+	if err != nil {
+		return resp, err
+	}
+
+	entrypoint, ok := e[contract.MetaDataEntrypoint]
+	if !ok {
+		return resp, apperrors.New(apperrors.ErrBadRequest, "token_metadata")
+	}
+
+	storage, isFound, err := indexerRepo.GetContractStorage(assetID)
+	if err != nil {
+		return resp, err
+	}
+
+	if !isFound {
+		return resp, apperrors.New(apperrors.ErrNotFound, "storage")
+	}
+
+	value, err := contract.GetStorageValue(entrypoint, storage.RawValue.MichelinePrim())
+	if err != nil {
+		return resp, err
+	}
+
+	bigMap := value.Int.Int64()
+
+	hash, err := contract.GetBigMapKeyHash(tokenID)
+	if err != nil {
+		return resp, err
+	}
+
+	bigMapValue, isFound, err := s.rpcClient.BigMapKey(context.Background(), bigMap, hash)
+	if err != nil {
+		return resp, err
+	}
+
+	if !isFound {
+		return resp, apperrors.New(apperrors.ErrNotFound, "big_map value")
+	}
+
+	v, err := contract.ParseMetadata(bigMapValue)
+	if err != nil {
+		return resp, err
+	}
+
+	return v, nil
+}
+
 func (s *ServiceFacade) processAssetOperations(contractsMap map[types.Address]models.Contract, networkID string, asset models.Asset) (count uint64, err error) {
 
 	transferType := models.IncomeFATransfer

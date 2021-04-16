@@ -45,6 +45,7 @@ type (
 		Script(context.Context, string) (micheline.Script, error)
 		ManagerKey(ctx context.Context, address string) (pubKey string, err error)
 		Balance(ctx context.Context, address string) (balance int64, err error)
+		BigMapKey(ctx context.Context, bigMapID int64, keyHash string) (value []byte, isFound bool, err error)
 	}
 
 	AuthProvider interface {

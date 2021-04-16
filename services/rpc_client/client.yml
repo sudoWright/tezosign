@@ -3,6 +3,33 @@ info:
   title: Tezos RPC
   version: 0.0.1
 paths:
+  /chains/main/blocks/head/context/big_maps/{big_map_id}/{key_hash}:
+    get:
+      operationId: getBigMapKey
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: big_map_id
+          required: true
+          type: integer
+        - in: path
+          name: key_hash
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Endpoint for big map keys
+          schema:
+            type: object
+        '404':
+          description: Key not found
+          schema:
+            type: object
+        '500':
+          description: Internal error
+      tags:
+        - Big_Map
   /chains/main/blocks/head/context/contracts/{contract}/script:
     get:
       operationId: getContractScript
