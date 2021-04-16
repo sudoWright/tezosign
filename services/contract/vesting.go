@@ -142,7 +142,7 @@ func VestingContractParamAndEntrypoint(req models.VestingContractOperation) (arg
 type VestingContractStorageContainer struct {
 	VestingAddress types.Address
 	DelegateAdmin  types.Address
-	VestedAmount   uint64
+	VestedTicks    uint64
 	Timestamp      uint64
 	SecondsPerTick uint64
 	TokensPerTick  uint64
@@ -206,7 +206,7 @@ func NewVestingContractStorageContainer(script micheline.Script) (c VestingContr
 		return c, err
 	}
 
-	c.VestedAmount = amount.Int.Uint64()
+	c.VestedTicks = amount.Int.Uint64()
 
 	amount, err = GetStorageValue(e[epochEntrypoint], script.Storage)
 	if err != nil {

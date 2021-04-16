@@ -79,9 +79,14 @@ func (s *ServiceFacade) VestingContractInfo(contractID types.Address) (info mode
 	}
 
 	//Calc already opened amount
-	openedAmount := (uint64(time.Now().Unix()) - storageContainer.Timestamp) / storageContainer.SecondsPerTick * storageContainer.TokensPerTick
-	//Subtract already vested amount
-	openedAmount = openedAmount - storageContainer.VestedAmount
+	openedTicks := (uint64(time.Now().Unix()) - storageContainer.Timestamp) / storageContainer.SecondsPerTick
+
+	//Subtract already vested ticks
+	openedTicks -= storageContainer.VestedTicks
+
+	//Mul to tokens per tick
+	openedAmount := openedTicks * storageContainer.TokensPerTick
+	vestedAmount := storageContainer.VestedTicks * storageContainer.TokensPerTick
 
 	return models.VestingContractInfo{
 		Balance:       account.Balance,
@@ -90,7 +95,7 @@ func (s *ServiceFacade) VestingContractInfo(contractID types.Address) (info mode
 		Storage: models.VestingContractStorageRequest{
 			VestingAddress: storageContainer.VestingAddress,
 			DelegateAdmin:  storageContainer.DelegateAdmin,
-			VestedAmount:   storageContainer.VestedAmount,
+			VestedAmount:   vestedAmount,
 			Timestamp:      storageContainer.Timestamp,
 			SecondsPerTick: storageContainer.SecondsPerTick,
 			TokensPerTick:  storageContainer.TokensPerTick,
