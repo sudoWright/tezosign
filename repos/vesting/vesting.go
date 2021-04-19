@@ -58,7 +58,7 @@ func (r *Repository) GetVestingsList(contractID uint64) (vesting []models.Vestin
 
 	err = r.db.Model(models.Vesting{}).
 		Where("ctr_id = ?", contractID).
-		Order("ctr_id desc").
+		Order("vst_id desc").
 		Find(&vesting).Error
 	if err != nil {
 		return vesting, err
