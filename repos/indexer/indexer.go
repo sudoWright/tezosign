@@ -24,6 +24,7 @@ type (
 		GetAccount(address types.Address) (account models.Account, isFound bool, err error)
 		GetAccountByID(id uint64) (account models.Account, isFound bool, err error)
 
+		GetLastBlock() (block models.Block, err error)
 		GetTezosQuote() (models.Quote, error)
 	}
 )
@@ -160,4 +161,15 @@ func (r *Repository) GetTezosQuote() (quote models.Quote, err error) {
 	}
 
 	return quote, nil
+}
+
+func (r *Repository) GetLastBlock() (block models.Block, err error) {
+	err = r.db.Table("Blocks").
+		Order(`"Blocks"."Id" desc`).
+		First(&block).Error
+	if err != nil {
+		return block, err
+	}
+
+	return block, nil
 }

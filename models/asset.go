@@ -23,6 +23,9 @@ type Asset struct {
 	Scale         uint8   `gorm:"column:ast_scale" json:"scale"`
 	Ticker        string  `gorm:"column:ast_ticker" json:"ticker"`
 
+	TokenID  uint64 `gorm:"column:ast_token_id" json:"token_id"`
+	IsActive bool   `gorm:"column:ast_is_active" json:"-"`
+
 	ContractID sql.NullInt64 `gorm:"column:ctr_id" json:"-"`
 
 	Balances []TokenBalance `gorm:"-" json:"balances"`

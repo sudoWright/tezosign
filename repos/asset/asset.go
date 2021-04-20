@@ -16,11 +16,12 @@ type (
 	}
 
 	Repo interface {
-		GetAssetsList(contract uint64, isOwner bool) (assets []models.Asset, err error)
-		GetAsset(contract uint64, assetAddress types.Address) (assets models.Asset, isFound bool, err error)
+		GetAssetsList(contract uint64, isOwner, isActive, isAll bool) (assets []models.Asset, err error)
+		GetAsset(contract uint64, assetAddress types.Address, tokenID uint64) (assets models.Asset, isFound bool, err error)
 		CreateAsset(asset models.Asset) (err error)
 		UpdateAsset(asset models.Asset) (err error)
-		DeleteContractAsset(assetID uint64) (err error)
+		EnableContractAsset(assetID uint64) (err error)
+		DisableContractAsset(assetID uint64) (err error)
 	}
 )
 
@@ -57,13 +58,21 @@ func (r *Repository) UpdateAsset(asset models.Asset) (err error) {
 	return nil
 }
 
-func (r *Repository) GetAssetsList(contractID uint64, isOwner bool) (assets []models.Asset, err error) {
+func (r *Repository) GetAssetsList(contractID uint64, isOwner, isActive, isAll bool) (assets []models.Asset, err error) {
 
-	db := r.db.Model(models.Asset{}).
-		Where("ctr_id IS NULL")
+	db := r.db.Model(models.Asset{})
+
+	//Select only global assets
+	if !isAll {
+		db = db.Where("ctr_id IS NULL")
+	}
 
 	if isOwner {
 		db = db.Or("ctr_id = ?", contractID)
+	}
+
+	if isActive {
+		db = db.Where("ast_is_active = ?", isActive)
 	}
 
 	err = db.Find(&assets).Error
@@ -73,20 +82,33 @@ func (r *Repository) GetAssetsList(contractID uint64, isOwner bool) (assets []mo
 	return assets, nil
 }
 
-func (r *Repository) DeleteContractAsset(assetID uint64) (err error) {
-	err = r.db.
-		Model(models.Asset{}).
-		Delete(&models.Asset{ID: assetID}).Error
+func (r *Repository) EnableContractAsset(assetID uint64) (err error) {
+	err = r.db.Model(&models.Asset{ID: assetID}).
+		Updates(models.Asset{
+			IsActive: true,
+		}).
+		Error
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
-func (r *Repository) GetAsset(contract uint64, assetAddress types.Address) (asset models.Asset, isFound bool, err error) {
+func (r *Repository) DisableContractAsset(assetID uint64) (err error) {
+	err = r.db.Model(&models.Asset{ID: assetID}).
+		Updates(models.Asset{
+			IsActive: false,
+		}).
+		Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *Repository) GetAsset(contract uint64, assetAddress types.Address, tokenID uint64) (asset models.Asset, isFound bool, err error) {
 	err = r.db.Model(models.Asset{}).
-		Where("(ctr_id = ?  OR ctr_id IS NULL) AND ast_address = ? ", contract, assetAddress).
+		Where("(ctr_id = ?  OR ctr_id IS NULL) AND ast_address = ? and ast_token_id = ?", contract, assetAddress, tokenID).
 		First(&asset).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
