@@ -20,15 +20,19 @@ create table requests
 			references contracts,
     req_hash varchar(32) not null,
 	req_status varchar default 'wait' not null,
-	req_counter int,
+	req_counter int, -- internal msig contract counter
 	req_created_at timestamp without time zone default now() not null,
     req_info text not null,
+    req_nonce int, --field for multi operation txs
     req_network_id varchar not null,
  	req_operation_id varchar(51)
 );
 
-create unique index requests_req_operation_id_uindex
-	on requests (req_operation_id);
+create unique index requests_req_operation_id_req_nonce_uindex
+	on requests (req_operation_id, req_nonce);
+
+create unique index requests_ctr_id_req_counter_uindex
+	on requests (ctr_id, req_counter);
 
 create table signatures
 (

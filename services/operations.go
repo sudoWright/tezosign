@@ -112,6 +112,7 @@ func (s *ServiceFacade) processOperations(repo contractRepo.Repo, c models.Contr
 				},
 				NetworkID:   networkID,
 				OperationID: &operations[j].OpHash,
+				Nonce:       operations[j].Nonce,
 			})
 			if err != nil {
 				return counter, err

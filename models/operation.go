@@ -1,6 +1,7 @@
 package models
 
 import (
+	"database/sql"
 	"tezosign/types"
 )
 
@@ -31,6 +32,9 @@ type Request struct {
 	NetworkID  string                   `gorm:"column:req_network_id" json:"network_id"`
 
 	OperationID *string `gorm:"column:req_operation_id" json:"tx_id,omitempty"`
+
+	//Internal operation nonce
+	Nonce sql.NullInt64 `gorm:"column:req_nonce" json:"-"`
 }
 
 type RequestReport struct {
@@ -69,8 +73,9 @@ type TezosOperation struct {
 type TransactionOperation struct {
 	TezosOperation
 
-	Amount     uint64 `gorm:"column:Amount"`
-	Entrypoint string `gorm:"column:Entrypoint"`
+	Amount     uint64        `gorm:"column:Amount"`
+	Entrypoint string        `gorm:"column:Entrypoint"`
+	Nonce      sql.NullInt64 `gorm:"column:Nonce"`
 	//JsonParameters     []byte `gorm:"column:JsonParameters"`
 	RawParameters      *types.TZKTPrim `gorm:"column:RawParameters"`
 	InternalOperations uint64          `gorm:"column:InternalOperations"`
