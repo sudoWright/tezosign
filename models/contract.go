@@ -96,6 +96,7 @@ type ContractOperationRequest struct {
 
 	//Vesting contract
 	VestingID types.Address `json:"vesting_id,omitempty"`
+	Ticks     uint64        `json:"ticks,omitempty"`
 }
 
 type TransferUnit struct {
@@ -209,8 +210,8 @@ func (r ContractOperationRequest) Validate() (err error) {
 			return err
 		}
 
-		if r.Amount == 0 {
-			return fmt.Errorf("wrong amount")
+		if r.Ticks == 0 {
+			return fmt.Errorf("wrong ticks num")
 		}
 	case VestingSetDelegate:
 		err = r.VestingID.Validate()

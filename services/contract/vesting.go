@@ -124,7 +124,7 @@ func VestingContractParamAndEntrypoint(req models.VestingContractOperation) (arg
 		prim = &micheline.Prim{
 			Type:   micheline.PrimInt,
 			OpCode: micheline.T_INT,
-			Int:    big.NewInt(int64(req.Amount)),
+			Int:    big.NewInt(int64(req.Ticks)),
 		}
 		entrypoint = vestEntrypoint
 	default:
