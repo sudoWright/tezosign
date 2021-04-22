@@ -20,6 +20,16 @@ func Test_verifysign(t *testing.T) {
 		wantErr   bool
 	}{
 		{
+			name: "Ledger raw",
+			args: args{
+				payload:   "616e7920737472696e6720746861742077696c6c206265207369676e6564",
+				pubKey:    "edpkv13wgJVsEQGiQmw6M2gt9SCu55ajuZDiS9Xyxq375tBUtv8Fjh",
+				signature: "edsigu7CP5oCEFGGJC1ixnUK85NkZ449coGeFpitcvC267r81jwoinkX5DKSrfemwJS97bmejSnkm5Nrfdmrsqpri4VCQrEs3Bz",
+			},
+			expResult: "",
+			wantErr:   false,
+		},
+		{
 			name: "Ed25519 signature",
 			args: args{
 				payload:   "05070707070a00000004a83650210a00000016019ce13845659ff2582555ec08dc322007f6493e800007070000050505050505050507070a00000016000032bb7d0084f79711f757d66b791d5290f88eb28000a80f",

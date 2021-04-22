@@ -17,6 +17,6 @@ create table assets
 			references contracts
 );
 
-create unique index assets_ctr_id_ast_address_uindex
-	on assets (ctr_id, ast_address);
+create unique index assets_ctr_id_ast_address_ast_token_id_uindex
+	on assets (ctr_id, ast_address,ast_token_id);
 
