@@ -84,9 +84,7 @@ func (r *Repository) GetAssetsList(contractID uint64, isOwner, isActive, isAll b
 
 func (r *Repository) EnableContractAsset(assetID uint64) (err error) {
 	err = r.db.Model(&models.Asset{ID: assetID}).
-		Updates(models.Asset{
-			IsActive: true,
-		}).
+		Update("ast_is_active", true).
 		Error
 	if err != nil {
 		return err
@@ -96,9 +94,7 @@ func (r *Repository) EnableContractAsset(assetID uint64) (err error) {
 
 func (r *Repository) DisableContractAsset(assetID uint64) (err error) {
 	err = r.db.Model(&models.Asset{ID: assetID}).
-		Updates(models.Asset{
-			IsActive: false,
-		}).
+		Update("ast_is_active", false).
 		Error
 	if err != nil {
 		return err
