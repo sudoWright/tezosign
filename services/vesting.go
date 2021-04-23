@@ -6,7 +6,6 @@ import (
 	"tezosign/models"
 	"tezosign/services/contract"
 	"tezosign/types"
-	"time"
 
 	"blockwatch.cc/tzindex/micheline"
 )
@@ -48,22 +47,9 @@ func (s *ServiceFacade) VestingContractInfo(contractID types.Address) (info mode
 		delegate = delegateAccount.Address
 	}
 
-	script, isFound, err := indexerRepo.GetContractScript(contractID)
+	script, storage, err := s.getContractScriptAndStorage(contractID)
 	if err != nil {
 		return info, err
-	}
-
-	if !isFound {
-		return info, apperrors.New(apperrors.ErrNotFound, "contract")
-	}
-
-	storage, isFound, err := indexerRepo.GetContractStorage(contractID)
-	if err != nil {
-		return info, err
-	}
-
-	if !isFound {
-		return info, apperrors.New(apperrors.ErrNotFound, "contract")
 	}
 
 	storageContainer, err := contract.NewVestingContractStorageContainer(micheline.Script{
@@ -78,11 +64,7 @@ func (s *ServiceFacade) VestingContractInfo(contractID types.Address) (info mode
 		return info, err
 	}
 
-	//Calc already opened amount
-	openedTicks := (uint64(time.Now().Unix()) - storageContainer.Timestamp) / storageContainer.SecondsPerTick
-
-	//Subtract already vested ticks
-	openedTicks -= storageContainer.VestedTicks
+	openedTicks := storageContainer.OpenedTicks()
 
 	//Mul to tokens per tick
 	openedAmount := openedTicks * storageContainer.TokensPerTick

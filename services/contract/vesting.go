@@ -5,6 +5,7 @@ import (
 	"math/big"
 	"tezosign/models"
 	"tezosign/types"
+	"time"
 
 	"blockwatch.cc/tzindex/micheline"
 )
@@ -149,6 +150,16 @@ type VestingContractStorageContainer struct {
 	storage        *micheline.Prim
 }
 
+func (c VestingContractStorageContainer) OpenedTicks() uint64 {
+	//Calc already opened amount
+	openedTicks := (uint64(time.Now().Unix()) - c.Timestamp) / c.SecondsPerTick
+
+	//Subtract already vested ticks
+	openedTicks -= c.VestedTicks
+
+	return openedTicks
+}
+
 const (
 	targetEntrypoint         = "target"
 	delegateAdminEntrypoint  = "delegateadmin"
@@ -227,4 +238,19 @@ func NewVestingContractStorageContainer(script micheline.Script) (c VestingContr
 	c.TokensPerTick = amount.Int.Uint64()
 
 	return
+}
+
+func CheckVestingContractStorage(script micheline.Script) (ok bool) {
+
+	e, err := InitAnnotsEntrypoints(script.Code.Storage)
+	if err != nil {
+		return false
+	}
+
+	err = checkFields(e, vestingContractStorageEntrypoints)
+	if err != nil {
+		return false
+	}
+
+	return true
 }
