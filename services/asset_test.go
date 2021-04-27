@@ -61,12 +61,6 @@ func Test_GroupOperations(t *testing.T) {
 						TokenID: 0,
 						Amount:  111,
 					},
-					//NFT token
-					{
-						To:      "address1",
-						TokenID: 2,
-						Amount:  1,
-					},
 				},
 			},
 			{
@@ -82,7 +76,7 @@ func Test_GroupOperations(t *testing.T) {
 		},
 	}
 
-	res := groupOperations(contracts, txs)
+	res := groupOperations(0, contracts, txs)
 
 	if !reflect.DeepEqual(res, result) {
 		log.Print(res)

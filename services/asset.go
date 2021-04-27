@@ -32,7 +32,7 @@ func (s *ServiceFacade) AssetsList(userPubKey types.PubKey, contractAddress type
 		return assets, err
 	}
 
-	assets, err = s.repoProvider.GetAsset().GetAssetsList(contract.ID, isOwner)
+	assets, err = s.repoProvider.GetAsset().GetAssetsList(contract.ID, isOwner, true, false)
 	if err != nil {
 		return assets, err
 	}
@@ -104,6 +104,13 @@ func (s *ServiceFacade) AssetsExchangeRates(userPubKey types.PubKey, contractAdd
 
 func (s *ServiceFacade) ContractAsset(userPubKey types.PubKey, contractAddress types.Address, reqAsset models.Asset) (asset models.Asset, err error) {
 
+	//Check token ID
+	//FA1.2 token not contain token id
+	//FA2 token contain token id
+	if (reqAsset.ContractType == models.TypeFA12 && reqAsset.TokenID != nil) || (reqAsset.ContractType == models.TypeFA2 && reqAsset.TokenID == nil) {
+		return asset, apperrors.New(apperrors.ErrBadParam, "token_id")
+	}
+
 	contract, isFound, err := s.repoProvider.GetContract().GetContract(contractAddress)
 	if err != nil {
 		return asset, err
@@ -124,13 +131,24 @@ func (s *ServiceFacade) ContractAsset(userPubKey types.PubKey, contractAddress t
 	}
 
 	assetRepo := s.repoProvider.GetAsset()
-	asset, isFound, err = assetRepo.GetAsset(contract.ID, reqAsset.Address)
+	asset, isFound, err = assetRepo.GetAsset(contract.ID, reqAsset.Address, reqAsset.TokenID)
 	if err != nil {
 		return asset, err
 	}
 
 	//Already created
 	if isFound {
+		//Check that asset is disabled
+		if !asset.IsActive {
+			err = assetRepo.EnableContractAsset(asset.ID)
+			if err != nil {
+				return asset, err
+			}
+
+			//TODO update asset
+			return asset, nil
+		}
+
 		return asset, apperrors.New(apperrors.ErrAlreadyExists, "asset")
 	}
 
@@ -166,7 +184,7 @@ func (s *ServiceFacade) ContractAssetEdit(userPubKey types.PubKey, contractAddre
 	}
 
 	assetRepo := s.repoProvider.GetAsset()
-	asset, isFound, err = assetRepo.GetAsset(contract.ID, reqAsset.Address)
+	asset, isFound, err = assetRepo.GetAsset(contract.ID, reqAsset.Address, reqAsset.TokenID)
 	if err != nil {
 		return asset, err
 	}
@@ -215,7 +233,7 @@ func (s *ServiceFacade) RemoveContractAsset(userPubKey types.PubKey, contractAdd
 	}
 
 	assetRepo := s.repoProvider.GetAsset()
-	asset, isFound, err = assetRepo.GetAsset(contract.ID, asset.Address)
+	asset, isFound, err = assetRepo.GetAsset(contract.ID, asset.Address, asset.TokenID)
 	if err != nil {
 		return err
 	}
@@ -229,7 +247,7 @@ func (s *ServiceFacade) RemoveContractAsset(userPubKey types.PubKey, contractAdd
 		return apperrors.New(apperrors.ErrNotAllowed, "global asset")
 	}
 
-	err = assetRepo.DeleteContractAsset(asset.ID)
+	err = assetRepo.DisableContractAsset(asset.ID)
 	if err != nil {
 		return err
 	}
@@ -240,9 +258,9 @@ func (s *ServiceFacade) RemoveContractAsset(userPubKey types.PubKey, contractAdd
 const transferEntrypoint = "transfer"
 
 func (s *ServiceFacade) AssetsIncomeOperations() (count uint64, err error) {
-	//Get global assets
-	//TODO add personal assets
-	assets, err := s.repoProvider.GetAsset().GetAssetsList(0, false)
+
+	//Get assets
+	assets, err := s.repoProvider.GetAsset().GetAssetsList(0, false, true, true)
 	if err != nil {
 		return count, err
 	}
@@ -352,8 +370,14 @@ func (s *ServiceFacade) processAssetOperations(contractsMap map[types.Address]mo
 	}
 
 	//New operations not founds
+	//Setup last block level as last known block
 	if len(assetOperations) == 0 {
-		return 0, nil
+		block, err := s.indexerRepoProvider.GetIndexer().GetLastBlock()
+		if err != nil {
+			return count, err
+		}
+
+		asset.LastOperationBlockLevel = block.Level
 	}
 
 	s.repoProvider.Start(context.Background())
@@ -362,7 +386,7 @@ func (s *ServiceFacade) processAssetOperations(contractsMap map[types.Address]mo
 	for j := range assetOperations {
 		txs := contract.AssetOperation(assetOperations[j].RawParameters.MichelinePrim(), asset.ContractType)
 
-		transferUnits := groupOperations(contractsMap, txs)
+		transferUnits := groupOperations(asset.TokenID, contractsMap, txs)
 		for contractAddress, transfers := range transferUnits {
 
 			err = s.repoProvider.GetContract().SavePayload(models.Request{
@@ -384,8 +408,8 @@ func (s *ServiceFacade) processAssetOperations(contractsMap map[types.Address]mo
 			//Increment counter of saved operations
 			count++
 		}
-		asset.LastOperationBlockLevel = assetOperations[j].Level
 
+		asset.LastOperationBlockLevel = assetOperations[j].Level
 	}
 
 	err = s.repoProvider.GetAsset().UpdateAsset(asset)
@@ -401,7 +425,7 @@ func (s *ServiceFacade) processAssetOperations(contractsMap map[types.Address]mo
 	return count, nil
 }
 
-func groupOperations(contractsMap map[types.Address]models.Contract, txs []models.TransferUnit) map[types.Address][]models.TransferUnit {
+func groupOperations(tokenID *uint64, contractsMap map[types.Address]models.Contract, txs []models.TransferUnit) map[types.Address][]models.TransferUnit {
 	//map Address TO map address From
 	transferUnitsGroupsByFromAddress := map[types.Address]map[types.Address]models.TransferUnit{}
 
@@ -419,6 +443,11 @@ func groupOperations(contractsMap map[types.Address]models.Contract, txs []model
 			//Init internal map
 			if _, ok = transferUnitsGroupsByFromAddress[value.To]; !ok {
 				transferUnitsGroupsByFromAddress[value.To] = map[types.Address]models.TransferUnit{}
+			}
+
+			//Check and skip txs with another txID if token token is presented
+			if tokenID != nil && value.TokenID != *tokenID {
+				continue
 			}
 
 			//Init first value

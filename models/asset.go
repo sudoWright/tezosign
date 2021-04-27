@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"tezosign/types"
+	"time"
 )
 
 type AssetType string
@@ -23,12 +24,17 @@ type Asset struct {
 	Scale         uint8   `gorm:"column:ast_scale" json:"scale"`
 	Ticker        string  `gorm:"column:ast_ticker" json:"ticker"`
 
+	TokenID  *uint64 `gorm:"column:ast_token_id" json:"token_id,omitempty"`
+	IsActive bool    `gorm:"column:ast_is_active" json:"-"`
+
 	ContractID sql.NullInt64 `gorm:"column:ctr_id" json:"-"`
 
 	Balances []TokenBalance `gorm:"-" json:"balances"`
 	IsGlobal bool           `gorm:"-" json:"is_global"`
 
 	LastOperationBlockLevel uint64 `gorm:"column:ast_last_block_level" json:"-"`
+
+	UpdatedAt time.Time `gorm:"column:ast_updated_at" json:"-"`
 }
 
 func (a Asset) Validate() (err error) {

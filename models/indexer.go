@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	"tezosign/types"
+	"time"
 )
 
 type Storage struct {
@@ -26,4 +27,12 @@ type Account struct {
 	Balance uint64        `gorm:"column:Balance"`
 
 	DelegateID sql.NullInt64 `gorm:"column:DelegateId"`
+}
+
+type Block struct {
+	Id    uint64 `gorm:"column:Id"`
+	Level uint64 `gorm:"column:Level"`
+
+	Hash      string    `gorm:"column:Hash"`
+	Timestamp time.Time `gorm:"column:Timestamp"`
 }
