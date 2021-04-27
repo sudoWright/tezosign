@@ -9,9 +9,10 @@ create table assets
     ast_dexter_address varchar(36),
     ast_scale int not null,
     ast_ticker varchar not null,
-    ast_token_id int not null,
+    ast_token_id int,
     ast_is_active bool default TRUE not null,
     ast_last_block_level int,
+    ast_updated_at timestamp default now() not null,
 	ctr_id int
 		constraint assets_contracts_ctr_id_fk
 			references contracts

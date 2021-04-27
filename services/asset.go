@@ -104,6 +104,13 @@ func (s *ServiceFacade) AssetsExchangeRates(userPubKey types.PubKey, contractAdd
 
 func (s *ServiceFacade) ContractAsset(userPubKey types.PubKey, contractAddress types.Address, reqAsset models.Asset) (asset models.Asset, err error) {
 
+	//Check token ID
+	//FA1.2 token not contain token id
+	//FA2 token contain token id
+	if (reqAsset.ContractType == models.TypeFA12 && reqAsset.TokenID != nil) || (reqAsset.ContractType == models.TypeFA2 && reqAsset.TokenID == nil) {
+		return asset, apperrors.New(apperrors.ErrBadParam, "token_id")
+	}
+
 	contract, isFound, err := s.repoProvider.GetContract().GetContract(contractAddress)
 	if err != nil {
 		return asset, err
@@ -123,10 +130,6 @@ func (s *ServiceFacade) ContractAsset(userPubKey types.PubKey, contractAddress t
 		return asset, apperrors.New(apperrors.ErrBadParam, "not FA asset")
 	}
 
-	if reqAsset.ContractType == models.TypeFA12 && reqAsset.TokenID != 0 {
-		return asset, apperrors.New(apperrors.ErrBadParam, "token_id")
-	}
-
 	assetRepo := s.repoProvider.GetAsset()
 	asset, isFound, err = assetRepo.GetAsset(contract.ID, reqAsset.Address, reqAsset.TokenID)
 	if err != nil {
@@ -142,6 +145,7 @@ func (s *ServiceFacade) ContractAsset(userPubKey types.PubKey, contractAddress t
 				return asset, err
 			}
 
+			//TODO update asset
 			return asset, nil
 		}
 
@@ -421,7 +425,7 @@ func (s *ServiceFacade) processAssetOperations(contractsMap map[types.Address]mo
 	return count, nil
 }
 
-func groupOperations(tokenID uint64, contractsMap map[types.Address]models.Contract, txs []models.TransferUnit) map[types.Address][]models.TransferUnit {
+func groupOperations(tokenID *uint64, contractsMap map[types.Address]models.Contract, txs []models.TransferUnit) map[types.Address][]models.TransferUnit {
 	//map Address TO map address From
 	transferUnitsGroupsByFromAddress := map[types.Address]map[types.Address]models.TransferUnit{}
 
@@ -441,10 +445,11 @@ func groupOperations(tokenID uint64, contractsMap map[types.Address]models.Contr
 				transferUnitsGroupsByFromAddress[value.To] = map[types.Address]models.TransferUnit{}
 			}
 
-			//Skip txs with another txID
-			if value.TokenID != tokenID {
+			//Check and skip txs with another txID if token token is presented
+			if tokenID != nil && value.TokenID != *tokenID {
 				continue
 			}
+
 			//Init first value
 			_, ok = transferUnitsGroupsByFromAddress[value.To][from]
 			if !ok {

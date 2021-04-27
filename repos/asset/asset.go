@@ -4,6 +4,7 @@ import (
 	"errors"
 	"tezosign/models"
 	"tezosign/types"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -17,7 +18,7 @@ type (
 
 	Repo interface {
 		GetAssetsList(contract uint64, isOwner, isActive, isAll bool) (assets []models.Asset, err error)
-		GetAsset(contract uint64, assetAddress types.Address, tokenID uint64) (assets models.Asset, isFound bool, err error)
+		GetAsset(contract uint64, assetAddress types.Address, tokenID *uint64) (assets models.Asset, isFound bool, err error)
 		CreateAsset(asset models.Asset) (err error)
 		UpdateAsset(asset models.Asset) (err error)
 		EnableContractAsset(assetID uint64) (err error)
@@ -50,6 +51,7 @@ func (r *Repository) UpdateAsset(asset models.Asset) (err error) {
 			Scale:                   asset.Scale,
 			Ticker:                  asset.Ticker,
 			LastOperationBlockLevel: asset.LastOperationBlockLevel,
+			UpdatedAt:               asset.UpdatedAt,
 		}).
 		Error
 	if err != nil {
@@ -75,7 +77,7 @@ func (r *Repository) GetAssetsList(contractID uint64, isOwner, isActive, isAll b
 		db = db.Where("ast_is_active = ?", isActive)
 	}
 
-	err = db.Find(&assets).Error
+	err = db.Order("ast_updated_at desc").Find(&assets).Error
 	if err != nil {
 		return assets, err
 	}
@@ -85,6 +87,7 @@ func (r *Repository) GetAssetsList(contractID uint64, isOwner, isActive, isAll b
 func (r *Repository) EnableContractAsset(assetID uint64) (err error) {
 	err = r.db.Model(&models.Asset{ID: assetID}).
 		Update("ast_is_active", true).
+		Update("ast_updated_at", time.Now()).
 		Error
 	if err != nil {
 		return err
@@ -95,6 +98,7 @@ func (r *Repository) EnableContractAsset(assetID uint64) (err error) {
 func (r *Repository) DisableContractAsset(assetID uint64) (err error) {
 	err = r.db.Model(&models.Asset{ID: assetID}).
 		Update("ast_is_active", false).
+		Update("ast_updated_at", time.Now()).
 		Error
 	if err != nil {
 		return err
@@ -102,10 +106,17 @@ func (r *Repository) DisableContractAsset(assetID uint64) (err error) {
 	return nil
 }
 
-func (r *Repository) GetAsset(contract uint64, assetAddress types.Address, tokenID uint64) (asset models.Asset, isFound bool, err error) {
-	err = r.db.Model(models.Asset{}).
-		Where("(ctr_id = ?  OR ctr_id IS NULL) AND ast_address = ? and ast_token_id = ?", contract, assetAddress, tokenID).
-		First(&asset).Error
+func (r *Repository) GetAsset(contract uint64, assetAddress types.Address, tokenID *uint64) (asset models.Asset, isFound bool, err error) {
+	db := r.db.Model(models.Asset{}).
+		Where("(ctr_id = ?  OR ctr_id IS NULL) AND ast_address = ?", contract, assetAddress)
+
+	if tokenID == nil {
+		db = db.Where("ast_token_id is NULL")
+	} else {
+		db = db.Where("ast_token_id = ?", tokenID)
+	}
+
+	err = db.First(&asset).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return asset, false, nil
