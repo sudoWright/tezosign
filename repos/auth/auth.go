@@ -17,7 +17,7 @@ type (
 
 	Repo interface {
 		CreateAuthToken(authToken models.AuthToken) (err error)
-		GetAuthToken(data string) (authToken models.AuthToken, isFound bool, err error)
+		GetAuthToken(token string) (authToken models.AuthToken, isFound bool, err error)
 		GetActiveTokenByPubKeyAndType(address types.PubKey, tokenType models.TokenType) (authToken models.AuthToken, isFound bool, err error)
 		MarkAsUsedAuthToken(id uint64) (err error)
 	}

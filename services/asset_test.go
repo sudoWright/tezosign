@@ -76,7 +76,8 @@ func Test_GroupOperations(t *testing.T) {
 		},
 	}
 
-	res := groupOperations(0, contracts, txs)
+	tokenID := uint64(0)
+	res := groupOperations(&tokenID, contracts, txs)
 
 	if !reflect.DeepEqual(res, result) {
 		log.Print(res)
