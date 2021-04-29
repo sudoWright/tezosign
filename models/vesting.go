@@ -14,7 +14,7 @@ import (
 type VestingContractStorageRequest struct {
 	VestingAddress types.Address `json:"vesting_address"`
 	DelegateAdmin  types.Address `json:"delegate_admin"`
-	Timestamp      uint64        `json:"timestamp"`
+	Timestamp      int64         `json:"timestamp"`
 	SecondsPerTick uint64        `json:"seconds_per_tick"`
 	TokensPerTick  uint64        `json:"tokens_per_tick"`
 
