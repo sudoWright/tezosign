@@ -155,7 +155,7 @@ func (s *ServiceFacade) ContractOperation(userPubKey types.PubKey, req models.Co
 	}
 
 	if !isOwner {
-		return resp, apperrors.NewWithDesc(apperrors.ErrNotAllowed, "pubkey not contains in storage")
+		return resp, apperrors.New(apperrors.ErrNotAllowed, "pubkey not contains in storage")
 	}
 
 	//Get contact
@@ -299,7 +299,7 @@ func (s *ServiceFacade) BuildContractOperationToSign(userPubKey types.PubKey, tx
 	}
 
 	if !isFound {
-		return resp, apperrors.NewWithDesc(apperrors.ErrNotFound, "payload")
+		return resp, apperrors.New(apperrors.ErrNotFound, "payload")
 	}
 
 	contractModel, err := repo.GetContractByID(operationReq.ContractID)
@@ -313,7 +313,7 @@ func (s *ServiceFacade) BuildContractOperationToSign(userPubKey types.PubKey, tx
 	}
 
 	if !isOwner {
-		return resp, apperrors.NewWithDesc(apperrors.ErrNotAllowed, "pubkey not contains in storage")
+		return resp, apperrors.New(apperrors.ErrNotAllowed, "pubkey not contains in storage")
 	}
 
 	if operationReq.Counter == nil {
@@ -349,7 +349,7 @@ func (s *ServiceFacade) BuildContractOperation(userPubKey types.PubKey, txID str
 	}
 
 	if !isFound {
-		return resp, apperrors.NewWithDesc(apperrors.ErrNotFound, "payload")
+		return resp, apperrors.New(apperrors.ErrNotFound, "payload")
 	}
 
 	contr, err := repo.GetContractByID(payload.ContractID)
@@ -366,7 +366,7 @@ func (s *ServiceFacade) BuildContractOperation(userPubKey types.PubKey, txID str
 	//Check user allowance
 	_, isOwner := storage.Contains(userPubKey)
 	if !isOwner {
-		return resp, apperrors.NewWithDesc(apperrors.ErrNotAllowed, "pubkey not contains in storage")
+		return resp, apperrors.New(apperrors.ErrNotAllowed, "pubkey not contains in storage")
 	}
 
 	//get signatures by payload ID
@@ -420,7 +420,7 @@ func (s *ServiceFacade) SaveContractOperationSignature(userPubKey types.PubKey, 
 
 	index, isFound := storage.Contains(req.PubKey)
 	if !isFound {
-		return resp, apperrors.NewWithDesc(apperrors.ErrNotAllowed, "pubkey not contains in storage")
+		return resp, apperrors.New(apperrors.ErrNotAllowed, "pubkey not contains in storage")
 	}
 
 	repo := s.repoProvider.GetContract()
@@ -431,7 +431,7 @@ func (s *ServiceFacade) SaveContractOperationSignature(userPubKey types.PubKey, 
 	}
 
 	if !isFound {
-		return resp, apperrors.NewWithDesc(apperrors.ErrNotFound, "operation")
+		return resp, apperrors.New(apperrors.ErrNotFound, "operation")
 	}
 
 	//Check sign with pubkey
@@ -500,7 +500,7 @@ func (s *ServiceFacade) getMsigContractStorage(contractID types.Address) (storag
 		Storage: storage.RawValue.MichelinePrim(),
 	})
 	if err != nil {
-		return storageContainer, fmt.Errorf("%v; %w", err, apperrors.NewWithDesc(apperrors.ErrBadParam, "wrong contract type"))
+		return storageContainer, fmt.Errorf("%v; %w", err, apperrors.New(apperrors.ErrBadParam, "wrong contract type"))
 	}
 
 	return storageContainer, err
@@ -541,7 +541,7 @@ func (s *ServiceFacade) getVestingContractStorage(contractID types.Address) (sto
 		},
 		Storage: storage.RawValue.MichelinePrim()})
 	if err != nil {
-		return storageContainer, fmt.Errorf("%v; %w", err, apperrors.NewWithDesc(apperrors.ErrBadParam, "wrong contract type"))
+		return storageContainer, fmt.Errorf("%v; %w", err, apperrors.New(apperrors.ErrBadParam, "wrong contract type"))
 	}
 
 	return storageContainer, nil
@@ -641,7 +641,7 @@ func verifySign(message []byte, signature types.Signature, publicKey crypto.Publ
 		return errors.Errorf("unsupported public key type: %T", publicKey)
 	}
 	if !ok {
-		return errors.Errorf("invalid signature %s for public key %s", signature, publicKey)
+		return errors.Errorf("invalid signature %s for public key %v", signature, publicKey)
 	}
 	return nil
 }
