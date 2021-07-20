@@ -12,6 +12,7 @@ require (
 	github.com/go-openapi/errors v0.19.2
 	github.com/go-openapi/runtime v0.19.3
 	github.com/go-openapi/strfmt v0.19.2
+	github.com/go-openapi/swag v0.19.2
 	github.com/golang-migrate/migrate/v4 v4.14.1
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/schema v1.2.0

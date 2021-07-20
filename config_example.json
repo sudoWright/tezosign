@@ -8,7 +8,8 @@
     ]
   },
   "Cron": {
-    "Operations": 30
+    "Operations": 30,
+    "Assets": 30
   },
   "Networks":[
     {

@@ -5,6 +5,7 @@ import (
 	"tezosign/api/response"
 	"tezosign/common/apperrors"
 	"tezosign/common/log"
+	"tezosign/models"
 	"tezosign/repos"
 	"tezosign/services"
 	"tezosign/types"
@@ -20,16 +21,28 @@ func (api *API) ContractOperationsList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	contractAddress := types.Address(mux.Vars(r)["contract_id"])
+	contractAddress := types.Address(mux.Vars(r)[ContractIDParam])
 	err = contractAddress.Validate()
 	if err != nil {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "contract_id"))
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, ContractIDParam))
+		return
+	}
+
+	var params models.CommonParams
+	err = api.queryDecoder.Decode(&params, r.URL.Query())
+	if err != nil {
+		response.JsonError(w, err)
+		return
+	}
+
+	if err = params.Validate(); err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadRequest, err.Error()))
 		return
 	}
 
 	service := services.New(repos.New(networkContext.Db), repos.New(networkContext.IndexerDB), networkContext.Client, nil, net)
 
-	list, err := service.GetOperationsList(user, contractAddress, nil)
+	list, err := service.GetOperationsList(user, contractAddress, params)
 	if err != nil {
 		//Unwrap apperror
 		err, IsAppErr := apperrors.Unwrap(err)

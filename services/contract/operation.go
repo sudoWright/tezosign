@@ -21,16 +21,16 @@ type Operation struct {
 	Value      *micheline.Prim `json:"value"`
 }
 
-func BuildContractSignPayload(networkID string, counter int64, operationParams models.ContractOperationRequest) (resp types.Payload, err error) {
+func BuildContractSignPayload(networkID string, counter int64, operationParams models.ContractOperationRequest) (resp types.Payload, jsonResp string, err error) {
 
 	networkArgs, err := buildNetworkMichelsonArgs(networkID, operationParams.ContractID)
 	if err != nil {
-		return resp, err
+		return resp, jsonResp, err
 	}
 
 	params, err := buildActionMichelsonArgs(counter, operationParams)
 	if err != nil {
-		return resp, err
+		return resp, jsonResp, err
 	}
 
 	operation := &micheline.Prim{
@@ -41,15 +41,20 @@ func BuildContractSignPayload(networkID string, counter int64, operationParams m
 
 	bt, err := operation.MarshalBinary()
 	if err != nil {
-		return resp, err
+		return resp, jsonResp, err
+	}
+
+	operationJson, err := operation.MarshalJSON()
+	if err != nil {
+		return resp, jsonResp, err
 	}
 
 	bt = append([]byte{TextWatermark}, bt...)
 
-	return types.Payload(hex.EncodeToString(bt)), nil
+	return types.Payload(hex.EncodeToString(bt)), string(operationJson), nil
 }
 
-func BuildRejectSignPayload(networkID string, counter int64, contractAddress types.Address) (resp types.Payload, err error) {
+func BuildRejectSignPayload(networkID string, counter int64, contractAddress types.Address) (resp types.Payload, respJson string, err error) {
 	return BuildContractSignPayload(networkID, counter, models.ContractOperationRequest{
 		ContractID:    contractAddress,
 		Type:          models.CustomPayload,

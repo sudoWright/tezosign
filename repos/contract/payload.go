@@ -37,7 +37,7 @@ func (r *Repository) SavePayload(request models.Request) (err error) {
 	return nil
 }
 
-func (r *Repository) GetPayloadsReportByContractID(contractID uint64, isOwner bool) (requests []models.RequestReport, err error) {
+func (r *Repository) GetPayloadsReportByContractID(contractID uint64, isOwner bool, limit, offset int) (requests []models.RequestReport, err error) {
 	db := r.db.Select("requests.*, signatures").
 		Model(models.Request{}).
 		Table(PayloadsTable).
@@ -53,6 +53,8 @@ func (r *Repository) GetPayloadsReportByContractID(contractID uint64, isOwner bo
 
 	err = db. //TODO order by time
 			Order("req_id desc").
+			Limit(limit).
+			Offset(offset).
 			Find(&requests).Error
 	if err != nil {
 		return requests, err

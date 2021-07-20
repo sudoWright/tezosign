@@ -22,7 +22,7 @@ paths:
           required: true
           type : string
         - in: body
-          name: user
+          name: body
           description: The user to create.
           schema:
             $ref: '#/definitions/AuthRequestBody'
@@ -49,7 +49,7 @@ paths:
           required: true
           type : string
         - in: body
-          name: user
+          name: body
           description: Signed request
           schema:
             $ref: '#/definitions/AuthBody'
@@ -76,7 +76,7 @@ paths:
           required: true
           type : string
         - in: body
-          name: user
+          name: body
           description: Refresh token
           schema:
             $ref: '#/definitions/RefreshBody'
@@ -154,7 +154,7 @@ paths:
           required: true
           type : string
         - in: body
-          name: user
+          name: body
           schema:
             $ref: '#/definitions/StorageInitBody'
       responses:
@@ -210,7 +210,7 @@ paths:
           required: true
           type : string
         - in: body
-          name: user
+          name: body
           schema:
             $ref: '#/definitions/ContractOperationBody'
       responses:
@@ -242,7 +242,7 @@ paths:
           required: true
           type : string
         - in: body
-          name: user
+          name: body
           schema:
             $ref: '#/definitions/StorageInitBody'
       responses:
@@ -302,7 +302,7 @@ paths:
           required: true
           type : string
         - in: body
-          name: user
+          name: body
           schema:
             $ref: '#/definitions/OperationSignatute'
       responses:
@@ -447,8 +447,8 @@ paths:
             $ref: '#/definitions/AssetsResp'
       responses:
         '200':
-           description: Contract asset
-           schema:
+          description: Contract asset
+          schema:
             type: array
             items:
               $ref: '#/definitions/AssetsResp'
@@ -512,7 +512,7 @@ paths:
         - in: body
           name: asset
           schema:
-              $ref: '#/definitions/AssetsResp'
+            $ref: '#/definitions/AssetsResp'
       responses:
         '200':
           description: Hexed payload
@@ -523,6 +523,38 @@ paths:
             properties:
               message:
                 type: string
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+      tags:
+        - Assets
+  '/{network}/asset/{asset_id}/meta_data':
+    get:
+      operationId: assetMetaData
+      summary: Get asset token metadata
+      produces:
+        - application/json
+      security:
+        - Bearer: []
+      parameters:
+        - in: path
+          name: network
+          required: true
+          type : string
+        - in: path
+          name: asset_id
+          required: true
+          type : string
+        - in: query
+          name: token_id
+          required: false
+          type: integer
+      responses:
+        '200':
+          description: Meta data object
+          schema:
+            type: object
         '400':
           description: Bad request
         '500':
@@ -554,6 +586,37 @@ paths:
             properties:
               revealed:
                 type: boolean
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+      tags:
+        - Helpers
+  '/{network}/{address}/balance':
+    get:
+      operationId: addressBalance
+      summary: Get address balance
+      produces:
+        - application/json
+      security:
+        - Bearer: []
+      parameters:
+        - in: path
+          name: network
+          required: true
+          type : string
+        - in: path
+          name: address
+          required: true
+          type : string
+      responses:
+        '200':
+          description: Balance
+          schema:
+            type: object
+            properties:
+              balance:
+                type: integer
         '400':
           description: Bad request
         '500':
@@ -617,7 +680,297 @@ paths:
           description: Internal server error
       tags:
         - Helpers
+  '/{network}/contract/vesting/storage/init':
+    post:
+      operationId: vestingContractStorageInit
+      summary: Vesting contract init storage
+      produces:
+        - application/json
+      security:
+        - Bearer: []
+      parameters:
+        - in: path
+          name: network
+          required: true
+          type : string
+        - in: body
+          name: body
+          schema:
+            $ref: '#/definitions/VestingStorageInitBody'
+      responses:
+        '200':
+          description: Vesting contract storage json
+          schema:
+            type: string
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+      tags:
+        - Vesting
+  '/{network}/contract/vesting/operation':
+    post:
+      operationId: vestingContractOperation
+      summary: Vesting contract direct operation args
+      produces:
+        - application/json
+      security:
+        - Bearer: []
+      parameters:
+        - in: path
+          name: network
+          required: true
+          type : string
+        - in: body
+          name: body
+          schema:
+            $ref: '#/definitions/VestingOperation'
+      responses:
+        '200':
+          description: Vesting contract storage json
+          schema:
+            $ref: '#/definitions/BuildOperationResp'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+      tags:
+        - Vesting
+  '/{network}}/contract/vesting/{vesting_contract_id}/info':
+    get:
+      operationId: vestingContractInfo
+      summary: Vesting contract info
+      produces:
+        - application/json
+      security:
+        - Bearer: []
+      parameters:
+        - in: path
+          name: network
+          required: true
+          type : string
+        - in: path
+          name: vesting_contract_id
+          required: true
+          type : string
+      responses:
+        '200':
+          description: Contract info
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/VestingContractInfo'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+      tags:
+        - Vesting
+  '/{network}/contract/{contract_id}/vestings':
+    get:
+      operationId: vestingContractsList
+      summary: Vesting contracts list
+      produces:
+        - application/json
+      security:
+        - Bearer: []
+      parameters:
+        - in: path
+          name: network
+          required: true
+          type : string
+        - in: path
+          name: contract_id
+          required: true
+          type : string
+      responses:
+        '200':
+          description: Vestings list
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/VestingListItem'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+      tags:
+        - Vesting
+  '/{network}/contract/{contract_id}/vesting':
+    post:
+      operationId: addContractVesting
+      summary: Edit contract vesting
+      produces:
+        - application/json
+      security:
+        - Bearer: []
+      parameters:
+        - in: path
+          name: network
+          required: true
+          type: string
+        - in: path
+          name: contract_id
+          required: true
+          type: string
+        - in: body
+          name: vesting
+          schema:
+            type: object
+            required:
+              - name
+              - address
+            properties:
+              name:
+                type: string
+              address:
+                type: string
+      responses:
+        '200':
+          description: Vesting item
+          schema:
+            $ref: '#/definitions/VestingListItem'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+      tags:
+        - Vesting
+  '/{network}/contract/{contract_id}/vesting/edit':
+    post:
+      operationId: editContractVesting
+      summary: Edit contract vesting
+      produces:
+        - application/json
+      security:
+        - Bearer: []
+      parameters:
+        - in: path
+          name: network
+          required: true
+          type : string
+        - in: path
+          name: contract_id
+          required: true
+          type : string
+        - in: body
+          name: vesting
+          schema:
+            type: object
+            required:
+              - name
+              - address
+            properties:
+              name:
+                type: string
+              address:
+                type: string
+      responses:
+        '200':
+          description: Vesting item
+          schema:
+            $ref: '#/definitions/VestingListItem'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+      tags:
+        - Vesting
+  '/{network}/contract/{contract_id}/vesting/delete':
+    post:
+      operationId: deleteContractVesting
+      summary: Delete contract vesting
+      produces:
+        - application/json
+      security:
+        - Bearer: []
+      parameters:
+        - in: path
+          name: network
+          required: true
+          type : string
+        - in: path
+          name: contract_id
+          required: true
+          type : string
+        - in: body
+          name: vesting
+          schema:
+            type: object
+            required:
+              - address
+            properties:
+              address:
+                type: string
+      responses:
+        '200':
+          description: Message
+          schema:
+            type: object
+            required:
+              - message
+            properties:
+              message:
+                type: string
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+      tags:
+        - Vesting
 definitions:
+  VestingOperation:
+    properties:
+      type:
+        type: string
+      amount:
+        type: integer
+      to:
+        type: string
+  VestingListItem:
+    properties:
+      address:
+        type: string
+      name:
+        type: string
+      balance:
+        type: integer
+  VestingContractInfo:
+    properties:
+      balance:
+        type: integer
+      delegate:
+        type: integer
+      opened_balance:
+        type: integer
+      storage:
+        $ref: '#/definitions/VestingStorage'
+  VestingStorageInitBody:
+    properties:
+      vesting_address:
+        type: string
+      delegate_admin:
+        type: string
+      timestamp:
+        type: integer
+      seconds_per_tick:
+        type: integer
+      tokens_per_tick:
+        type: integer
+  VestingStorage:
+    properties:
+      vesting_address:
+        type: string
+      delegate_admin:
+        type: string
+      vested_amount:
+        type: integer
+      timestamp:
+        type: integer
+      seconds_per_tick:
+        type: integer
+      tokens_per_tick:
+        type: integer
   AuthRequestBody:
     properties:
       pubkey:
@@ -713,6 +1066,9 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/TransferUnit'
+      # Vesting contract
+      vesting_id:
+        type: string
       # Custom michelson bytes or JSON payload
       custom_payload:
         type: string
@@ -754,6 +1110,8 @@ definitions:
         type: string
       payload:
         type: string
+      payload_json:
+        type: string
   OperationSignatute:
     properties:
       contract_id:
@@ -790,6 +1148,8 @@ definitions:
         type: integer
       ticker:
         type: string
+      token_id:
+        type: integer
       balances:
         type: array
         items:

@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"strconv"
 	"tezosign/common/log"
 
 	"go.uber.org/zap"
@@ -24,10 +25,10 @@ func (api *API) AssetsList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	contractAddress := types.Address(mux.Vars(r)["contract_id"])
+	contractAddress := types.Address(mux.Vars(r)[ContractIDParam])
 	err = contractAddress.Validate()
 	if err != nil {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "contract_id"))
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, ContractIDParam))
 		return
 	}
 
@@ -55,10 +56,10 @@ func (api *API) AssetsExchangeRates(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	contractAddress := types.Address(mux.Vars(r)["contract_id"])
+	contractAddress := types.Address(mux.Vars(r)[ContractIDParam])
 	err = contractAddress.Validate()
 	if err != nil {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "contract_id"))
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, ContractIDParam))
 		return
 	}
 
@@ -80,10 +81,10 @@ func (api *API) ContractAsset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	contractAddress := types.Address(mux.Vars(r)["contract_id"])
+	contractAddress := types.Address(mux.Vars(r)[ContractIDParam])
 	err = contractAddress.Validate()
 	if err != nil {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "contract_id"))
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, ContractIDParam))
 		return
 	}
 
@@ -123,10 +124,10 @@ func (api *API) ContractAssetEdit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	contractAddress := types.Address(mux.Vars(r)["contract_id"])
+	contractAddress := types.Address(mux.Vars(r)[ContractIDParam])
 	err = contractAddress.Validate()
 	if err != nil {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "contract_id"))
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, ContractIDParam))
 		return
 	}
 
@@ -166,10 +167,10 @@ func (api *API) RemoveContractAsset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	contractAddress := types.Address(mux.Vars(r)["contract_id"])
+	contractAddress := types.Address(mux.Vars(r)[ContractIDParam])
 	err = contractAddress.Validate()
 	if err != nil {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "contract_id"))
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, ContractIDParam))
 		return
 	}
 
@@ -200,4 +201,44 @@ func (api *API) RemoveContractAsset(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.Json(w, map[string]interface{}{"message": "success"})
+}
+
+func (api *API) AssetMetadata(w http.ResponseWriter, r *http.Request) {
+	_, net, networkContext, err := GetUserNetworkContext(r)
+	if err != nil {
+		response.JsonError(w, err)
+		return
+	}
+
+	assetID := types.Address(mux.Vars(r)["asset_id"])
+	if err := assetID.Validate(); err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "asset_id"))
+		return
+	}
+
+	var tokenID int64
+	value := r.URL.Query().Get("token_id")
+	if len(value) != 0 {
+		tokenID, err = strconv.ParseInt(value, 10, 64)
+		if err != nil {
+			response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "token_id"))
+			return
+		}
+	}
+
+	service := services.New(repos.New(networkContext.Db), repos.New(networkContext.IndexerDB), networkContext.Client, networkContext.Auth, net)
+
+	resp, err := service.GetAssetMetadata(assetID, tokenID)
+	if err != nil {
+		//Unwrap apperror
+		err, IsAppErr := apperrors.Unwrap(err)
+		if !IsAppErr {
+			log.Error("GetAssetMetadata error: ", zap.Error(err))
+		}
+
+		response.JsonError(w, err)
+		return
+	}
+
+	response.Json(w, resp)
 }

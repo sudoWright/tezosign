@@ -12,7 +12,9 @@ var (
 	transferPath   = []micheline.OpCode{micheline.D_LEFT, micheline.D_LEFT, micheline.D_LEFT, micheline.D_LEFT}
 	delegationPath = []micheline.OpCode{micheline.D_LEFT, micheline.D_LEFT, micheline.D_LEFT, micheline.D_RIGHT}
 	//Transfer have branching inside
-	transferFAPath    = []micheline.OpCode{micheline.D_LEFT, micheline.D_LEFT, micheline.D_RIGHT, micheline.D_LEFT}
+	transferFAPath = []micheline.OpCode{micheline.D_LEFT, micheline.D_LEFT, micheline.D_RIGHT, micheline.D_LEFT}
+	//Vesting have branching inside
+	vestingPath       = []micheline.OpCode{micheline.D_LEFT, micheline.D_LEFT, micheline.D_RIGHT, micheline.D_RIGHT}
 	customPayloadPath = []micheline.OpCode{micheline.D_LEFT, micheline.D_RIGHT}
 	updateStoragePath = []micheline.OpCode{micheline.D_RIGHT}
 )
@@ -132,6 +134,8 @@ func getPathByType(actionType models.ActionType) (path []micheline.OpCode, err e
 		path = updateStoragePath
 	case models.FATransfer, models.FA2Transfer:
 		path = transferFAPath
+	case models.VestingVest, models.VestingSetDelegate:
+		path = vestingPath
 	case models.CustomPayload:
 		path = customPayloadPath
 

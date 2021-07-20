@@ -33,10 +33,26 @@ func (a Address) Validate() (err error) {
 	return nil
 }
 
+func (a Address) IsEmpty() bool {
+	return len(a) == 0
+}
+
 func (a Address) String() string {
 	return string(a)
 }
 
 func (a Address) MarshalBinary() ([]byte, error) {
 	return tezosprotocol.ContractID(a).MarshalBinary()
+}
+
+func (a *Address) UnmarshalBinary(data []byte) (err error) {
+	adr := tezosprotocol.ContractID(*a)
+
+	err = adr.UnmarshalBinary(data)
+	if err != nil {
+		return err
+	}
+	*a = Address(adr)
+
+	return nil
 }

@@ -7,7 +7,8 @@ import (
 )
 
 type AssetBalances struct {
-	Tokens []Token `json:"tokens"`
+	Total    uint64  `json:"total"`
+	Balances []Token `json:"balances"`
 }
 
 type Token struct {

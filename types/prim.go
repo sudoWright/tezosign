@@ -169,7 +169,14 @@ func (p *TZKTPrim) DecodeBuffer(buf *bytes.Buffer) (err error) {
 		case MichelineTypeInt:
 			p.Type = micheline.PrimInt
 			p.OpCode = micheline.T_INT
-			p.Int = big.NewInt(0).SetBytes(buf.Next(int(cnt)))
+
+			//Revers bytes array to convert from little endian to big endian
+			bt := buf.Next(int(cnt))
+			for i, j := 0, len(bt)-1; i < j; i, j = i+1, j-1 {
+				bt[i], bt[j] = bt[j], bt[i]
+			}
+
+			p.Int = big.NewInt(0).SetBytes(bt)
 
 		case MichelineTypeString:
 			p.Type = micheline.PrimString

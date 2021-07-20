@@ -12,10 +12,11 @@ import (
 	"tezosign/types"
 
 	"github.com/gorilla/mux"
+
 	"go.uber.org/zap"
 )
 
-func (api *API) ContractStorageInit(w http.ResponseWriter, r *http.Request) {
+func (api *API) VestingContractStorageInit(w http.ResponseWriter, r *http.Request) {
 	//Use GetUserNetworkContext to check user middleware
 	_, net, networkContext, err := GetUserNetworkContext(r)
 	if err != nil {
@@ -23,7 +24,7 @@ func (api *API) ContractStorageInit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req models.ContractStorageRequest
+	var req models.VestingContractStorageRequest
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		response.JsonError(w, apperrors.New(apperrors.ErrBadRequest))
@@ -38,12 +39,12 @@ func (api *API) ContractStorageInit(w http.ResponseWriter, r *http.Request) {
 
 	service := services.New(repos.New(networkContext.Db), repos.New(networkContext.IndexerDB), networkContext.Client, networkContext.Auth, net)
 
-	resp, err := service.BuildContractInitStorage(req)
+	resp, err := service.BuildVestingContractInitStorage(req)
 	if err != nil {
 		//Unwrap apperror
 		err, IsAppErr := apperrors.Unwrap(err)
 		if !IsAppErr {
-			log.Error("BuildContractInitStorage error: ", zap.Error(err))
+			log.Error("BuildVestingContractInitStorage error: ", zap.Error(err))
 		}
 
 		response.JsonError(w, err)
@@ -54,20 +55,14 @@ func (api *API) ContractStorageInit(w http.ResponseWriter, r *http.Request) {
 	w.Write(resp)
 }
 
-func (api *API) ContractStorageUpdate(w http.ResponseWriter, r *http.Request) {
-	user, net, networkContext, err := GetUserNetworkContext(r)
+func (api *API) VestingContractOperation(w http.ResponseWriter, r *http.Request) {
+	_, net, networkContext, err := GetUserNetworkContext(r)
 	if err != nil {
 		response.JsonError(w, err)
 		return
 	}
 
-	contractID := types.Address(mux.Vars(r)[ContractIDParam])
-	if contractID == "" || contractID.Validate() != nil {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, ContractIDParam))
-		return
-	}
-
-	var req models.ContractStorageRequest
+	var req models.VestingContractOperation
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		response.JsonError(w, apperrors.New(apperrors.ErrBadRequest))
@@ -82,12 +77,12 @@ func (api *API) ContractStorageUpdate(w http.ResponseWriter, r *http.Request) {
 
 	service := services.New(repos.New(networkContext.Db), repos.New(networkContext.IndexerDB), networkContext.Client, networkContext.Auth, net)
 
-	resp, err := service.BuildContractStorageUpdateOperation(user, contractID, req)
+	resp, err := service.VestingContractOperation(req)
 	if err != nil {
 		//Unwrap apperror
 		err, IsAppErr := apperrors.Unwrap(err)
 		if !IsAppErr {
-			log.Error("ContractStorageUpdate error: ", zap.Error(err))
+			log.Error("VestingContractOperation error: ", zap.Error(err))
 		}
 
 		response.JsonError(w, err)
@@ -97,7 +92,7 @@ func (api *API) ContractStorageUpdate(w http.ResponseWriter, r *http.Request) {
 	response.Json(w, resp)
 }
 
-func (api *API) ContractInfo(w http.ResponseWriter, r *http.Request) {
+func (api *API) VestingContractInfo(w http.ResponseWriter, r *http.Request) {
 	//Use GetUserNetworkContext to check user middleware
 	_, net, networkContext, err := GetUserNetworkContext(r)
 	if err != nil {
@@ -105,178 +100,185 @@ func (api *API) ContractInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	contractID := types.Address(mux.Vars(r)[ContractIDParam])
+	contractID := types.Address(mux.Vars(r)["vesting_contract_id"])
 	if err := contractID.Validate(); err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "vesting_contract_id"))
+		return
+	}
+
+	service := services.New(repos.New(networkContext.Db), repos.New(networkContext.IndexerDB), networkContext.Client, networkContext.Auth, net)
+
+	resp, err := service.VestingContractInfo(contractID)
+	if err != nil {
+		//Unwrap apperror
+		err, IsAppErr := apperrors.Unwrap(err)
+		if !IsAppErr {
+			log.Error("VestingContractInfo error: ", zap.Error(err))
+		}
+
+		response.JsonError(w, err)
+		return
+	}
+
+	response.Json(w, resp)
+}
+
+func (api *API) VestingsList(w http.ResponseWriter, r *http.Request) {
+	user, net, networkContext, err := GetUserNetworkContext(r)
+	if err != nil {
+		response.JsonError(w, err)
+		return
+	}
+
+	contractAddress := types.Address(mux.Vars(r)[ContractIDParam])
+	err = contractAddress.Validate()
+	if err != nil {
 		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, ContractIDParam))
 		return
 	}
 
 	service := services.New(repos.New(networkContext.Db), repos.New(networkContext.IndexerDB), networkContext.Client, networkContext.Auth, net)
 
-	resp, err := service.ContractInfo(contractID)
+	reps, err := service.VestingsList(user, contractAddress)
 	if err != nil {
 		//Unwrap apperror
 		err, IsAppErr := apperrors.Unwrap(err)
 		if !IsAppErr {
-			log.Error("ContractInfo error: ", zap.Error(err))
+			log.Error("VestingsList error: ", zap.Error(err))
 		}
 
 		response.JsonError(w, err)
 		return
 	}
 
-	response.Json(w, resp)
+	response.Json(w, reps)
 }
 
-func (api *API) ContractOperation(w http.ResponseWriter, r *http.Request) {
+func (api *API) ContractVesting(w http.ResponseWriter, r *http.Request) {
 	user, net, networkContext, err := GetUserNetworkContext(r)
 	if err != nil {
 		response.JsonError(w, err)
 		return
 	}
 
-	var req models.ContractOperationRequest
-	err = json.NewDecoder(r.Body).Decode(&req)
+	contractAddress := types.Address(mux.Vars(r)[ContractIDParam])
+	err = contractAddress.Validate()
+	if err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, ContractIDParam))
+		return
+	}
+
+	var data models.Vesting
+	err = json.NewDecoder(r.Body).Decode(&data)
 	if err != nil {
 		response.JsonError(w, apperrors.New(apperrors.ErrBadRequest))
 		return
 	}
 
-	err = req.Validate()
-	if err != nil {
+	if err = data.Validate(); err != nil {
 		response.JsonError(w, apperrors.New(apperrors.ErrBadRequest, err.Error()))
 		return
 	}
 
 	service := services.New(repos.New(networkContext.Db), repos.New(networkContext.IndexerDB), networkContext.Client, networkContext.Auth, net)
 
-	resp, err := service.ContractOperation(user, req)
+	reps, err := service.ContractVesting(user, contractAddress, data)
 	if err != nil {
 		//Unwrap apperror
 		err, IsAppErr := apperrors.Unwrap(err)
 		if !IsAppErr {
-			log.Error("BuildContractOperationToSign error: ", zap.Error(err))
+			log.Error("ContractVesting error: ", zap.Error(err))
 		}
 
 		response.JsonError(w, err)
 		return
 	}
 
-	response.Json(w, resp)
+	response.Json(w, reps)
 }
 
-func (api *API) OperationSignPayload(w http.ResponseWriter, r *http.Request) {
+func (api *API) ContractVestingEdit(w http.ResponseWriter, r *http.Request) {
 	user, net, networkContext, err := GetUserNetworkContext(r)
 	if err != nil {
 		response.JsonError(w, err)
 		return
 	}
 
-	operationID := mux.Vars(r)["operation_id"]
-	if operationID == "" {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "operation_id"))
-		return
-	}
-
-	payloadType := models.PayloadType(r.URL.Query().Get("type"))
-	err = payloadType.Validate()
+	contractAddress := types.Address(mux.Vars(r)[ContractIDParam])
+	err = contractAddress.Validate()
 	if err != nil {
-		response.JsonError(w, apperrors.NewWithDesc(apperrors.ErrBadParam, "type"))
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, ContractIDParam))
 		return
 	}
 
-	service := services.New(repos.New(networkContext.Db), repos.New(networkContext.IndexerDB), networkContext.Client, networkContext.Auth, net)
-
-	resp, err := service.BuildContractOperationToSign(user, operationID, payloadType)
-	if err != nil {
-		//Unwrap apperror
-		err, IsAppErr := apperrors.Unwrap(err)
-		if !IsAppErr {
-			log.Error("BuildContractOperationReject error: ", zap.Error(err))
-		}
-
-		response.JsonError(w, err)
-		return
-	}
-
-	response.Json(w, resp)
-}
-
-func (api *API) ContractOperationSignature(w http.ResponseWriter, r *http.Request) {
-	user, net, networkContext, err := GetUserNetworkContext(r)
-	if err != nil {
-		response.JsonError(w, err)
-		return
-	}
-
-	operationID := mux.Vars(r)["operation_id"]
-	if operationID == "" {
-		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "operation_id"))
-		return
-	}
-
-	var req models.OperationSignature
-	err = json.NewDecoder(r.Body).Decode(&req)
+	var data models.Vesting
+	err = json.NewDecoder(r.Body).Decode(&data)
 	if err != nil {
 		response.JsonError(w, apperrors.New(apperrors.ErrBadRequest))
 		return
 	}
 
-	err = req.Validate()
-	if err != nil {
+	if err = data.Validate(); err != nil {
 		response.JsonError(w, apperrors.New(apperrors.ErrBadRequest, err.Error()))
 		return
 	}
 
 	service := services.New(repos.New(networkContext.Db), repos.New(networkContext.IndexerDB), networkContext.Client, networkContext.Auth, net)
 
-	resp, err := service.SaveContractOperationSignature(user, operationID, req)
+	reps, err := service.ContractVestingEdit(user, contractAddress, data)
 	if err != nil {
 		//Unwrap apperror
 		err, IsAppErr := apperrors.Unwrap(err)
 		if !IsAppErr {
-			log.Error("SaveContractOperationSignature error: ", zap.Error(err))
+			log.Error("ContractVestingEdit error: ", zap.Error(err))
 		}
 
 		response.JsonError(w, err)
 		return
 	}
 
-	response.Json(w, resp)
+	response.Json(w, reps)
 }
 
-func (api *API) ContractOperationBuild(w http.ResponseWriter, r *http.Request) {
+func (api *API) RemoveContractVesting(w http.ResponseWriter, r *http.Request) {
 	user, net, networkContext, err := GetUserNetworkContext(r)
 	if err != nil {
 		response.JsonError(w, err)
 		return
 	}
 
-	operationID, ok := mux.Vars(r)["operation_id"]
-	if !ok || len(operationID) == 0 {
-		response.JsonError(w, apperrors.NewWithDesc(apperrors.ErrBadParam, "tx_id"))
+	contractAddress := types.Address(mux.Vars(r)[ContractIDParam])
+	err = contractAddress.Validate()
+	if err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, ContractIDParam))
 		return
 	}
 
-	payloadType := models.PayloadType(r.URL.Query().Get("type"))
-	if err := payloadType.Validate(); err != nil {
-		response.JsonError(w, apperrors.NewWithDesc(apperrors.ErrBadParam, "type"))
+	var data models.Vesting
+	err = json.NewDecoder(r.Body).Decode(&data)
+	if err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadRequest))
+		return
+	}
+
+	if err = data.Address.Validate(); err != nil {
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "address"))
 		return
 	}
 
 	service := services.New(repos.New(networkContext.Db), repos.New(networkContext.IndexerDB), networkContext.Client, networkContext.Auth, net)
 
-	resp, err := service.BuildContractOperation(user, operationID, payloadType)
+	err = service.RemoveContractVesting(user, contractAddress, data)
 	if err != nil {
 		//Unwrap apperror
 		err, IsAppErr := apperrors.Unwrap(err)
 		if !IsAppErr {
-			log.Error("ContractOperationBuild error: ", zap.Error(err))
+			log.Error("RemoveContractVesting error: ", zap.Error(err))
 		}
 
 		response.JsonError(w, err)
 		return
 	}
 
-	response.Json(w, resp)
+	response.Json(w, map[string]interface{}{"message": "success"})
 }

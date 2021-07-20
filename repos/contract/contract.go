@@ -27,7 +27,7 @@ type (
 		UpdatePayload(request models.Request) error
 		GetPayloadByContractAndCounter(contractID uint64, counter int64) (models.Request, bool, error)
 		GetPayloadByHash(id string) (models.Request, bool, error)
-		GetPayloadsReportByContractID(id uint64, isOwner bool) ([]models.RequestReport, error)
+		GetPayloadsReportByContractID(id uint64, isOwner bool, limit, offset int) ([]models.RequestReport, error)
 		GetSignaturesByPayloadID(id uint64, signatureType models.PayloadType) ([]models.Signature, error)
 		SavePayloadSignature(signature models.Signature) error
 		GetPayloadSignature(sig types.Signature) (signature models.Signature, isFound bool, err error)

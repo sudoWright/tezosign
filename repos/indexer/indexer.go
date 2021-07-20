@@ -16,13 +16,15 @@ type (
 	}
 
 	Repo interface {
-		GetContractOperations(contract types.Address, blockLevel uint64) ([]models.TransactionOperation, error)
+		GetContractOperations(contract types.Address, blockLevel uint64, entrypoint string) ([]models.TransactionOperation, error)
 		GetContractRevealOperation(contract types.Address) (models.RevealOperation, bool, error)
 		GetContractOriginationOperation(txID string) (tx models.OriginationOperation, isFound bool, err error)
 		GetContractStorage(address types.Address) (storage models.Storage, isFound bool, err error)
 		GetContractScript(address types.Address) (script models.Script, isFound bool, err error)
 		GetAccount(address types.Address) (account models.Account, isFound bool, err error)
+		GetAccountByID(id uint64) (account models.Account, isFound bool, err error)
 
+		GetLastBlock() (block models.Block, err error)
 		GetTezosQuote() (models.Quote, error)
 	}
 )
@@ -34,13 +36,18 @@ func New(db *gorm.DB) *Repository {
 	}
 }
 
-func (r *Repository) GetContractOperations(contract types.Address, blockLevel uint64) (operations []models.TransactionOperation, err error) {
+func (r *Repository) GetContractOperations(contract types.Address, blockLevel uint64, entrypoint string) (operations []models.TransactionOperation, err error) {
 
-	err = r.db.Table("TransactionOps").
+	db := r.db.Table("TransactionOps").
 		Joins(`LEFT JOIN "Accounts" a on "TargetId" = a."Id"`).
 		Where(`"Address" = ?`, contract.String()).
-		Where(`"Level" > ?`, blockLevel).
-		Order(`"TransactionOps"."Id" asc`).
+		Where(`"Level" > ?`, blockLevel)
+
+	if len(entrypoint) > 0 {
+		db = db.Where(`"Entrypoint" = ?`, entrypoint)
+	}
+
+	err = db.Order(`"TransactionOps"."Id" asc`).
 		Find(&operations).Error
 	if err != nil {
 		return operations, err
@@ -130,6 +137,21 @@ func (r *Repository) GetAccount(address types.Address) (account models.Account, 
 	return account, true, nil
 }
 
+func (r *Repository) GetAccountByID(id uint64) (account models.Account, isFound bool, err error) {
+	err = r.db.
+		Table("Accounts").
+		Where(`"Id" = ?`, id).
+		First(&account).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return account, false, nil
+		}
+		return account, false, err
+	}
+
+	return account, true, nil
+}
+
 func (r *Repository) GetTezosQuote() (quote models.Quote, err error) {
 	err = r.db.Table("Quotes").
 		Order(`"Quotes"."Id" desc`).
@@ -139,4 +161,15 @@ func (r *Repository) GetTezosQuote() (quote models.Quote, err error) {
 	}
 
 	return quote, nil
+}
+
+func (r *Repository) GetLastBlock() (block models.Block, err error) {
+	err = r.db.Table("Blocks").
+		Order(`"Blocks"."Id" desc`).
+		First(&block).Error
+	if err != nil {
+		return block, err
+	}
+
+	return block, nil
 }

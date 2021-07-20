@@ -9,7 +9,7 @@ import (
 	"tezosign/types"
 )
 
-func (s *ServiceFacade) GetOperationsList(userPubKey types.PubKey, contractID types.Address, params interface{}) (resp []models.RequestReport, err error) {
+func (s *ServiceFacade) GetOperationsList(userPubKey types.PubKey, contractID types.Address, params models.CommonParams) (resp []models.RequestReport, err error) {
 
 	isOwner, err := s.GetUserAllowance(userPubKey, contractID)
 	if err != nil {
@@ -23,9 +23,9 @@ func (s *ServiceFacade) GetOperationsList(userPubKey types.PubKey, contractID ty
 		return resp, err
 	}
 
-	resp, err = repo.GetPayloadsReportByContractID(contract.ID, isOwner)
+	resp, err = repo.GetPayloadsReportByContractID(contract.ID, isOwner, params.Limit, params.Offset)
 	if err != nil {
-		return
+		return resp, err
 	}
 
 	return resp, nil
@@ -57,7 +57,7 @@ func (s *ServiceFacade) CheckOperations() (counter int64, err error) {
 	//var parameter contract.Operation
 	for i := range contracts {
 
-		operations, err := indexerRepo.GetContractOperations(contracts[i].Address, contracts[i].LastOperationBlockLevel)
+		operations, err := indexerRepo.GetContractOperations(contracts[i].Address, contracts[i].LastOperationBlockLevel, "")
 		if err != nil {
 			return counter, err
 		}
@@ -95,8 +95,6 @@ func (s *ServiceFacade) processOperations(repo contractRepo.Repo, c models.Contr
 		if operations[j].Status != 1 {
 			continue
 		}
-
-		//TODO add assets income transfers
 
 		//Default entrypoint
 		if operations[j].RawParameters == nil {

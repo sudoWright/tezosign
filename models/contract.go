@@ -61,7 +61,7 @@ func (r ContractStorageRequest) Validate() (err error) {
 
 type ContractInfo struct {
 	Address   types.Address `json:"address"`
-	Balance   int64         `json:"balance"`
+	Balance   uint64        `json:"balance"`
 	Threshold int64         `json:"threshold"`
 	Counter   int64         `json:"counter"`
 	Owners    []Owner       `json:"owners"`
@@ -93,6 +93,9 @@ type ContractOperationRequest struct {
 	//Update storage
 	Threshold uint           `json:"threshold,omitempty"`
 	Keys      []types.PubKey `json:"keys,omitempty"`
+
+	//Vesting contract
+	VestingID types.Address `json:"vesting_id,omitempty"`
 }
 
 type TransferUnit struct {
@@ -191,7 +194,6 @@ func (r ContractOperationRequest) Validate() (err error) {
 		if err != nil {
 			return err
 		}
-
 	case Transfer:
 		err = r.To.Validate()
 		if err != nil {
@@ -200,6 +202,28 @@ func (r ContractOperationRequest) Validate() (err error) {
 
 		if r.Amount == 0 {
 			return fmt.Errorf("wrong amount")
+		}
+	case VestingVest:
+		err = r.VestingID.Validate()
+		if err != nil {
+			return err
+		}
+
+		if r.Amount == 0 {
+			return fmt.Errorf("wrong amount")
+		}
+	case VestingSetDelegate:
+		err = r.VestingID.Validate()
+		if err != nil {
+			return err
+		}
+
+		//Delegation destination can be empty
+		if r.To.String() != "" {
+			err = r.To.Validate()
+		}
+		if err != nil {
+			return err
 		}
 	case CustomPayload:
 		if !json.Valid([]byte(r.CustomPayload)) {
