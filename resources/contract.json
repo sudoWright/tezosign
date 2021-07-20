@@ -91,7 +91,13 @@
                                     "prim": "pair",
                                     "args": [
                                       { "prim": "address", "annots": [ ":vesting" ] },
-                                      { "prim": "or", "args": [ { "prim": "key_hash", "annots": [ ":setDelegate" ] }, { "prim": "nat", "annots": [ ":vest" ] } ] }
+                                      {
+                                        "prim": "or",
+                                        "args": [
+                                          { "prim": "option", "args": [ { "prim": "key_hash" } ], "annots": [ ":setDelegate" ] },
+                                          { "prim": "nat", "annots": [ ":vest" ] }
+                                        ]
+                                      }
                                     ]
                                   }
                                 ]
@@ -188,7 +194,13 @@
                                                 }
                                               ]
                                             },
-                                            { "prim": "pair", "args": [ { "prim": "address" }, { "prim": "or", "args": [ { "prim": "key_hash" }, { "prim": "nat" } ] } ] }
+                                            {
+                                              "prim": "pair",
+                                              "args": [
+                                                { "prim": "address" },
+                                                { "prim": "or", "args": [ { "prim": "option", "args": [ { "prim": "key_hash" } ] }, { "prim": "nat" } ] }
+                                              ]
+                                            }
                                           ]
                                         }
                                       ]
@@ -463,7 +475,7 @@
                                               "prim": "DIP",
                                               "args": [
                                                 [
-                                                  { "prim": "CONTRACT", "args": [ { "prim": "key_hash" } ], "annots": [ "%setDelegate" ] },
+                                                  { "prim": "CONTRACT", "args": [ { "prim": "option", "args": [ { "prim": "key_hash" } ] } ], "annots": [ "%setDelegate" ] },
                                                   {
                                                     "prim": "IF_NONE",
                                                     "args": [

@@ -318,7 +318,7 @@ func buildVestingTxPrim(operationParams models.ContractOperationRequest) (prim *
 		arg = &micheline.Prim{
 			Type:   micheline.PrimInt,
 			OpCode: micheline.T_INT,
-			Int:    big.NewInt(int64(operationParams.Amount)),
+			Int:    big.NewInt(int64(operationParams.Ticks)),
 		}
 	default:
 		return prim, errors.New("wrong type")

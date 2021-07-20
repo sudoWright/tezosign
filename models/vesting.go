@@ -14,7 +14,7 @@ import (
 type VestingContractStorageRequest struct {
 	VestingAddress types.Address `json:"vesting_address"`
 	DelegateAdmin  types.Address `json:"delegate_admin"`
-	Timestamp      uint64        `json:"timestamp"`
+	Timestamp      int64         `json:"timestamp"`
 	SecondsPerTick uint64        `json:"seconds_per_tick"`
 	TokensPerTick  uint64        `json:"tokens_per_tick"`
 
@@ -48,17 +48,17 @@ func (v VestingContractStorageRequest) Validate() (err error) {
 }
 
 type VestingContractOperation struct {
-	Type   ActionType    `json:"type"`
-	Amount uint64        `json:"amount,omitempty"`
-	To     types.Address `json:"to,omitempty"`
+	Type  ActionType    `json:"type"`
+	Ticks uint64        `json:"ticks,omitempty"`
+	To    types.Address `json:"to,omitempty"`
 }
 
 func (v VestingContractOperation) Validate() (err error) {
 
 	switch v.Type {
 	case VestingVest:
-		if v.Amount == 0 {
-			return errors.New("amount")
+		if v.Ticks == 0 {
+			return errors.New("ticks")
 		}
 	case VestingSetDelegate:
 		if !v.To.IsEmpty() {

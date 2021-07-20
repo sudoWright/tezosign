@@ -14,6 +14,8 @@ func ToNetwork(net string) (models.Network, error) {
 		return models.NetworkDelphi, nil
 	case "edo", "edonet":
 		return models.NetworkEdo, nil
+	case "florence", "florencenet":
+		return models.NetworkFlorence, nil
 	}
 
 	return "", fmt.Errorf("not supported network")

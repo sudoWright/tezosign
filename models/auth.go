@@ -1,6 +1,8 @@
 package models
 
 import (
+	"fmt"
+	"strings"
 	"tezosign/types"
 	"time"
 )
@@ -13,12 +15,12 @@ const (
 )
 
 type AuthToken struct {
-	ID        uint64        `gorm:"column:atn_id;primaryKey"`
-	PubKey    types.PubKey  `gorm:"column:atn_pubkey"`
-	Type      TokenType     `gorm:"column:atn_type"`
-	Data      types.Payload `gorm:"column:atn_data"`
-	IsUsed    bool          `gorm:"column:atn_is_used"`
-	ExpiresAt time.Time     `gorm:"column:atn_expires_at"`
+	ID        uint64       `gorm:"column:atn_id;primaryKey"`
+	PubKey    types.PubKey `gorm:"column:atn_pubkey"`
+	Type      TokenType    `gorm:"column:atn_type"`
+	Data      string       `gorm:"column:atn_data"` //token uuid
+	IsUsed    bool         `gorm:"column:atn_is_used"`
+	ExpiresAt time.Time    `gorm:"column:atn_expires_at"`
 }
 
 type AuthTokenReq struct {
@@ -35,7 +37,7 @@ func (r AuthTokenReq) Validate() (err error) {
 }
 
 type AuthTokenResp struct {
-	Token types.Payload `json:"token"`
+	Token AuthTokenPayload `json:"token"`
 }
 
 func (r AuthToken) Expired() bool {
@@ -43,8 +45,45 @@ func (r AuthToken) Expired() bool {
 }
 
 type AuthSignature struct {
-	Payload types.Payload `json:"payload"`
+	Payload AuthTokenPayload `json:"payload"`
 	SignatureReq
+}
+
+type AuthTokenPayload string
+
+const (
+	AuthTokenPayloadPrefix = "tzsignwallet-authpayload-"
+	UUIDLength             = 36
+)
+
+func NewAuthTokenPayload(token string) AuthTokenPayload {
+	return AuthTokenPayload(fmt.Sprintf("%s%s", AuthTokenPayloadPrefix, token))
+}
+
+func (t AuthTokenPayload) Token() string {
+	tokens := strings.SplitAfter(string(t), AuthTokenPayloadPrefix)
+	if len(tokens) != 2 {
+		return ""
+	}
+
+	return tokens[1]
+}
+
+func (t AuthTokenPayload) Validate() (err error) {
+	if !strings.HasPrefix(string(t), AuthTokenPayloadPrefix) {
+		return fmt.Errorf("wrong payload format")
+	}
+
+	if len(strings.SplitAfter(string(t), AuthTokenPayloadPrefix)) != 2 {
+		return fmt.Errorf("payload not presented")
+	}
+
+	return nil
+}
+
+//Convert UTF8 to bytes
+func (t AuthTokenPayload) MarshalBinary() ([]byte, error) {
+	return []byte(string(t)), nil
 }
 
 func (s AuthSignature) Validate() (err error) {

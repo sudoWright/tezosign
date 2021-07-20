@@ -123,7 +123,7 @@ func (api *API) OwnerAllowance(w http.ResponseWriter, r *http.Request, next http
 	}
 
 	if !isOwner {
-		response.JsonError(w, apperrors.NewWithDesc(apperrors.ErrNotAllowed, "pubkey not contains in storage"))
+		response.JsonError(w, apperrors.New(apperrors.ErrNotAllowed, "pubkey not contains in storage"))
 		return
 	}
 

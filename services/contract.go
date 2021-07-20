@@ -104,7 +104,7 @@ func (s *ServiceFacade) getPubKeys(threshold uint, entities []models.StorageEnti
 
 func (s *ServiceFacade) ContractInfo(contractID types.Address) (resp models.ContractInfo, err error) {
 	//Get contact
-	storage, err := s.getContractStorage(contractID)
+	storage, err := s.getMsigContractStorage(contractID)
 	if err != nil {
 		return resp, err
 	}
@@ -155,11 +155,11 @@ func (s *ServiceFacade) ContractOperation(userPubKey types.PubKey, req models.Co
 	}
 
 	if !isOwner {
-		return resp, apperrors.NewWithDesc(apperrors.ErrNotAllowed, "pubkey not contains in storage")
+		return resp, apperrors.New(apperrors.ErrNotAllowed, "pubkey not contains in storage")
 	}
 
 	//Get contact
-	storage, err := s.getContractStorage(req.ContractID)
+	storage, err := s.getMsigContractStorage(req.ContractID)
 	if err != nil {
 		return resp, err
 	}
@@ -259,7 +259,20 @@ func (s *ServiceFacade) checkOperation(req models.ContractOperationRequest) (err
 
 		//TODO check FA balance
 	case models.VestingSetDelegate, models.VestingVest:
-		//TODO check VESTING contract
+		//Сheck contract for vesting type
+		vestingStorage, err := s.getVestingContractStorage(req.VestingID)
+		if err != nil {
+			return err
+		}
+
+		if req.Type == models.VestingSetDelegate && vestingStorage.DelegateAdmin != req.ContractID {
+			return apperrors.New(apperrors.ErrNotAllowed, "msig is not delegate admin")
+		}
+
+		if req.Type == models.VestingVest && vestingStorage.OpenedTicks() < req.Ticks {
+			return apperrors.New(apperrors.ErrNotAllowed, "not enough ticks")
+		}
+
 	}
 
 	return nil
@@ -267,7 +280,7 @@ func (s *ServiceFacade) checkOperation(req models.ContractOperationRequest) (err
 
 func (s *ServiceFacade) GetUserAllowance(userPubKey types.PubKey, contractAddress types.Address) (isOwner bool, err error) {
 
-	storage, err := s.getContractStorage(contractAddress)
+	storage, err := s.getMsigContractStorage(contractAddress)
 	if err != nil {
 		return false, err
 	}
@@ -286,7 +299,7 @@ func (s *ServiceFacade) BuildContractOperationToSign(userPubKey types.PubKey, tx
 	}
 
 	if !isFound {
-		return resp, apperrors.NewWithDesc(apperrors.ErrNotFound, "payload")
+		return resp, apperrors.New(apperrors.ErrNotFound, "payload")
 	}
 
 	contractModel, err := repo.GetContractByID(operationReq.ContractID)
@@ -300,7 +313,7 @@ func (s *ServiceFacade) BuildContractOperationToSign(userPubKey types.PubKey, tx
 	}
 
 	if !isOwner {
-		return resp, apperrors.NewWithDesc(apperrors.ErrNotAllowed, "pubkey not contains in storage")
+		return resp, apperrors.New(apperrors.ErrNotAllowed, "pubkey not contains in storage")
 	}
 
 	if operationReq.Counter == nil {
@@ -336,7 +349,7 @@ func (s *ServiceFacade) BuildContractOperation(userPubKey types.PubKey, txID str
 	}
 
 	if !isFound {
-		return resp, apperrors.NewWithDesc(apperrors.ErrNotFound, "payload")
+		return resp, apperrors.New(apperrors.ErrNotFound, "payload")
 	}
 
 	contr, err := repo.GetContractByID(payload.ContractID)
@@ -345,7 +358,7 @@ func (s *ServiceFacade) BuildContractOperation(userPubKey types.PubKey, txID str
 	}
 
 	//Get contact
-	storage, err := s.getContractStorage(contr.Address)
+	storage, err := s.getMsigContractStorage(contr.Address)
 	if err != nil {
 		return resp, err
 	}
@@ -353,7 +366,7 @@ func (s *ServiceFacade) BuildContractOperation(userPubKey types.PubKey, txID str
 	//Check user allowance
 	_, isOwner := storage.Contains(userPubKey)
 	if !isOwner {
-		return resp, apperrors.NewWithDesc(apperrors.ErrNotAllowed, "pubkey not contains in storage")
+		return resp, apperrors.New(apperrors.ErrNotAllowed, "pubkey not contains in storage")
 	}
 
 	//get signatures by payload ID
@@ -400,14 +413,14 @@ func (s *ServiceFacade) CheckContractOrigination(txID string) (contract types.Ad
 
 func (s *ServiceFacade) SaveContractOperationSignature(userPubKey types.PubKey, operationID string, req models.OperationSignature) (resp models.OperationSignatureResp, err error) {
 
-	storage, err := s.getContractStorage(req.ContractID)
+	storage, err := s.getMsigContractStorage(req.ContractID)
 	if err != nil {
 		return resp, err
 	}
 
 	index, isFound := storage.Contains(req.PubKey)
 	if !isFound {
-		return resp, apperrors.NewWithDesc(apperrors.ErrNotAllowed, "pubkey not contains in storage")
+		return resp, apperrors.New(apperrors.ErrNotAllowed, "pubkey not contains in storage")
 	}
 
 	repo := s.repoProvider.GetContract()
@@ -418,7 +431,7 @@ func (s *ServiceFacade) SaveContractOperationSignature(userPubKey types.PubKey, 
 	}
 
 	if !isFound {
-		return resp, apperrors.NewWithDesc(apperrors.ErrNotFound, "operation")
+		return resp, apperrors.New(apperrors.ErrNotFound, "operation")
 	}
 
 	//Check sign with pubkey
@@ -471,26 +484,11 @@ func (s *ServiceFacade) SaveContractOperationSignature(userPubKey types.PubKey, 
 	}, nil
 }
 
-func (s *ServiceFacade) getContractStorage(contractID types.Address) (storageContainer contract.ContractStorageContainer, err error) {
+func (s *ServiceFacade) getMsigContractStorage(contractID types.Address) (storageContainer contract.ContractStorageContainer, err error) {
 
-	indexerRepo := s.indexerRepoProvider.GetIndexer()
-
-	script, isFound, err := indexerRepo.GetContractScript(contractID)
+	script, storage, err := s.getContractScriptAndStorage(contractID)
 	if err != nil {
 		return storageContainer, err
-	}
-
-	if !isFound {
-		return storageContainer, apperrors.New(apperrors.ErrNotFound, "contract")
-	}
-
-	storage, isFound, err := indexerRepo.GetContractStorage(contractID)
-	if err != nil {
-		return storageContainer, err
-	}
-
-	if !isFound {
-		return storageContainer, apperrors.New(apperrors.ErrNotFound, "contract")
 	}
 
 	storageContainer, err = contract.NewContractStorageContainer(micheline.Script{
@@ -502,7 +500,7 @@ func (s *ServiceFacade) getContractStorage(contractID types.Address) (storageCon
 		Storage: storage.RawValue.MichelinePrim(),
 	})
 	if err != nil {
-		return storageContainer, fmt.Errorf("%v; %w", err, apperrors.NewWithDesc(apperrors.ErrBadParam, "wrong contract type"))
+		return storageContainer, fmt.Errorf("%v; %w", err, apperrors.New(apperrors.ErrBadParam, "wrong contract type"))
 	}
 
 	return storageContainer, err
@@ -528,28 +526,14 @@ func (s *ServiceFacade) checkFAStandart(contractID types.Address, assetType mode
 	}, assetType), nil
 }
 
-func (s *ServiceFacade) checkVestingContract(contractID types.Address) (isVestingContract bool, err error) {
+func (s *ServiceFacade) getVestingContractStorage(contractID types.Address) (storageContainer contract.VestingContractStorageContainer, err error) {
 
-	indexerRepo := s.indexerRepoProvider.GetIndexer()
-	script, isFound, err := indexerRepo.GetContractScript(contractID)
+	script, storage, err := s.getContractScriptAndStorage(contractID)
 	if err != nil {
-		return false, err
+		return storageContainer, err
 	}
 
-	if !isFound {
-		return false, apperrors.New(apperrors.ErrNotFound, "contract")
-	}
-
-	storage, isFound, err := indexerRepo.GetContractStorage(contractID)
-	if err != nil {
-		return false, err
-	}
-
-	if !isFound {
-		return false, apperrors.New(apperrors.ErrNotFound, "contract")
-	}
-
-	_, err = contract.NewVestingContractStorageContainer(micheline.Script{
+	storageContainer, err = contract.NewVestingContractStorageContainer(micheline.Script{
 		Code: &micheline.Code{
 			Param:   script.ParameterSchema.MichelinePrim(),
 			Storage: script.StorageSchema.MichelinePrim(),
@@ -557,10 +541,57 @@ func (s *ServiceFacade) checkVestingContract(contractID types.Address) (isVestin
 		},
 		Storage: storage.RawValue.MichelinePrim()})
 	if err != nil {
-		return false, nil
+		return storageContainer, fmt.Errorf("%v; %w", err, apperrors.New(apperrors.ErrBadParam, "wrong contract type"))
 	}
 
+	return storageContainer, nil
+}
+
+func (s *ServiceFacade) checkVestingContract(contractID types.Address) (isVestingContract bool, err error) {
+
+	script, isFound, err := s.indexerRepoProvider.GetIndexer().GetContractScript(contractID)
+	if err != nil {
+		return false, err
+	}
+
+	if !isFound {
+		return false, apperrors.New(apperrors.ErrNotFound, "contract")
+	}
+
+	return contract.CheckVestingContractStorage(micheline.Script{
+		Code: &micheline.Code{
+			Param:   script.ParameterSchema.MichelinePrim(),
+			Storage: script.StorageSchema.MichelinePrim(),
+			Code:    script.CodeSchema.MichelinePrim(),
+		}}), nil
+
 	return true, nil
+}
+
+func (s *ServiceFacade) getContractScriptAndStorage(contractID types.Address) (script models.Script, storage models.Storage, err error) {
+
+	var isFound bool
+
+	indexerRepo := s.indexerRepoProvider.GetIndexer()
+	script, isFound, err = indexerRepo.GetContractScript(contractID)
+	if err != nil {
+		return script, storage, err
+	}
+
+	if !isFound {
+		return script, storage, apperrors.New(apperrors.ErrNotFound, "contract")
+	}
+
+	storage, isFound, err = indexerRepo.GetContractStorage(contractID)
+	if err != nil {
+		return script, storage, err
+	}
+
+	if !isFound {
+		return script, storage, apperrors.New(apperrors.ErrNotFound, "contract")
+	}
+
+	return script, storage, nil
 }
 
 func operationID(payload string) string {
@@ -610,7 +641,7 @@ func verifySign(message []byte, signature types.Signature, publicKey crypto.Publ
 		return errors.Errorf("unsupported public key type: %T", publicKey)
 	}
 	if !ok {
-		return errors.Errorf("invalid signature %s for public key %s", signature, publicKey)
+		return errors.Errorf("invalid signature %s for public key %v", signature, publicKey)
 	}
 	return nil
 }

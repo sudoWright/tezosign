@@ -1,16 +1,13 @@
 package services
 
 import (
-	"encoding/hex"
 	"tezosign/common/apperrors"
 	"tezosign/conf"
 	"tezosign/models"
-	"tezosign/services/contract"
 	"tezosign/types"
 	"time"
 
 	uuid "github.com/satori/go.uuid"
-	"golang.org/x/crypto/blake2b"
 )
 
 const expirationTime = 10 * time.Minute
@@ -20,30 +17,21 @@ func (s *ServiceFacade) AuthRequest(req models.AuthTokenReq) (resp models.AuthTo
 
 	activeToken, isFound, err := authRepo.GetActiveTokenByPubKeyAndType(req.PubKey, models.TypeAuth)
 	if err != nil {
-		return
+		return resp, err
 	}
 
 	//Already exist active auth request
 	if isFound {
-		resp.Token = activeToken.Data
+		resp.Token = models.NewAuthTokenPayload(activeToken.Data)
 		return resp, nil
 	}
 
 	reqUUID := uuid.NewV4()
 
-	binaryPubKey, err := req.PubKey.MarshalBinary()
-	if err != nil {
-		return resp, apperrors.NewWithDesc(apperrors.ErrBadParam, "address")
-	}
-
-	hash := blake2b.Sum256(append(binaryPubKey, reqUUID.Bytes()...))
-
-	token := hex.EncodeToString(append([]byte{contract.TextWatermark}, hash[:]...))
-
 	err = authRepo.CreateAuthToken(models.AuthToken{
 		PubKey:    req.PubKey,
 		Type:      models.TypeAuth,
-		Data:      types.Payload(token),
+		Data:      reqUUID.String(),
 		IsUsed:    false,
 		ExpiresAt: time.Now().Add(expirationTime),
 	})
@@ -51,7 +39,8 @@ func (s *ServiceFacade) AuthRequest(req models.AuthTokenReq) (resp models.AuthTo
 		return
 	}
 
-	resp.Token = types.Payload(token)
+	resp.Token = models.NewAuthTokenPayload(reqUUID.String())
+
 	return resp, nil
 }
 
@@ -62,11 +51,18 @@ type AuthResponce struct {
 }
 
 func (s *ServiceFacade) Auth(req models.AuthSignature) (resp AuthResponce, err error) {
+
+	//Check that token in correct format
+	_, err = uuid.FromString(req.Payload.Token())
+	if err != nil {
+		return resp, apperrors.New(apperrors.ErrBadParam, "auth token wrong format")
+	}
+
 	authRepo := s.repoProvider.GetAuth()
 	//Get token
-	authToken, isFound, err := authRepo.GetAuthToken(req.Payload.String())
+	authToken, isFound, err := authRepo.GetAuthToken(req.Payload.Token())
 	if err != nil {
-		return
+		return resp, err
 	}
 	if !isFound {
 		return resp, apperrors.New(apperrors.ErrBadParam, "token")
@@ -79,7 +75,7 @@ func (s *ServiceFacade) Auth(req models.AuthSignature) (resp AuthResponce, err e
 		return resp, apperrors.New(apperrors.ErrBadParam, "auth token already expired")
 	}
 
-	payload, err := authToken.Data.MarshalBinary()
+	payload, err := req.Payload.MarshalBinary()
 	if err != nil {
 		return resp, err
 	}
@@ -183,7 +179,7 @@ func (s *ServiceFacade) generateAuthData(userPubKey types.PubKey) (accessToken s
 	//Save refresh token
 	err = s.repoProvider.GetAuth().CreateAuthToken(models.AuthToken{
 		PubKey:    userPubKey,
-		Data:      types.Payload(refreshToken),
+		Data:      refreshToken,
 		Type:      models.TypeRefresh,
 		ExpiresAt: time.Now().Add(conf.TtlRefreshToken * time.Second),
 	})

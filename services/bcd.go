@@ -10,11 +10,12 @@ import (
 )
 
 //TODO make as URL
-const betterCallDevAccountAPI = "https://better-call.dev/v1/account/%s/%s/token_balances?offset=0&size=10"
+const betterCallDevAccountAPI = "https://api.better-call.dev/v1/account/%s/%s/token_balances?offset=0&size=10"
 
 var bcdNetworks = map[models.Network]string{
-	models.NetworkMain: "mainnet",
-	models.NetworkEdo:  "edo2net",
+	models.NetworkMain:     "mainnet",
+	models.NetworkEdo:      "edo2net",
+	models.NetworkFlorence: "florencenet",
 }
 
 func getAccountTokensBalance(account types.Address, network models.Network) (balances models.AssetBalances, err error) {

@@ -181,7 +181,7 @@ func (api *API) OperationSignPayload(w http.ResponseWriter, r *http.Request) {
 	payloadType := models.PayloadType(r.URL.Query().Get("type"))
 	err = payloadType.Validate()
 	if err != nil {
-		response.JsonError(w, apperrors.NewWithDesc(apperrors.ErrBadParam, "type"))
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "type"))
 		return
 	}
 
@@ -254,13 +254,13 @@ func (api *API) ContractOperationBuild(w http.ResponseWriter, r *http.Request) {
 
 	operationID, ok := mux.Vars(r)["operation_id"]
 	if !ok || len(operationID) == 0 {
-		response.JsonError(w, apperrors.NewWithDesc(apperrors.ErrBadParam, "tx_id"))
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "tx_id"))
 		return
 	}
 
 	payloadType := models.PayloadType(r.URL.Query().Get("type"))
 	if err := payloadType.Validate(); err != nil {
-		response.JsonError(w, apperrors.NewWithDesc(apperrors.ErrBadParam, "type"))
+		response.JsonError(w, apperrors.New(apperrors.ErrBadParam, "type"))
 		return
 	}
 

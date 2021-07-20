@@ -5,6 +5,7 @@ import (
 	"math/big"
 	"tezosign/models"
 	"tezosign/types"
+	"time"
 
 	"blockwatch.cc/tzindex/micheline"
 )
@@ -16,7 +17,7 @@ import (
 //              (pair %schedule (timestamp %epoch)
 //              (pair (nat %secondsPerTick) (nat %tokensPerTick)))))
 
-func BuildVestingContractStorage(vestingAddress, delegateAdmin types.Address, timestamp, secondsPerTick, tokensPerTick uint64) (resp []byte, err error) {
+func BuildVestingContractStorage(vestingAddress, delegateAdmin types.Address, timestamp int64, secondsPerTick, tokensPerTick uint64) (resp []byte, err error) {
 
 	encodedVestingAddress, err := vestingAddress.MarshalBinary()
 	if err != nil {
@@ -124,7 +125,7 @@ func VestingContractParamAndEntrypoint(req models.VestingContractOperation) (arg
 		prim = &micheline.Prim{
 			Type:   micheline.PrimInt,
 			OpCode: micheline.T_INT,
-			Int:    big.NewInt(int64(req.Amount)),
+			Int:    big.NewInt(int64(req.Ticks)),
 		}
 		entrypoint = vestEntrypoint
 	default:
@@ -143,10 +144,27 @@ type VestingContractStorageContainer struct {
 	VestingAddress types.Address
 	DelegateAdmin  types.Address
 	VestedTicks    uint64
-	Timestamp      uint64
+	Timestamp      int64
 	SecondsPerTick uint64
 	TokensPerTick  uint64
 	storage        *micheline.Prim
+}
+
+func (c VestingContractStorageContainer) OpenedTicks() uint64 {
+
+	//Vesting process not started yet
+	timeDiff := time.Now().Unix() - c.Timestamp
+	if timeDiff < 0 {
+		return 0
+	}
+
+	//Calc already opened amount
+	openedTicks := uint64(timeDiff) / c.SecondsPerTick
+
+	//Subtract already vested ticks
+	openedTicks -= c.VestedTicks
+
+	return openedTicks
 }
 
 const (
@@ -212,7 +230,7 @@ func NewVestingContractStorageContainer(script micheline.Script) (c VestingContr
 	if err != nil {
 		return c, err
 	}
-	c.Timestamp = amount.Int.Uint64()
+	c.Timestamp = amount.Int.Int64()
 
 	amount, err = GetStorageValue(e[secondsPerTickEntrypoint], script.Storage)
 	if err != nil {
@@ -227,4 +245,19 @@ func NewVestingContractStorageContainer(script micheline.Script) (c VestingContr
 	c.TokensPerTick = amount.Int.Uint64()
 
 	return
+}
+
+func CheckVestingContractStorage(script micheline.Script) (ok bool) {
+
+	e, err := InitAnnotsEntrypoints(script.Code.Storage)
+	if err != nil {
+		return false
+	}
+
+	err = checkFields(e, vestingContractStorageEntrypoints)
+	if err != nil {
+		return false
+	}
+
+	return true
 }
