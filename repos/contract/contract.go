@@ -133,9 +133,13 @@ func (r *Repository) GetContract(address types.Address) (contract models.Contrac
 }
 
 func (r *Repository) GetContractsList(limit, offset int) (contracts []models.Contract, err error) {
-	err = r.db.Model(models.Contract{}).
-		Limit(limit).
-		Offset(offset).
+	db := r.db.Model(models.Contract{})
+
+	if limit > 0 {
+		db = db.Limit(limit)
+	}
+
+	err = db.Offset(offset).
 		Find(&contracts).Error
 	if err != nil {
 		return contracts, err

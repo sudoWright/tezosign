@@ -484,6 +484,27 @@ func (s *ServiceFacade) SaveContractOperationSignature(userPubKey types.PubKey, 
 	}, nil
 }
 
+func (s *ServiceFacade) GetAccountContracts(userPubKey types.PubKey) ([]string, error) {
+
+	//Request without limit
+	contracts, err := s.repoProvider.GetContract().GetContractsList(0, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	msigContractsList := make([]string, len(contracts))
+	for i := range contracts {
+		msigContractsList[i] = contracts[i].Address.String()
+	}
+
+	userContracts, err := s.indexerRepoProvider.GetIndexer().GetContractsStoragesContainsKey(msigContractsList, userPubKey.String())
+	if err != nil {
+		return nil, err
+	}
+
+	return userContracts, nil
+}
+
 func (s *ServiceFacade) getMsigContractStorage(contractID types.Address) (storageContainer contract.ContractStorageContainer, err error) {
 
 	script, storage, err := s.getContractScriptAndStorage(contractID)

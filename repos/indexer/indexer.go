@@ -2,6 +2,7 @@ package indexer
 
 import (
 	"errors"
+	"fmt"
 	"tezosign/models"
 	"tezosign/types"
 
@@ -19,8 +20,10 @@ type (
 		GetContractOperations(contract types.Address, blockLevel uint64, entrypoint string) ([]models.TransactionOperation, error)
 		GetContractRevealOperation(contract types.Address) (models.RevealOperation, bool, error)
 		GetContractOriginationOperation(txID string) (tx models.OriginationOperation, isFound bool, err error)
+
 		GetContractStorage(address types.Address) (storage models.Storage, isFound bool, err error)
 		GetContractStorageChange(address types.Address, level uint64) (storage []models.Storage, err error)
+		GetContractsStoragesContainsKey(contracts []string, key string) ([]string, error)
 		GetContractScript(address types.Address) (script models.Script, isFound bool, err error)
 		GetAccount(address types.Address) (account models.Account, isFound bool, err error)
 		GetAccountByID(id uint64) (account models.Account, isFound bool, err error)
@@ -120,6 +123,25 @@ func (r *Repository) GetContractStorageChange(address types.Address, level uint6
 	}
 
 	return storages, nil
+}
+
+func (r *Repository) GetContractsStoragesContainsKey(contracts []string, key string) (resp []string, err error) {
+
+	subQuery := r.db.
+		Select(fmt.Sprintf(`"Accounts"."Address",("JsonValue" -> 'keys') ?| array['%s'] AS is_contain`, key)).
+		Table("Storages").
+		Joins(`LEFT JOIN "Accounts" on "Accounts"."Id" = "ContractId"`).
+		Where(`"Current" IS TRUE AND "Address" IN (?)`, contracts)
+
+	err = r.db.Select(`"Address" `).
+		Table("(?) s", subQuery).
+		Where("s.is_contain IS TRUE").
+		Find(&resp).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
 }
 
 func (r *Repository) GetContractScript(address types.Address) (script models.Script, isFound bool, err error) {

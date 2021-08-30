@@ -62,3 +62,21 @@ func (api *API) AddressBalance(w http.ResponseWriter, r *http.Request) {
 		"balance": balance,
 	})
 }
+
+func (api *API) AddressContracts(w http.ResponseWriter, r *http.Request) {
+	user, net, networkContext, err := GetUserNetworkContext(r)
+	if err != nil {
+		response.JsonError(w, err)
+		return
+	}
+
+	service := services.New(repos.New(networkContext.Db), repos.New(networkContext.IndexerDB), networkContext.Client, networkContext.Auth, net)
+
+	contracts, err := service.GetAccountContracts(user)
+	if err != nil {
+		response.JsonError(w, err)
+		return
+	}
+
+	response.Json(w, contracts)
+}

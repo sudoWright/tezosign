@@ -561,6 +561,30 @@ paths:
           description: Internal server error
       tags:
         - Assets
+  '/{network}/contracts':
+    get:
+      operationId: pubKeyContracts
+      summary: Get pubkey owned contracts
+      produces:
+        - application/json
+      security:
+        - Bearer: []
+      parameters:
+        - in: path
+          name: network
+          required: true
+          type : string
+      responses:
+        '200':
+          description: Contracts list
+          schema:
+            type: array
+            items:
+              type: string
+        '500':
+          description: Internal server error
+      tags:
+        - Helpers
   '/{network}/{address}/revealed':
     get:
       operationId: addressRevealed
