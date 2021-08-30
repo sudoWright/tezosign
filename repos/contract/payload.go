@@ -68,6 +68,7 @@ func (r *Repository) UpdatePayload(request models.Request) (err error) {
 		Updates(models.Request{
 			Status:      request.Status,
 			OperationID: request.OperationID,
+			StorageDiff: request.StorageDiff,
 		}).
 		Error
 	if err != nil {

@@ -20,6 +20,7 @@ type (
 		GetContractRevealOperation(contract types.Address) (models.RevealOperation, bool, error)
 		GetContractOriginationOperation(txID string) (tx models.OriginationOperation, isFound bool, err error)
 		GetContractStorage(address types.Address) (storage models.Storage, isFound bool, err error)
+		GetContractStorageChange(address types.Address, level uint64) (storage []models.Storage, err error)
 		GetContractScript(address types.Address) (script models.Script, isFound bool, err error)
 		GetAccount(address types.Address) (account models.Account, isFound bool, err error)
 		GetAccountByID(id uint64) (account models.Account, isFound bool, err error)
@@ -104,6 +105,21 @@ func (r *Repository) GetContractStorage(address types.Address) (storage models.S
 	}
 
 	return storage, true, nil
+}
+
+func (r *Repository) GetContractStorageChange(address types.Address, level uint64) (storages []models.Storage, err error) {
+	err = r.db.Select("*").
+		Table("Storages").
+		Joins(`LEFT JOIN "Accounts" a on "ContractId" = a."Id"`).
+		Where(`"Address" = ? AND "Level" <= ?`, address.String(), level).
+		Order("Level desc").
+		Limit(2).
+		Find(&storages).Error
+	if err != nil {
+		return storages, err
+	}
+
+	return storages, nil
 }
 
 func (r *Repository) GetContractScript(address types.Address) (script models.Script, isFound bool, err error) {

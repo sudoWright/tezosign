@@ -23,6 +23,7 @@ create table requests
 	req_counter int, -- internal msig contract counter
 	req_created_at timestamp without time zone default now() not null,
     req_info text not null,
+    req_storage_diff text,
     req_nonce int, --field for multi operation txs
     req_network_id varchar not null,
  	req_operation_id varchar(51)

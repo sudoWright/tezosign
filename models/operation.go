@@ -2,6 +2,9 @@ package models
 
 import (
 	"database/sql"
+	"database/sql/driver"
+	"encoding/json"
+	"fmt"
 	"tezosign/types"
 )
 
@@ -33,8 +36,54 @@ type Request struct {
 
 	OperationID *string `gorm:"column:req_operation_id" json:"tx_id,omitempty"`
 
+	//Previous state of storage
+	StorageDiff *StorageDiff `gorm:"column:req_storage_diff" json:"storage_diff,omitempty"`
+
 	//Internal operation nonce
 	Nonce sql.NullInt64 `gorm:"column:req_nonce" json:"-"`
+}
+
+type StorageDiff struct {
+	Counter   Diff `json:"counter"`
+	Threshold Diff `json:"threshold"`
+	Keys      Diff `json:"keys"`
+}
+
+func (r *StorageDiff) Scan(value interface{}) (err error) {
+	if value == nil {
+		return nil
+	}
+
+	data, ok := value.(string)
+	if !ok {
+		return fmt.Errorf("invalid type")
+	}
+
+	if len(data) == 0 {
+		return nil
+	}
+
+	err = json.Unmarshal([]byte(data), r)
+	if err != nil {
+		return fmt.Errorf("json.Unmarshal: %s", err.Error())
+	}
+
+	return nil
+}
+
+func (r StorageDiff) Value() (driver.Value, error) {
+
+	bt, err := json.Marshal(r)
+	if err != nil {
+		return nil, err
+	}
+
+	return string(bt), nil
+}
+
+type Diff struct {
+	Previous interface{} `json:"previous,omitempty"`
+	Current  interface{} `json:"current"`
 }
 
 type RequestReport struct {
