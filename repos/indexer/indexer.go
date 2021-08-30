@@ -112,7 +112,7 @@ func (r *Repository) GetContractStorageChange(address types.Address, level uint6
 		Table("Storages").
 		Joins(`LEFT JOIN "Accounts" a on "ContractId" = a."Id"`).
 		Where(`"Address" = ? AND "Level" <= ?`, address.String(), level).
-		Order(`"Level"" desc`).
+		Order(`"Level" desc`).
 		Limit(2).
 		Find(&storages).Error
 	if err != nil {
