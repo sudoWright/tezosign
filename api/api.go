@@ -128,6 +128,9 @@ func (api *API) initialize(handlerArr ...negroni.Handler) {
 	}
 
 	HandleActions(api.router, wrapper, actionsAPIPrefix, []*Route{
+		//Get contracts by pubkey
+		{Path: "/{network}/contracts", Method: http.MethodGet, Func: api.AddressContracts, Middleware: mw},
+		//Init contract storage
 		{Path: "/{network}/contract/storage/init", Method: http.MethodPost, Func: api.ContractStorageInit, Middleware: mw},
 		//Get contract info
 		{Path: "/{network}/contract/{contract_id}/info", Method: http.MethodGet, Func: api.ContractInfo, Middleware: mw},
