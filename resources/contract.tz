@@ -160,10 +160,7 @@ code
                                     SWAP;
                                   };
                               };
-                            DIP 2
-                              {
-                                DUP;
-                              };
+                            DIP 2 {DUP};
                             DIG 2;
                             DIP
                               {
